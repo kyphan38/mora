@@ -13,10 +13,9 @@ export default function Session() {
   const reorderTasks = useStore((s) => s.reorderTasks);
   const autoContinue = useStore((s) => s.autoContinue);
   const setAutoContinue = useStore((s) => s.setAutoContinue);
+  const startFocus = useStore((s) => s.startFocus);
 
   const [taskInput, setTaskInput] = useState('');
-  const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
-  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleAddTask = () => {
     addTask(taskInput);
@@ -68,65 +67,44 @@ export default function Session() {
               {tasks.map((t, i) => (
                 <li
                   key={t.id}
-                  style={{
-                    ...taskRowStyle,
-                    opacity: dragFromIndex === i ? 0.4 : 1,
-                    borderTopColor: dragOverIndex === i && dragFromIndex !== null && dragFromIndex > i ? 'var(--accent)' : undefined,
-                    borderBottomColor: dragOverIndex === i && dragFromIndex !== null && dragFromIndex < i ? 'var(--accent)' : undefined,
-                  }}
+                  style={taskRowStyle}
                   className="task-row"
-                  draggable
-                  onDragStart={(e) => {
-                    e.dataTransfer.effectAllowed = 'move';
-                    e.dataTransfer.setData('text/plain', i.toString());
-                    setDragFromIndex(i);
-                  }}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    setDragOverIndex(i);
-                  }}
-                  onDragLeave={() => {
-                    setDragOverIndex((prev) => prev === i ? null : prev);
-                  }}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                    if (!isNaN(fromIndex) && fromIndex !== i) {
-                      reorderTasks(fromIndex, i);
-                    }
-                    setDragFromIndex(null);
-                    setDragOverIndex(null);
-                  }}
-                  onDragEnd={() => {
-                    setDragFromIndex(null);
-                    setDragOverIndex(null);
-                  }}
                 >
-                  <svg
-                    width="12"
-                    height="18"
-                    viewBox="0 0 12 18"
-                    fill="none"
-                    className="drag-handle"
-                    style={dragHandleStyle}
-                  >
-                    <circle cx="4" cy="4" r="1" fill="currentColor"/>
-                    <circle cx="4" cy="9" r="1" fill="currentColor"/>
-                    <circle cx="4" cy="14" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="4" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="9" r="1" fill="currentColor"/>
-                    <circle cx="8" cy="14" r="1" fill="currentColor"/>
-                  </svg>
                   <span style={taskNumStyle}>{i + 1}</span>
                   <span style={taskNameStyle}>{t.name}</span>
-                  <button
-                    onClick={() => removeTask(t.id)}
-                    style={removeBtnStyle}
-                    aria-label={`Remove ${t.name}`}
-                  >
-                    ×
-                  </button>
+                  <div style={taskActionsStyle} className="task-row-actions">
+                    <button
+                      type="button"
+                      className="task-action-btn"
+                      onClick={() => reorderTasks(i, i - 1)}
+                      disabled={i === 0}
+                      style={{ ...actionBtnStyle, visibility: i === 0 ? 'hidden' : 'visible' }}
+                      aria-label={`Move ${t.name} up`}
+                      data-testid={`task-move-up-${i}`}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      type="button"
+                      className="task-action-btn"
+                      onClick={() => reorderTasks(i, i + 1)}
+                      disabled={i === tasks.length - 1}
+                      style={{ ...actionBtnStyle, visibility: i === tasks.length - 1 ? 'hidden' : 'visible' }}
+                      aria-label={`Move ${t.name} down`}
+                      data-testid={`task-move-down-${i}`}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      type="button"
+                      className="task-action-btn"
+                      onClick={() => removeTask(t.id)}
+                      style={actionBtnStyle}
+                      aria-label={`Remove ${t.name}`}
+                    >
+                      ×
+                    </button>
+                  </div>
                 </li>
               ))}
             </ol>
@@ -168,6 +146,17 @@ export default function Session() {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => setScreen('sound')} style={ghostBtnStyle}>Back</button>
+          <button
+            onClick={() => startFocus()}
+            disabled={tasks.length === 0}
+            className="btn-primary"
+            style={{
+              opacity: tasks.length === 0 ? 0.4 : 1,
+              cursor: tasks.length === 0 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            Start focus
+          </button>
         </div>
       </div>
     </div>
@@ -250,6 +239,8 @@ const taskRowStyle: React.CSSProperties = {
   border: '1px solid var(--line)',
   borderRadius: 'var(--r-sm)',
   padding: '8px 12px',
+  WebkitUserSelect: 'none',
+  userSelect: 'none',
 };
 
 const taskNumStyle: React.CSSProperties = {
@@ -265,14 +256,29 @@ const taskNameStyle: React.CSSProperties = {
   color: 'var(--ink)',
 };
 
-const removeBtnStyle: React.CSSProperties = {
-  background: 'none',
+const taskActionsStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '12px',
+  flexShrink: 0,
+};
+
+const actionBtnStyle: React.CSSProperties = {
+  background: 'transparent',
+  backgroundColor: 'transparent',
   border: 'none',
-  fontSize: 18,
+  borderWidth: 0,
+  borderStyle: 'none',
+  borderColor: 'transparent',
+  outline: 'none',
+  boxShadow: 'none',
+  WebkitAppearance: 'none',
+  appearance: 'none',
   color: 'var(--ink-3)',
   cursor: 'pointer',
-  padding: '0 4px',
+  padding: '4px 8px',
   lineHeight: 1,
+  fontSize: 14,
   fontFamily: 'var(--font)',
 };
 
@@ -307,12 +313,6 @@ const addBtnStyle: React.CSSProperties = {
   fontWeight: 500,
   cursor: 'pointer',
   fontFamily: 'var(--font)',
-};
-
-const dragHandleStyle: React.CSSProperties = {
-  cursor: 'grab',
-  marginRight: 8,
-  flexShrink: 0,
 };
 
 const unifiedBottomBarStyle: React.CSSProperties = {

@@ -25,7 +25,7 @@ describe('reorderTasks store action', () => {
     expect(useStore.getState().tasks.map(t => t.name)).toEqual(['Task 3', 'Task 2', 'Task 1']);
   });
 
-  it('dragging and dropping reorders tasks in UI', () => {
+  it('clicking the Up/Down buttons reorders tasks in UI', () => {
     useStore.getState().setScreen('session');
     useStore.getState().addTask('Task A');
     useStore.getState().addTask('Task B');
@@ -35,23 +35,18 @@ describe('reorderTasks store action', () => {
     const rows = document.querySelectorAll('.task-row');
     expect(rows.length).toBe(2);
 
-    // Mock dataTransfer object
-    const dataTransfer = {
-      setData: (type: string, val: string) => {
-        dataTransfer.data[type] = val;
-      },
-      getData: (type: string) => {
-        return dataTransfer.data[type];
-      },
-      data: {} as Record<string, string>,
-      effectAllowed: ''
-    };
-
-    // Drag Task A (index 0) and drop onto Task B (index 1)
-    fireEvent.dragStart(rows[0], { dataTransfer });
-    fireEvent.dragOver(rows[1], { dataTransfer });
-    fireEvent.drop(rows[1], { dataTransfer });
+    // Move Task B (index 1) up above Task A (index 0)
+    const moveUpBtn = document.querySelector('[data-testid="task-move-up-1"]');
+    expect(moveUpBtn).not.toBeNull();
+    fireEvent.click(moveUpBtn as Element);
 
     expect(useStore.getState().tasks.map(t => t.name)).toEqual(['Task B', 'Task A']);
+
+    // Move Task B (now index 0) back down below Task A
+    const moveDownBtn = document.querySelector('[data-testid="task-move-down-0"]');
+    expect(moveDownBtn).not.toBeNull();
+    fireEvent.click(moveDownBtn as Element);
+
+    expect(useStore.getState().tasks.map(t => t.name)).toEqual(['Task A', 'Task B']);
   });
 });

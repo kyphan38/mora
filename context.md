@@ -81,14 +81,14 @@ See src/styles/tokens.css (source of truth). Radius 12px (pills for nav/chips), 
 - `.github/workflows/release.yml` - GitHub Actions release workflow for automated cross-compiling
 - `RELEASE.md` - localized manual build, Gatekeeper bypass, signing environment vars, and release workflow instructions
 - `src/test/config.test.ts` - test verifying packaging configuration files
-- `src/data/sceneManifest.ts` — maps corner scene names to image URLs
-- `public/scenes/README.md` — user instructions for scene image local storage
-- `src/test/scene.test.tsx` — unit tests for scene image path mappers and preview background rendering
-- `src/test/roomBg.test.tsx` — unit and integration tests for Room background settings
-- `src/test/roomScene.test.tsx` — unit and integration tests for immersive Room Scene mode
-- `src/test/audioEngineUnit.test.ts` — unit tests for the AudioEngine singleton and dispose behaviors
-- `src/lib/pomodoro.ts` — pure break-scaling helper (breakForSeconds, NEXT_DURATIONS)
-- `src/test/pomodoro.test.tsx` — pomodoro phase machine tests (break mapping, review, break, autoContinue, Room render)
+- `src/data/sceneManifest.ts` - maps corner scene names to image URLs
+- `public/scenes/README.md` - user instructions for scene image local storage
+- `src/test/scene.test.tsx` - unit tests for scene image path mappers and preview background rendering
+- `src/test/roomBg.test.tsx` - unit and integration tests for Room background settings
+- `src/test/roomScene.test.tsx` - unit and integration tests for immersive Room Scene mode
+- `src/test/audioEngineUnit.test.ts` - unit tests for the AudioEngine singleton and dispose behaviors
+- `src/lib/pomodoro.ts` - pure break-scaling helper (breakForSeconds, NEXT_DURATIONS)
+- `src/test/pomodoro.test.tsx` - pomodoro phase machine tests (break mapping, review, break, autoContinue, Room render)
 
 ## Data model
 ```ts
@@ -165,16 +165,16 @@ Implemented actions:
 - `setAudioActive(b)` - sets audioActive flag for setup previews
 
 Pomodoro phase machine:
-- `phase: 'focus' | 'break' | 'review'` — current session phase
-- `lastFocusSec: number` — duration of the last focus session (used to compute break length)
-- `autoContinue: boolean` — when true, skips review sheet (focus→break→focus automatically); default false
-- `setAutoContinue(b)` — toggle autoContinue
-- `enterReview()` — called on focus completion (natural countdown or "Complete now"): if autoContinue, auto-logs session + enters break; else shows review sheet
-- `reviewMarkDone(done)` — done=true: logs session, marks task done, advances activeTaskId; done=false: no-op (keep working)
-- `startBreak()` — enters break phase, starts break timer
-- `finishBreak()` — ends break: if autoContinue, auto-starts next focus; else returns to focus paused
-- `focusAgain(durationSec)` — sets new duration and returns to focus phase
-- `stopAllSessions()` — stops focus, navigates to history
+- `phase: 'focus' | 'break' | 'review'` - current session phase
+- `lastFocusSec: number` - duration of the last focus session (used to compute break length)
+- `autoContinue: boolean` - when true, skips review sheet (focus→break→focus automatically); default false
+- `setAutoContinue(b)` - toggle autoContinue
+- `enterReview()` - called on focus completion (natural countdown or "Complete now"): if autoContinue, auto-logs session + enters break; else shows review sheet
+- `reviewMarkDone(done)` - done=true: logs session, marks task done, advances activeTaskId; done=false: no-op (keep working)
+- `startBreak()` - enters break phase, starts break timer
+- `finishBreak()` - ends break: if autoContinue, auto-starts next focus; else returns to focus paused
+- `focusAgain(durationSec)` - sets new duration and returns to focus phase
+- `stopAllSessions()` - stops focus, navigates to history
 
 Derived: `canStart()` - true when tasks.length > 0.
 `shouldPlayAudio(state)` - selector function determining if audio should play based on screen and active flags.
@@ -423,7 +423,7 @@ Room review-phase render (1): renders review sheet with all elements.
 - **Phase machine**: focus → review (or auto-continue: focus → break → focus). On focus completion (natural countdown to 0 or "Complete now"), `enterReview()` is called.
 - **Review sheet**: renders in both Color and Scene modes. Row A: "Mark done" / "Keep working". Row B: "Take a break {Xm}" / "Focus again" (expands duration chips 25/50/1.5h/2h) / "Stop".
 - **Break phase**: amber-tinted timer, "Rest a little" label, "Skip break" control. Auto-calls `finishBreak()` when countdown reaches 0.
-- **autoContinue** (default off, persisted): when on, skips review sheet — focus→break→focus until no undone tasks remain or user stops.
+- **autoContinue** (default off, persisted): when on, skips review sheet - focus→break→focus until no undone tasks remain or user stops.
 - **stopAllSessions()**: routes to History screen.
 - **Break scaling** (`breakForSeconds`): 25m→5m, 50m→10m, 1.5h→15m, 2h→20m, Count Up→10m, fallback ratio clamped 5–20m.
 

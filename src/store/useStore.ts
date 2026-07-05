@@ -288,7 +288,7 @@ export const useStore = create<AppStore>((set, get) => ({
       get().completeActive(elapsed);
       const nextUndone = get().tasks.find((t) => !t.done);
       if (!nextUndone) {
-        // No more tasks — stop
+        // No more tasks - stop
         set({
           sessionActive: false, isRunning: false, elapsedSec: 0,
           activeTaskId: null, phase: 'focus', lastFocusSec: focusDur,

@@ -46,6 +46,7 @@ body {
   background: transparent !important;
   z-index: 10;
   border-bottom: none !important;
+  box-shadow: none !important;
   pointer-events: auto !important;
 }
 
@@ -108,17 +109,6 @@ body {
   color: #ffffff !important;
 }
 
-/* Force absolute structural visibility and prevent suppression in Scene Mode */
-[data-scene="true"] .screen-content h1,
-[data-scene="true"] .screen-content h2,
-[data-scene="true"] .screen-content p,
-[data-scene="true"] .screen-content div.landing-title-wrapper {
-  display: block !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-  color: #ffffff !important;
-}
-
 /* Specifically preserve secondary text states inside the translucent card if needed */
 [data-scene="true"] .screen-content .unselected-card p,
 [data-scene="true"] .screen-content .unselected-card span {
@@ -149,7 +139,7 @@ body {
 /* Maintain bright solid accent color for the active selected card */
 [data-scene="true"] .screen-content button[style*="var(--accent-soft)"] {
   background: rgba(var(--accent-rgb), 0.2) !important;
-  border: 2px solid var(--accent) !important;
+  border: 1px solid var(--accent) !important;
   color: #ffffff !important;
 }
 
@@ -237,16 +227,47 @@ input[type=range].volume-slider:hover::-moz-range-thumb {
   background: rgba(255, 255, 255, 0.22) !important;
 }
 
-/* Subtle drag handle styling and hover reveal */
-.task-row .drag-handle {
-  opacity: 0.22;
-  color: var(--ink-3);
-  transition: opacity 0.2s ease, color 0.2s ease;
+/* Task row actions (Up/Down/Delete): hidden by default, revealed on row hover */
+.task-row-actions {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
 }
 
-.task-row:hover .drag-handle {
-  opacity: 0.75 !important;
+.task-row:hover .task-row-actions {
+  opacity: 1;
+}
+
+.task-action-btn {
+  background: transparent;
+  background-color: transparent;
+  border: none;
+  border-width: 0;
+  border-style: none;
+  border-color: transparent;
+  outline: none;
+  box-shadow: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.task-action-btn:focus,
+.task-action-btn:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.task-action-btn:hover:not(:disabled) {
   color: var(--ink) !important;
+}
+
+[data-scene="true"] .task-action-btn:hover:not(:disabled) {
+  color: #ffffff !important;
+}
+
+.task-action-btn:disabled {
+  cursor: not-allowed;
 }
 
 /* Pagination buttons styling */

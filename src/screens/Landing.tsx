@@ -52,12 +52,14 @@ export default function Landing() {
         </div>
       )}
 
-      <button onClick={() => setScreen("corner")} style={ctaStyle}>
-        Start a focus session
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 8 }}>
-          <path d="M5 12h14M12 5l7 7-7 7" />
-        </svg>
-      </button>
+      <div style={ctaRowStyle}>
+        <button onClick={() => setScreen("corner")} style={ctaStyle} className="btn-primary">
+          Start a focus session
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 8 }}>
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </button>
+      </div>
     </div>
   );
 }
@@ -91,16 +93,26 @@ const headingStyle: React.CSSProperties = {
   marginBottom: 12,
 };
 
+const ctaRowStyle: React.CSSProperties = {
+  width: "100%",
+  display: "flex",
+  justifyContent: "center",
+  marginTop: 8,
+};
+
 const ctaStyle: React.CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
-  background: "var(--accent-soft)",
-  color: "var(--accent-txt)",
-  border: "1px solid var(--accent-line)",
+  // Solid accent fill - matches the visual weight of the wizard's
+  // .btn-primary "Next" buttons (Corner/Sound/Session), instead of the
+  // previous soft/pastel treatment.
+  background: "var(--accent)",
+  color: "#ffffff",
+  border: "1px solid var(--accent)",
   borderRadius: "var(--r-pill)",
   padding: "12px 28px",
   fontSize: 16,
-  fontWeight: 500,
+  fontWeight: 600,
   cursor: "pointer",
   fontFamily: "var(--font)",
   transition: "background var(--dur) var(--ease)",

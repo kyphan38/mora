@@ -192,16 +192,8 @@ export default function Room() {
     right: undefined,
   };
 
-  const immersiveRoomStyleOverride: React.CSSProperties = {
-    ...immersiveRoomStyle,
-    backgroundImage: isSceneMode ? `url("${sceneUrl(corner.name)}"), ${corner.gradient}` : undefined,
-    backgroundSize: isSceneMode ? 'cover, cover' : undefined,
-    backgroundPosition: isSceneMode ? 'center, center' : undefined,
-    backgroundRepeat: isSceneMode ? 'no-repeat, no-repeat' : undefined,
-  };
-
   const mainStyleOverride: React.CSSProperties = {
-    ...(isSceneMode ? immersiveMainStyle : mainStyle),
+    ...mainStyle,
     background: isSceneMode ? undefined : tintColor,
     backgroundImage: isSceneMode ? `url("${sceneUrl(corner.name)}"), ${corner.gradient}` : undefined,
     backgroundSize: isSceneMode ? 'cover, cover' : undefined,
@@ -210,7 +202,7 @@ export default function Room() {
   };
 
   return (
-    <div style={isSceneMode ? immersiveRoomStyleOverride : layoutStyle}>
+    <div style={layoutStyle}>
       {/* Timer card / main panel */}
       <div style={mainStyleOverride} data-testid="room-main">
         {isSceneMode && (
@@ -224,6 +216,7 @@ export default function Room() {
             />
             {!videoError && (
               <video
+                key={corner.id}
                 autoPlay
                 loop
                 muted
@@ -522,42 +515,11 @@ export default function Room() {
                         : (isActive ? 'var(--accent-soft)' : 'var(--surface)'),
                       borderColor: isSceneMode
                         ? (isActive ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.1)')
-                        : (isActive ? 'var(--accent-line)' : 'var(--line)'),
+                        : 'var(--line)',
                       opacity: t.done ? 0.55 : 1,
                     }}
                     className="task-row"
-                    draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.effectAllowed = 'move';
-                      e.dataTransfer.setData('text/plain', idx.toString());
-                    }}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      e.dataTransfer.dropEffect = 'move';
-                    }}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-                      if (!isNaN(fromIndex) && fromIndex !== idx) {
-                        reorderTasks(fromIndex, idx);
-                      }
-                    }}
                   >
-                    <svg
-                      width="12"
-                      height="18"
-                      viewBox="0 0 12 18"
-                      fill="none"
-                      className="drag-handle"
-                      style={dragHandleStyle}
-                    >
-                      <circle cx="4" cy="4" r="1" fill="currentColor"/>
-                      <circle cx="4" cy="9" r="1" fill="currentColor"/>
-                      <circle cx="4" cy="14" r="1" fill="currentColor"/>
-                      <circle cx="8" cy="4" r="1" fill="currentColor"/>
-                      <circle cx="8" cy="9" r="1" fill="currentColor"/>
-                      <circle cx="8" cy="14" r="1" fill="currentColor"/>
-                    </svg>
                     <input
                       type="checkbox"
                       checked={t.done}
@@ -578,6 +540,34 @@ export default function Room() {
                         now
                       </span>
                     )}
+                    <div style={reorderBtnGroupStyle}>
+                      <button
+                        type="button"
+                        onClick={() => reorderTasks(idx, idx - 1)}
+                        disabled={idx === 0}
+                        style={{
+                          ...reorderBtnStyle(isSceneMode),
+                          visibility: idx === 0 ? 'hidden' : 'visible',
+                        }}
+                        aria-label={`Move ${t.name} up`}
+                        data-testid={`room-task-move-up-${idx}`}
+                      >
+                        ▲
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => reorderTasks(idx, idx + 1)}
+                        disabled={idx === tasks.length - 1}
+                        style={{
+                          ...reorderBtnStyle(isSceneMode),
+                          visibility: idx === tasks.length - 1 ? 'hidden' : 'visible',
+                        }}
+                        aria-label={`Move ${t.name} down`}
+                        data-testid={`room-task-move-down-${idx}`}
+                      >
+                        ▼
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -814,6 +804,8 @@ const mainStyle: React.CSSProperties = {
 };
 
 const cardStyle: React.CSSProperties = {
+  position: 'relative',
+  zIndex: 2,
   background: 'var(--surface)',
   borderRadius: 'var(--r-lg)',
   padding: '32px 40px',
@@ -926,6 +918,7 @@ const sceneLineStyle: React.CSSProperties = {
 
 const sideStyle: React.CSSProperties = {
   width: 340,
+  flexShrink: 0,
   borderLeft: '1px solid var(--line)',
   background: 'var(--surface)',
   display: 'flex',
@@ -990,13 +983,29 @@ const taskRowStyle: React.CSSProperties = {
   padding: '8px 12px',
   borderRadius: 'var(--r-sm)',
   border: '1px solid',
+  WebkitUserSelect: 'none',
+  userSelect: 'none',
 };
 
-const dragHandleStyle: React.CSSProperties = {
-  cursor: 'grab',
-  marginRight: 8,
+const reorderBtnGroupStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
   flexShrink: 0,
 };
+
+const reorderBtnStyle = (isSceneMode: boolean): React.CSSProperties => ({
+  background: 'transparent',
+  backgroundColor: 'transparent',
+  border: 'none',
+  outline: 'none',
+  boxShadow: 'none',
+  color: isSceneMode ? 'rgba(255,255,255,0.6)' : 'var(--ink-3)',
+  cursor: 'pointer',
+  padding: '4px 8px',
+  lineHeight: 1,
+  fontSize: 10,
+  fontFamily: 'var(--font)',
+});
 
 const nowTagStyle: React.CSSProperties = {
   fontSize: 11,
@@ -1020,28 +1029,8 @@ const footerStyle: React.CSSProperties = {
   marginTop: 12,
 };
 
-const immersiveRoomStyle: React.CSSProperties = {
-  position: 'relative',
-  flex: 1,
-  display: 'flex',
-  overflow: 'hidden',
-  minHeight: 0,
-  width: '100%',
-  height: '100%',
-};
-
-const immersiveMainStyle: React.CSSProperties = {
-  position: 'absolute',
-  inset: 0,
-  zIndex: 1,
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  padding: 24,
-};
-
 const bgLayerStyle: React.CSSProperties = {
-  position: 'absolute',
+  position: 'fixed',
   inset: 0,
   zIndex: 1,
 };
@@ -1098,8 +1087,10 @@ const timerAnchorStyle: React.CSSProperties = {
   zIndex: 2,
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
-  minWidth: 320,
+  alignItems: 'flex-start',
+  gap: 12,
+  maxWidth: 420,
+  color: '#f3f1ea',
 };
 
 const immersiveLabelTextStyle: React.CSSProperties = {
@@ -1107,15 +1098,15 @@ const immersiveLabelTextStyle: React.CSSProperties = {
   fontWeight: 600,
   textTransform: 'uppercase',
   letterSpacing: '0.05em',
-  color: 'rgba(255,255,255,0.6)',
+  color: 'rgba(243,241,234,0.7)',
 };
 
 const immersiveTaskNameStyle: React.CSSProperties = {
   fontSize: 24,
   fontWeight: 600,
   textAlign: 'left',
-  margin: '4px 0',
-  color: '#fff',
+  margin: '8px 0 4px',
+  color: '#f3f1ea',
 };
 
 const immersiveTimeStyle: React.CSSProperties = {
@@ -1129,7 +1120,7 @@ const immersiveTimeStyle: React.CSSProperties = {
 const immersiveSubLineStyle: React.CSSProperties = {
   fontSize: 13,
   color: 'rgba(255,255,255,0.5)',
-  marginBottom: 4,
+  marginBottom: 8,
 };
 
 const immersiveSceneLineStyle: React.CSSProperties = {
@@ -1157,16 +1148,17 @@ const glassSideStyle: React.CSSProperties = {
   bottom: 40,
   right: 40,
   width: 340,
-  background: 'rgba(20,20,20,0.35)',
+  zIndex: 2,
+  border: '1px solid rgba(255,255,255,0.15)',
+  background: 'rgba(20,20,20,.35)',
   backdropFilter: 'blur(18px)',
   WebkitBackdropFilter: 'blur(18px)',
-  border: '1px solid rgba(255,255,255,0.15)',
   borderRadius: 'var(--r-lg)',
+  boxShadow: 'var(--shadow)',
   display: 'flex',
   flexDirection: 'column',
   padding: '24px 20px',
   overflow: 'auto',
-  zIndex: 2,
 };
 
 const immersiveSideHeaderStyle: React.CSSProperties = {

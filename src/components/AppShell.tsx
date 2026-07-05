@@ -25,8 +25,6 @@ export function AppShell({ children }: AppShellProps) {
   const roomBackground = useStore((s) => s.roomBackground);
   const setRoomBackground = useStore((s) => s.setRoomBackground);
   const randomScene = useStore((s) => s.randomScene);
-  const tasks = useStore((s) => s.tasks);
-  const startFocus = useStore((s) => s.startFocus);
 
   const activeTab = getActiveTab(screen);
   const showTabs = screen !== "landing";
@@ -67,20 +65,6 @@ export function AppShell({ children }: AppShellProps) {
         {/* Right side: Global Color / Scene toggle + Shuffle button */}
         {screen !== 'room' && (
           <div style={navRightStyle} className="nav-actions">
-            {screen === 'session' && (
-              <button
-                onClick={() => startFocus()}
-                disabled={tasks.length === 0}
-                style={{
-                  ...primaryHeaderBtnStyle(isSceneMode),
-                  opacity: tasks.length === 0 ? 0.4 : 1,
-                  cursor: tasks.length === 0 ? 'not-allowed' : 'pointer',
-                }}
-              >
-                Start focus
-              </button>
-            )}
-
             {isSceneMode && (
               <button
                 onClick={randomScene}
@@ -116,7 +100,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         )}
       </nav>
-      <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>{children}</main>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0, position: "relative", zIndex: 1 }}>{children}</main>
     </>
   );
 }
@@ -128,6 +112,13 @@ const navStyle: React.CSSProperties = {
   padding: "16px 24px",
   position: "relative",
   flexShrink: 0,
+  // Explicitly codify Color Mode parity with the app canvas: no isolated
+  // "header layer" - the nav shares .app's var(--bg) tone with no seam.
+  // (Scene Mode forces this transparent via [data-scene="true"] .nav-bar.)
+  background: "var(--bg)",
+  border: "none",
+  borderBottom: "none",
+  boxShadow: "none",
 };
 
 const logoStyle: React.CSSProperties = {
@@ -211,15 +202,3 @@ const shuffleBtnStyle = (isScene: boolean): React.CSSProperties => ({
   transition: "background var(--dur) var(--ease), color var(--dur) var(--ease)",
 });
 
-const primaryHeaderBtnStyle = (_isScene: boolean): React.CSSProperties => ({
-  background: 'var(--accent)',
-  color: '#ffffff',
-  border: '1px solid var(--accent)',
-  borderRadius: 'var(--r-pill)',
-  padding: '6px 16px',
-  fontSize: 13,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontFamily: 'var(--font)',
-  transition: 'background var(--dur) var(--ease), opacity var(--dur) var(--ease)',
-});
