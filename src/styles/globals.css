@@ -1,0 +1,240 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  width: 100%;
+  height: 100vh;
+  margin: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Immersive Scene Nav Overrides & Variable Redefinitions */
+[data-scene="true"] {
+  --ink:   #f4f2ec;                    /* light primary text */
+  --ink-2: rgba(244,242,236,0.82);     /* light secondary   */
+  --ink-3: rgba(244,242,236,0.60);     /* light muted        */
+  --surface:   rgba(18,20,18,0.42);    /* dark glass         */
+  --surface-2: rgba(18,20,18,0.32);
+  --line:   rgba(255,255,255,0.18);
+  --line-2: rgba(255,255,255,0.30);
+  --shadow: 0 8px 30px rgba(0,0,0,0.35);
+}
+
+[data-scene="true"] .nav-bar {
+  position: relative !important;
+  background: transparent !important;
+  z-index: 10;
+  border-bottom: none !important;
+  pointer-events: auto !important;
+}
+
+[data-scene="true"] .nav-logo,
+[data-scene="true"] .nav-tabs,
+[data-scene="true"] .nav-actions {
+  pointer-events: auto;
+}
+
+[data-scene="true"] .nav-logo {
+  color: #f3f1ea !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-scene="true"] .nav-tabs {
+  background: rgba(0, 0, 0, 0.28) !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+}
+
+[data-scene="true"] .nav-tab-btn {
+  color: rgba(243, 241, 234, 0.75) !important;
+  background: transparent !important;
+}
+
+[data-scene="true"] .nav-tab-btn.active {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: var(--accent-txt) !important;
+}
+
+/* Float content on background - remove container background/blur/border/padding */
+[data-scene="true"] .screen-content {
+  background: transparent !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-radius: 0 !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  min-height: 0 !important;
+}
+
+/* Large headings text-shadow for readability */
+[data-scene="true"] .screen-content h2 {
+  color: var(--ink) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+}
+
+/* Reusable dark-glass surfaces & blur logic in setup screen flow */
+[data-scene="true"] .screen-content button:not([style*="var(--accent-soft)"]):not([style*="r-pill"]),
+[data-scene="true"] .screen-content input[type="text"],
+[data-scene="true"] .screen-content li,
+[data-scene="true"] .screen-content div[style*="var(--surface-2)"] {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+  backdrop-filter: blur(16px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.05) !important;
+}
+
+/* Unselected chips and music cards specific overrides */
+[data-scene="true"] .screen-content button:not([style*="var(--accent-soft)"]) {
+  background: var(--surface) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+}
+
+/* Selected states overrides (ambient/duration chips, music card, tasks) */
+[data-scene="true"] .screen-content button[style*="var(--accent-soft)"] {
+  background: var(--accent-soft) !important;
+  border: 1px solid var(--accent-line) !important;
+  color: #f4f2ec !important;
+  backdrop-filter: blur(16px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.05) !important;
+}
+
+/* Ambient tag badge inside Corner Card */
+[data-scene="true"] .screen-content button span[style*="var(--accent-soft)"] {
+  background: var(--surface-2) !important;
+  color: var(--ink-2) !important;
+  border: 1px solid var(--line) !important;
+}
+
+/* Inputs styling */
+[data-scene="true"] .screen-content input[type="text"] {
+  background: var(--surface) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+[data-scene="true"] .screen-content input[type="text"]::placeholder {
+  color: var(--ink-3) !important;
+}
+
+/* Back button override */
+[data-scene="true"] .screen-content button[style*="transparent"] {
+  background: var(--surface-2) !important;
+  border: 1px solid var(--line) !important;
+  color: var(--ink-2) !important;
+  backdrop-filter: blur(16px) saturate(1.05) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(1.05) !important;
+}
+
+/* Continue / Start Focus buttons styling */
+[data-scene="true"] .screen-content button[style*="r-pill"]:not([style*="transparent"]) {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--accent) !important;
+}
+
+/* Disabled Start Focus button */
+[data-scene="true"] .screen-content button[style*="r-pill"]:not([style*="transparent"]):disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+/* custom range inputs volume slider styling (both modes) */
+input[type=range].volume-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  background: transparent;
+  cursor: pointer;
+  height: 24px;
+}
+
+input[type=range].volume-slider:focus {
+  outline: none;
+}
+
+input[type=range].volume-slider::-webkit-slider-runnable-track {
+  background: rgba(0, 0, 0, 0.10);
+  height: 2px;
+  border-radius: 1px;
+}
+
+input[type=range].volume-slider::-moz-range-track {
+  background: rgba(0, 0, 0, 0.10);
+  height: 2px;
+  border-radius: 1px;
+}
+
+input[type=range].volume-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: var(--accent);
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  margin-top: -5px; /* (12 - 2)/2 = 5 */
+  transition: transform 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+input[type=range].volume-slider::-moz-range-thumb {
+  background: var(--accent);
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  transition: transform 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+input[type=range].volume-slider:hover::-webkit-slider-thumb {
+  transform: scale(1.3);
+}
+
+input[type=range].volume-slider:hover::-moz-range-thumb {
+  transform: scale(1.3);
+}
+
+[data-scene="true"] input[type=range].volume-slider::-webkit-slider-runnable-track {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+[data-scene="true"] input[type=range].volume-slider::-moz-range-track {
+  background: rgba(255, 255, 255, 0.22) !important;
+}
+
+/* Subtle drag handle styling and hover reveal */
+.task-row .drag-handle {
+  opacity: 0.22;
+  color: var(--ink-3);
+  transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.task-row:hover .drag-handle {
+  opacity: 0.75 !important;
+  color: var(--ink) !important;
+}

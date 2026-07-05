@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <!-- Rounded square background -->
+  <rect width="1024" height="1024" rx="256" fill="#eef0f1" />
+  <!-- Centered logo mark scaled 32x -->
+  <g transform="translate(128, 128) scale(32)">
+    <rect x="2" y="2" width="20" height="20" rx="6" fill="#748158" />
+    <circle cx="15" cy="10" r="5" fill="#eef0f1" />
+  </g>
+</svg>

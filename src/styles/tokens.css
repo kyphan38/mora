@@ -1,0 +1,26 @@
+:root{
+  /* color */
+  --bg:#eef0f1;
+  --surface:#ffffff;
+  --surface-2:#f6f7f8;
+  --ink:#23262a;
+  --ink-2:#666c73;
+  --ink-3:#a2a7ad;
+  --line:rgba(0,0,0,.07);
+  --line-2:rgba(0,0,0,.10);
+  --accent:#748158;
+  --accent-txt:#556237;
+  --accent-soft:rgba(116,129,88,.13);
+  --accent-line:rgba(116,129,88,.28);
+  --break:#b5843e;
+  --break-txt:#8a6224;
+  --break-soft:rgba(181,132,62,.14);
+  /* shape */
+  --r-sm:8px; --r-md:12px; --r-lg:14px; --r-pill:999px;
+  /* motion - calm */
+  --dur:600ms; --ease:cubic-bezier(.4,0,.2,1);
+  --shadow:0 8px 24px rgba(0,0,0,.06);
+  --shadow-lg:0 20px 50px rgba(0,0,0,.10);
+  /* type */
+  --font:"Hanken Grotesk", system-ui, sans-serif;
+}
