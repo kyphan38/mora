@@ -67,16 +67,6 @@ export function AppShell({ children }: AppShellProps) {
         {/* Right side: Global Color / Scene toggle + Shuffle button */}
         {screen !== 'room' && (
           <div style={navRightStyle} className="nav-actions">
-            {screen === 'corner' && (
-              <button onClick={() => setScreen('sound')} style={primaryHeaderBtnStyle(isSceneMode)}>
-                Sound →
-              </button>
-            )}
-            {screen === 'sound' && (
-              <button onClick={() => setScreen('session')} style={primaryHeaderBtnStyle(isSceneMode)}>
-                Session & tasks →
-              </button>
-            )}
             {screen === 'session' && (
               <button
                 onClick={() => startFocus()}
@@ -126,7 +116,7 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         )}
       </nav>
-      <main style={{ flex: 1, display: "flex", flexDirection: "column" }}>{children}</main>
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", minHeight: 0 }}>{children}</main>
     </>
   );
 }
@@ -137,6 +127,7 @@ const navStyle: React.CSSProperties = {
   justifyContent: "space-between",
   padding: "16px 24px",
   position: "relative",
+  flexShrink: 0,
 };
 
 const logoStyle: React.CSSProperties = {

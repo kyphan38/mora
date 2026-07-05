@@ -18,108 +18,118 @@ export default function Sound() {
 
   return (
     <div style={wrapperStyle}>
-      <Stepper step={2} />
-      <h2 style={headingStyle}>Choose sound</h2>
+      {/* 1. Scrollable Content Area */}
+      <div style={scrollableAreaStyle}>
+        <Stepper step={2} />
+        <h2 style={headingStyle}>Choose sound</h2>
 
-      <div style={hintStyle}>
-        {cornerName} pairs with {pairedAmbient}.
-      </div>
+        <div style={hintStyle}>
+          {cornerName} pairs with {pairedAmbient}.
+        </div>
 
-      <div style={sectionStyle}>
-        <label style={labelStyle}>ambient sound</label>
-        <div style={chipsStyle}>
-          {AMBIENTS.map((a) => (
-            <button
-              key={a}
-              onClick={() => {
-                setAmbient(a);
+        <div style={sectionStyle}>
+          <label style={labelStyle}>ambient sound</label>
+          <div style={chipsStyle}>
+            {AMBIENTS.map((a) => (
+              <button
+                key={a}
+                onClick={() => {
+                  setAmbient(a);
+                  setAudioActive(true);
+                  getAudioEngine().play();
+                }}
+                style={{
+                  ...chipStyle,
+                  background: sound.ambient === a ? 'var(--accent-soft)' : 'transparent',
+                  color: sound.ambient === a ? 'var(--accent-txt)' : 'var(--ink-2)',
+                  borderColor: sound.ambient === a ? 'var(--accent-line)' : 'var(--line-2)',
+                }}
+              >
+                {a}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={sectionStyle}>
+          <label style={labelStyle}>music style</label>
+          <div style={musicGridStyle}>
+            {MUSIC_STYLES.map((m) => (
+              <button
+                key={m}
+                onClick={() => {
+                  setMusicStyle(m);
+                  setAudioActive(true);
+                  getAudioEngine().play();
+                }}
+                style={{
+                  ...musicCardStyle,
+                  background: sound.musicStyle === m ? 'var(--accent-soft)' : 'var(--surface)',
+                  borderColor: sound.musicStyle === m ? 'var(--accent-line)' : 'var(--line)',
+                  color: sound.musicStyle === m ? 'var(--accent-txt)' : 'var(--ink)',
+                }}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div style={slidersStyle}>
+          <div style={sliderRowStyle}>
+            <span style={sliderLabelStyle}>Ambient</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={sound.ambientVolume}
+              onChange={(e) => {
+                setAmbientVolume(Number(e.target.value));
                 setAudioActive(true);
                 getAudioEngine().play();
               }}
-              style={{
-                ...chipStyle,
-                background: sound.ambient === a ? 'var(--accent-soft)' : 'transparent',
-                color: sound.ambient === a ? 'var(--accent-txt)' : 'var(--ink-2)',
-                borderColor: sound.ambient === a ? 'var(--accent-line)' : 'var(--line-2)',
-              }}
-            >
-              {a}
-            </button>
-          ))}
-        </div>
-      </div>
+              aria-label="Ambient volume"
+              className="volume-slider"
+              style={{ flex: 1 }}
+            />
+            <span style={sliderValueStyle}>{sound.ambientVolume}%</span>
+          </div>
 
-      <div style={sectionStyle}>
-        <label style={labelStyle}>music style</label>
-        <div style={musicGridStyle}>
-          {MUSIC_STYLES.map((m) => (
-            <button
-              key={m}
-              onClick={() => {
-                setMusicStyle(m);
+          <div style={sliderRowStyle}>
+            <span style={sliderLabelStyle}>Music</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={sound.musicVolume}
+              onChange={(e) => {
+                setMusicVolume(Number(e.target.value));
                 setAudioActive(true);
                 getAudioEngine().play();
               }}
-              style={{
-                ...musicCardStyle,
-                background: sound.musicStyle === m ? 'var(--accent-soft)' : 'var(--surface)',
-                borderColor: sound.musicStyle === m ? 'var(--accent-line)' : 'var(--line)',
-                color: sound.musicStyle === m ? 'var(--accent-txt)' : 'var(--ink)',
-              }}
-            >
-              {m}
-            </button>
-          ))}
+              aria-label="Music volume"
+              className="volume-slider"
+              style={{ flex: 1 }}
+            />
+            <span style={sliderValueStyle}>{sound.musicVolume}%</span>
+          </div>
         </div>
       </div>
 
-      <div style={slidersStyle}>
-        <div style={sliderRowStyle}>
-          <span style={sliderLabelStyle}>Ambient</span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={sound.ambientVolume}
-            onChange={(e) => {
-              setAmbientVolume(Number(e.target.value));
-              setAudioActive(true);
-              getAudioEngine().play();
-            }}
-            aria-label="Ambient volume"
-            className="volume-slider"
-            style={{ flex: 1 }}
-          />
-          <span style={sliderValueStyle}>{sound.ambientVolume}%</span>
-        </div>
-        <div style={sliderRowStyle}>
-          <span style={sliderLabelStyle}>Music</span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={sound.musicVolume}
-            onChange={(e) => {
-              setMusicVolume(Number(e.target.value));
-              setAudioActive(true);
-              getAudioEngine().play();
-            }}
-            aria-label="Music volume"
-            className="volume-slider"
-            style={{ flex: 1 }}
-          />
-          <span style={sliderValueStyle}>{sound.musicVolume}%</span>
-        </div>
-      </div>
-
-      <div style={bottomBarStyle}>
+      {/* 2. Fixed Bottom Bar Area (Never gets crushed or pushed out) */}
+      <div style={unifiedBottomBarStyle}>
         <div style={summaryStyle}>
           <span>Scene: <strong>{cornerName}</strong></span>
           <span>Ambient: <strong>{sound.ambient}</strong></span>
         </div>
-        <div style={btnGroupStyle}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <button onClick={() => setScreen('corner')} style={ghostBtnStyle}>Back</button>
-          <button onClick={() => setScreen('session')} style={nextBtnStyle}>Session & tasks →</button>
+          <button
+            onClick={() => setScreen('session')}
+            className="btn-primary"
+          >
+            Session & tasks →
+          </button>
         </div>
       </div>
     </div>
@@ -127,11 +137,19 @@ export default function Sound() {
 }
 
 const wrapperStyle: React.CSSProperties = {
-  padding: '0 32px 32px',
-  flex: 1,
-  overflow: 'auto',
   display: 'flex',
   flexDirection: 'column',
+  flex: 1,
+  minHeight: 0,
+  width: '100%',
+  padding: '32px', /* CRITICAL: Fixed from '0 32px 32px' to prevent top clipping */
+};
+
+const scrollableAreaStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  minHeight: 0,
+  paddingBottom: '24px',
 };
 
 const headingStyle: React.CSSProperties = {
@@ -227,13 +245,14 @@ const sliderValueStyle: React.CSSProperties = {
   textAlign: 'right',
 };
 
-const bottomBarStyle: React.CSSProperties = {
-  marginTop: 'auto',
+const unifiedBottomBarStyle: React.CSSProperties = {
+  flexShrink: 0,
+  width: '100%',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
   borderTop: '1px solid var(--line)',
-  paddingTop: 16,
+  paddingTop: '16px',
 };
 
 const summaryStyle: React.CSSProperties = {
@@ -241,11 +260,6 @@ const summaryStyle: React.CSSProperties = {
   gap: 20,
   fontSize: 14,
   color: 'var(--ink-2)',
-};
-
-const btnGroupStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: 10,
 };
 
 const ghostBtnStyle: React.CSSProperties = {
@@ -257,17 +271,5 @@ const ghostBtnStyle: React.CSSProperties = {
   fontWeight: 500,
   cursor: 'pointer',
   color: 'var(--ink-2)',
-  fontFamily: 'var(--font)',
-};
-
-const nextBtnStyle: React.CSSProperties = {
-  background: 'var(--accent)',
-  color: '#ffffff',
-  border: '1px solid var(--accent)',
-  borderRadius: 'var(--r-pill)',
-  padding: '8px 22px',
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: 'pointer',
   fontFamily: 'var(--font)',
 };

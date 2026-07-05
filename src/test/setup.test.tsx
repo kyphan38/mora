@@ -51,6 +51,25 @@ describe('Corner screen', () => {
     fireEvent.click(screen.getByText('Autumn Cafe Italy'));
     expect(useStore.getState().sound.ambient).toBe('Wind');
   });
+
+  it('renders Sound button at bottom-right in both color and scene modes', () => {
+    // 1. Color mode
+    useStore.setState({ roomBackground: 'color' });
+    const { unmount } = render(<App />);
+    const soundBtn = screen.getByTestId('sound-next-btn');
+    expect(soundBtn).toBeInTheDocument();
+    expect(soundBtn).toHaveClass('btn-primary');
+    expect(soundBtn.textContent).toContain('Sound →');
+    unmount();
+
+    // 2. Scene mode
+    useStore.setState({ roomBackground: 'scene' });
+    render(<App />);
+    const soundBtnScene = screen.getByTestId('sound-next-btn');
+    expect(soundBtnScene).toBeInTheDocument();
+    expect(soundBtnScene).toHaveClass('btn-primary');
+    expect(soundBtnScene.textContent).toContain('Sound →');
+  });
 });
 
 describe('Sound screen', () => {
@@ -99,6 +118,23 @@ describe('Sound screen', () => {
     useStore.getState().setScreen('sound');
     render(<App />);
     expect(screen.getByText('Rainy Night Cafe pairs with Cafe Ambience.')).toBeInTheDocument();
+  });
+
+  it('renders Session & tasks button at bottom-right in both color and scene modes', () => {
+    // 1. Color mode
+    useStore.setState({ roomBackground: 'color' });
+    const { unmount } = render(<App />);
+    const sessionBtn = screen.getByText('Session & tasks →');
+    expect(sessionBtn).toBeInTheDocument();
+    expect(sessionBtn).toHaveClass('btn-primary');
+    unmount();
+
+    // 2. Scene mode
+    useStore.setState({ roomBackground: 'scene' });
+    render(<App />);
+    const sessionBtnScene = screen.getByText('Session & tasks →');
+    expect(sessionBtnScene).toBeInTheDocument();
+    expect(sessionBtnScene).toHaveClass('btn-primary');
   });
 });
 

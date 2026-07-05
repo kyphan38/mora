@@ -54,6 +54,7 @@ const nonRoomWrapperStyle: React.CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  minHeight: 0,
 };
 
 const nonRoomInnerStyle: React.CSSProperties = {
@@ -63,6 +64,7 @@ const nonRoomInnerStyle: React.CSSProperties = {
   flex: 1,
   display: 'flex',
   flexDirection: 'column',
+  minHeight: 0,
 };
 
 export default App;

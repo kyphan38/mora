@@ -429,3 +429,54 @@ Room review-phase render (1): renders review sheet with all elements.
 
 **Total: 159 tests (11 Phase 1 + 16 Phase 2 + 26 Phase 3 + 20 Phase 4 + 11 Phase 5 + 10 Phase 6 + 6 Phase 7 + 37 Patches + 2 Reorder + 20 Pomodoro)**
 
+### Scene Corners List Update
+- **Added 20 new scene corners** (deduplicated and renamed from `scene_xxxxxx.mp4` files using `rename_scenes.py` with custom under-5-word names and descriptions).
+- **Total active corners increased to 44**, mapped dynamically in `src/data/corners.ts` and `metadata.json`.
+- **Deduplication**: Removed the duplicate scene files (`scene_a8a4be.mp4` / `scene_9c7745.mp4` for countryside-morning-river).
+- **Pagination tests**: Updated `src/test/cornerPagination.test.tsx` to handle 6 pages (44 corners) alphabetically and verify correct next/prev page navigation.
+
+### Pagination Styling Fix (Color & Scene Mode Mapping)
+- **Resolved Scene Mode override conflict**: Replaced custom inline styles for pagination buttons with the `.pagination-btn` CSS class to prevent general `[data-scene="true"]` button overrides (e.g. `background: var(--surface) !important`) from rendering active and inactive buttons identically in Scene Mode.
+- **Enhanced hover states**: Added hover overrides in `globals.css` for both modes.
+- **Removed unused hooks/variables**: Cleaned up the unused variables (`roomBackground`, `isSceneMode`, and `setScreen`) from `Corner.tsx`. (Note: `setScreen` was later restored to support the relocated bottom navigation button).
+
+### Setup Flow Layout Polish
+- **Simplified Corner Pagination**: Removed the page number list buttons and the page text indicator. Now only shows centered `"Prev"` and `"Next"` buttons directly next to each other.
+- **Relocated Navigation Buttons**:
+  - Moved `"Sound →"` button from the top-right header in `AppShell.tsx` to the bottom-right corner of `Corner.tsx` using a balanced three-column flex layout (Spacer on the left, centered pagination in the middle, `"Sound →"` button on the right).
+  - Moved `"Session & tasks →"` button from the top-right header in `AppShell.tsx` to the bottom-right corner of `Sound.tsx` (using the existing bottom bar alongside the `"Back"` button).
+  - Keeps only `"Start focus"` button in the top-right header (disabled when `tasks.length === 0`).
+  - Adjusted unit tests in `src/test/cornerPagination.test.tsx` to align with the simplified pagination.
+
+### Height Constraint & Overflow Scrolling Fixes
+- **Refactoring to Fixed Bottom Bar & Scrollable Content Split**:
+  - Re-structured `Corner.tsx`, `Sound.tsx`, and `Session.tsx` to have a top-level flex column wrapper (`flex: 1`, `minHeight: 0`, `width: 100%`, and no height percentage). Removing the `height: 100%` prevents infinite content layout expansion issues in browsers when nested under parent containers with auto-calculated height.
+  - Separated the layout into a **Scrollable Content Area** (`flex: 1`, `overflowY: 'auto'`, `minHeight: 0`, `paddingBottom: '24px'`) and a **Fixed Bottom Bar Area** (`flexShrink: 0`, `paddingTop: '16px'`).
+  - By establishing a fully bounded flex chain from the root down to the screens, the bottom bar naturally stays pinned to the bottom of `.screen-content` (width <= 1160px) in both Color and Scene Mode. This ensures 100% pixel-perfect identical alignment and positioning across both modes.
+  - Removed all loose `marginTop: 'auto'` references on the bottom bars to avoid flex conflicts.
+- **Global Layout Constraints**:
+  - Configured the top navbar style (`navStyle` in `AppShell.tsx`) with `flexShrink: 0` to prevent the navigation bar from compressing or shifting content height.
+  - Added `minHeight: 0` to the `<main>` tag inside `AppShell.tsx` to prevent the flex container from expanding to fit its child contents, ensuring the flex height boundary is respected by the browser.
+  - Updated `nonRoomWrapperStyle` and `nonRoomInnerStyle` (which contains class `.screen-content`) in `App.tsx` with `minHeight: 0` to properly function as bounded flex children, allowing child components to scroll contents instead of overflowing.
+- **Flex Container constraints**: Explicitly configured `[data-scene="true"] .screen-content` in `globals.css` with `display: flex !important; flex-direction: column !important; flex: 1 !important; min-height: 0 !important; height: auto !important; overflow: hidden !important;` to establish a stable bounding box in Scene Mode without inheriting `100vh` blindly under the navbar.
+- **Solid Primary Action Buttons**: Ensured `.btn-primary` retains its solid green style (`background: var(--accent) !important; color: #ffffff !important;`) in both modes so it stands out clearly over any scene backdrop. Infused high-priority inline styles directly to primary buttons on all three wizard screens for guaranteed visibility.
+
+## Reset Phase 1: Bounded Layout & CSS Purge
+Marked as [Completed].
+- Purged broad button selector overrides from `src/styles/globals.css` (specifically commented out catch-all button overrides under `[data-scene="true"] .screen-content button` to prevent conflicting with button states in Scene Mode).
+- Declared a protected, solid style rule for `.btn-primary` at the bottom of `globals.css` to safeguard primary next action visibility across both Color and Scene Modes.
+- Validated the root bounded flex container chain:
+  - `<main>` tag wrapping children in `src/components/AppShell.tsx` uses strict flex item constraints (`flex: 1, display: "flex", flexDirection: "column", minHeight: 0`).
+  - `nonRoomWrapperStyle` and `nonRoomInnerStyle` in `src/App.tsx` strictly enforce flex column direction and `min-height: 0` without hardcoded percentage heights.
+  - Checked that `[data-scene="true"] .screen-content` in `globals.css` acts as a pure bounded pass-through container.
+- Verified compilation with `npm run build` and tests with `npm test -- --run` successfully.
+
+## Reset Phase 2: Screen Layout & Divider Unification
+Marked as [Completed].
+- Refactored `Corner.tsx`, `Sound.tsx`, and `Session.tsx` to enforce identical outer wrapper and scrollable content area layouts.
+- Replaced custom or double-nested bottom bar wrapper structures with a single `unifiedBottomBarStyle` container on all three setup flow screens, forcing a uniform gray divider line (`borderTop: '1px solid var(--line)'`) across both Color and Scene Modes.
+- Established correct horizontal element distribution inside the bottom bar:
+  - `Corner.tsx`: 3-column layout (Empty spacer on the left, centered pagination with `Prev` and `Next` buttons in the middle, primary action `Sound →` button on the right).
+  - `Sound.tsx` & `Session.tsx`: 2-column layout (Summary text on the left, buttons aligned right with `gap: '12px'`).
+- Deleted unused style definitions (`bottomBarStyle`, `btnGroupStyle`) in screen components to prevent TypeScript compilation warnings.
+- Ran production build `npm run build` and tests `npm test -- --run` successfully with zero regressions.

@@ -24,91 +24,128 @@ export default function Corner() {
     setCorner(c);
   };
 
+  const unifiedBottomBarStyle: React.CSSProperties = {
+    flexShrink: 0,
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTop: '1px solid var(--line)',
+    paddingTop: '16px',
+  };
+
   return (
     <div style={wrapperStyle}>
-      <Stepper step={1} />
-      <h2 style={headingStyle}>Choose a focus corner</h2>
-      <p style={subtitleStyle}>Choose the space that fits today's state.</p>
-      <div style={gridStyle}>
-        {CORNERS.map((c) => {
-          const alphabeticalIndex = sortedCorners.findIndex((x) => x.id === c.id);
-          const pageIndex = Math.floor(alphabeticalIndex / itemsPerPage);
-          const isVisible = pageIndex === currentPage;
-          return (
-            <button
-              key={c.id}
-              onClick={() => handleClick(c)}
-              style={{
-                ...cardStyle,
-                display: isVisible ? undefined : 'none',
-                order: alphabeticalIndex,
-                borderColor: corner?.id === c.id ? 'var(--accent)' : undefined,
-                boxShadow: corner?.id === c.id ? '0 0 0 2px var(--accent-soft)' : undefined,
-              }}
-            >
-              <div
+      {/* 1. Scrollable Content Area */}
+      <div style={scrollableAreaStyle}>
+        <Stepper step={1} />
+        <h2 style={headingStyle}>Choose a focus corner</h2>
+        <p style={subtitleStyle}>Choose the space that fits today's state.</p>
+        <div style={gridStyle}>
+          {CORNERS.map((c) => {
+            const alphabeticalIndex = sortedCorners.findIndex((x) => x.id === c.id);
+            const pageIndex = Math.floor(alphabeticalIndex / itemsPerPage);
+            const isVisible = pageIndex === currentPage;
+            return (
+              <button
+                key={c.id}
+                onClick={() => handleClick(c)}
                 style={{
-                  ...thumbStyle,
-                  backgroundImage: `url("${sceneUrl(c.name)}"), ${c.gradient}`,
-                  backgroundSize: 'cover, cover',
-                  backgroundPosition: 'center, center',
-                  backgroundRepeat: 'no-repeat, no-repeat',
+                  ...cardStyle,
+                  display: isVisible ? undefined : 'none',
+                  order: alphabeticalIndex,
+                  borderColor: corner?.id === c.id ? 'var(--accent)' : undefined,
+                  boxShadow: corner?.id === c.id ? '0 0 0 2px var(--accent-soft)' : undefined,
                 }}
-                data-testid="corner-thumb"
-              />
-              <div style={cardBodyStyle}>
-                <span style={cardNameStyle}>{c.name}</span>
-                <span style={cardDescStyle}>{c.description}</span>
-              </div>
-            </button>
-          );
-        })}
+              >
+                <div
+                  style={{
+                    ...thumbStyle,
+                    backgroundImage: `url("${sceneUrl(c.name)}"), ${c.gradient}`,
+                    backgroundSize: 'cover, cover',
+                    backgroundPosition: 'center, center',
+                    backgroundRepeat: 'no-repeat, no-repeat',
+                  }}
+                  data-testid="corner-thumb"
+                />
+                <div style={cardBodyStyle}>
+                  <span style={cardNameStyle}>{c.name}</span>
+                  <span style={cardDescStyle}>{c.description}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <div style={bottomBarStyle}>
-        {totalPages > 1 && (
-          <div style={paginationContainerStyle} data-testid="corner-pagination">
-            <button
-              onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
-              disabled={currentPage === 0}
-              style={{
-                ...paginationBtnStyle,
-                opacity: currentPage === 0 ? 0.4 : 1,
-                cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
-              }}
-              data-testid="prev-page-btn"
-            >
-              Prev
-            </button>
-            <span style={pageIndicatorStyle}>
-              Page {currentPage + 1} of {totalPages}
-            </span>
-            <button
-              onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
-              disabled={currentPage === totalPages - 1}
-              style={{
-                ...paginationBtnStyle,
-                opacity: currentPage === totalPages - 1 ? 0.4 : 1,
-                cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
-              }}
-              data-testid="next-page-btn"
-            >
-              Next
-            </button>
-          </div>
-        )}
-        <button onClick={() => setScreen('sound')} style={nextBtnStyle}>
-          Sound →
-        </button>
+      {/* 2. Fixed Bottom Bar Area (Never gets crushed or pushed out) */}
+      <div style={unifiedBottomBarStyle}>
+        {/* Left Column Spacer */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-start' }}>
+          {/* If there is a Back/Prev button, place it here */}
+        </div>
+
+        {/* Center Column Pagination */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'center' }}>
+          {totalPages > 1 && (
+            <div style={paginationContainerStyle} data-testid="corner-pagination">
+              <button
+                onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+                disabled={currentPage === 0}
+                className="pagination-btn"
+                style={{
+                  opacity: currentPage === 0 ? 0.4 : 1,
+                  cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+                }}
+                data-testid="prev-page-btn"
+              >
+                Prev
+              </button>
+              <button
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
+                disabled={currentPage === totalPages - 1}
+                className="pagination-btn"
+                style={{
+                  opacity: currentPage === totalPages - 1 ? 0.4 : 1,
+                  cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
+                }}
+                data-testid="next-page-btn"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right Column Navigation Button */}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => setScreen('sound')}
+            className="btn-primary"
+            data-testid="sound-next-btn"
+          >
+            Sound →
+          </button>
+        </div>
       </div>
     </div>
   );
 }
 
 const wrapperStyle: React.CSSProperties = {
-  padding: '0 32px 32px',
+  display: 'flex',
+  flexDirection: 'column',
   flex: 1,
-  overflow: 'auto',
+  minHeight: 0,
+  width: '100%',
+  padding: '32px', /* CRITICAL: Fixed from '0 32px 32px' to prevent top clipping */
+};
+
+const scrollableAreaStyle: React.CSSProperties = {
+  flex: 1,
+  overflowY: 'auto',
+  minHeight: 0,
+  paddingBottom: '24px',
 };
 
 const headingStyle: React.CSSProperties = {
@@ -170,48 +207,8 @@ const cardDescStyle: React.CSSProperties = {
   overflow: 'hidden',
 };
 
-
-
-const bottomBarStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  marginTop: 24,
-};
-
-const nextBtnStyle: React.CSSProperties = {
-  background: 'var(--accent)',
-  color: '#ffffff',
-  border: '1px solid var(--accent)',
-  borderRadius: 'var(--r-pill)',
-  padding: '8px 22px',
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: 'pointer',
-  fontFamily: 'var(--font)',
-  marginLeft: 'auto',
-};
-
 const paginationContainerStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
-  gap: 16,
-};
-
-const paginationBtnStyle: React.CSSProperties = {
-  background: 'var(--surface-2)',
-  border: '1px solid var(--line)',
-  borderRadius: 'var(--r-pill)',
-  padding: '6px 16px',
-  fontSize: 13,
-  fontWeight: 500,
-  color: 'var(--ink-2)',
-  fontFamily: 'var(--font)',
-  transition: 'background var(--dur) var(--ease), color var(--dur) var(--ease)',
-};
-
-const pageIndicatorStyle: React.CSSProperties = {
-  fontSize: 13,
-  fontWeight: 500,
-  color: 'var(--ink-3)',
+  gap: 8,
 };

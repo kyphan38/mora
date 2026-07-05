@@ -78,82 +78,92 @@ body {
 }
 
 /* Float content on background - remove container background/blur/border/padding */
+/* 1. Reset Scene Mode Container to preserve identical structural geometry */
 [data-scene="true"] .screen-content {
   background: transparent !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
   border-radius: 0 !important;
   border: none !important;
-  padding: 0 !important;
   box-shadow: none !important;
+  
+  /* Let React inline styles govern layout completely - NO height/padding overrides here */
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
   min-height: 0 !important;
+  overflow: visible !important; /* Prevent aggressive clipping of headers or buttons */
 }
 
-/* Large headings text-shadow for readability */
-[data-scene="true"] .screen-content h2 {
-  color: var(--ink) !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35) !important;
+/* 2. Pure Cosmetic Color Skinning for Contrast */
+/* Ensure the home/landing screen headers are brilliantly white in Scene Mode */
+[data-scene="true"] .screen-content h1,
+[data-scene="true"] .screen-content h2,
+[data-scene="true"] .screen-content p,
+[data-scene="true"] .screen-content span,
+[data-scene="true"] .screen-content label,
+[data-scene="true"] .screen-content .step-text,
+[data-scene="true"] .screen-content div {
+  /* Guard against dark color inheritance on raw text strings */
+  color: #ffffff !important;
 }
 
-/* Reusable dark-glass surfaces & blur logic in setup screen flow */
-[data-scene="true"] .screen-content button:not([style*="var(--accent-soft)"]):not([style*="r-pill"]),
+/* Force absolute structural visibility and prevent suppression in Scene Mode */
+[data-scene="true"] .screen-content h1,
+[data-scene="true"] .screen-content h2,
+[data-scene="true"] .screen-content p,
+[data-scene="true"] .screen-content div.landing-title-wrapper {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: #ffffff !important;
+}
+
+/* Specifically preserve secondary text states inside the translucent card if needed */
+[data-scene="true"] .screen-content .unselected-card p,
+[data-scene="true"] .screen-content .unselected-card span {
+  color: rgba(255, 255, 255, 0.7) !important; /* Slightly softer white for metadata contrast */
+}
+
+/* Ensure the dismiss '×' span button stays clearly visible and white */
+[data-scene="true"] .screen-content span[role="button"] {
+  color: rgba(255, 255, 255, 0.6) !important;
+  transition: color var(--dur) var(--ease);
+}
+[data-scene="true"] .screen-content span[role="button"]:hover {
+  color: #ffffff !important;
+}
+
+/* 3. Translucent Glass for Unselected Cards/Buttons */
+[data-scene="true"] .screen-content button:not(.btn-primary),
 [data-scene="true"] .screen-content input[type="text"],
 [data-scene="true"] .screen-content li,
-[data-scene="true"] .screen-content div[style*="var(--surface-2)"] {
-  background: var(--surface) !important;
-  border-color: var(--line) !important;
-  color: var(--ink) !important;
-  backdrop-filter: blur(16px) saturate(1.05) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.05) !important;
+[data-scene="true"] .screen-content .unselected-card {
+  background: rgba(20, 20, 25, 0.4) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
 }
 
-/* Unselected chips and music cards specific overrides */
-[data-scene="true"] .screen-content button:not([style*="var(--accent-soft)"]) {
-  background: var(--surface) !important;
-  border: 1px solid var(--line) !important;
-  color: var(--ink-2) !important;
-}
-
-/* Selected states overrides (ambient/duration chips, music card, tasks) */
+/* Maintain bright solid accent color for the active selected card */
 [data-scene="true"] .screen-content button[style*="var(--accent-soft)"] {
-  background: var(--accent-soft) !important;
-  border: 1px solid var(--accent-line) !important;
-  color: #f4f2ec !important;
-  backdrop-filter: blur(16px) saturate(1.05) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.05) !important;
+  background: rgba(var(--accent-rgb), 0.2) !important;
+  border: 2px solid var(--accent) !important;
+  color: #ffffff !important;
 }
 
-/* Ambient tag badge inside Corner Card */
-[data-scene="true"] .screen-content button span[style*="var(--accent-soft)"] {
-  background: var(--surface-2) !important;
-  color: var(--ink-2) !important;
-  border: 1px solid var(--line) !important;
-}
-
-/* Inputs styling */
-[data-scene="true"] .screen-content input[type="text"] {
-  background: var(--surface) !important;
-  border-color: var(--line) !important;
-  color: var(--ink) !important;
-}
-[data-scene="true"] .screen-content input[type="text"]::placeholder {
-  color: var(--ink-3) !important;
-}
-
-/* Back button override */
-[data-scene="true"] .screen-content button[style*="transparent"] {
-  background: var(--surface-2) !important;
-  border: 1px solid var(--line) !important;
-  color: var(--ink-2) !important;
-  backdrop-filter: blur(16px) saturate(1.05) !important;
-  -webkit-backdrop-filter: blur(16px) saturate(1.05) !important;
-}
-
-/* Continue / Start Focus buttons styling */
-[data-scene="true"] .screen-content button[style*="r-pill"]:not([style*="transparent"]) {
+/* 4. Ensure Primary Actions remain solid high-contrast green */
+.btn-primary,
+[data-scene="true"] .screen-content .btn-primary {
   background: var(--accent) !important;
   color: #ffffff !important;
   border: 1px solid var(--accent) !important;
+  opacity: 1 !important;
+}
+
+[data-scene="true"] .screen-content input[type="text"]::placeholder {
+  color: var(--ink-3) !important;
 }
 
 /* Disabled Start Focus button */
@@ -237,4 +247,84 @@ input[type=range].volume-slider:hover::-moz-range-thumb {
 .task-row:hover .drag-handle {
   opacity: 0.75 !important;
   color: var(--ink) !important;
+}
+
+/* Pagination buttons styling */
+.pagination-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  border-radius: var(--r-pill);
+  padding: 6px 14px;
+  min-width: 36px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background var(--dur) var(--ease), color var(--dur) var(--ease), border-color var(--dur) var(--ease);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+
+.pagination-btn.active {
+  background: var(--accent-soft);
+  color: var(--accent-txt);
+  border-color: var(--accent-line);
+}
+
+/* Scene Mode overrides for pagination buttons */
+[data-scene="true"] .pagination-btn {
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  color: var(--ink-2) !important;
+}
+
+[data-scene="true"] .pagination-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+}
+
+[data-scene="true"] .pagination-btn.active {
+  background: rgba(255, 255, 255, 0.24) !important;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: #ffffff !important;
+}
+
+/* Primary next action buttons styling */
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  border: 1px solid var(--accent);
+  border-radius: var(--r-pill);
+  padding: 8px 22px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background var(--dur) var(--ease), opacity var(--dur) var(--ease);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+[data-scene="true"] .btn-primary {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--accent) !important;
+}
+
+/* Isolated high-priority rule to safeguard primary actions in both modes */
+.btn-primary,
+[data-scene="true"] .screen-content .btn-primary {
+  background: var(--accent) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--accent) !important;
+  opacity: 1 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }

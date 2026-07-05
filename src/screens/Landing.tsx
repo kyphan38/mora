@@ -8,28 +8,46 @@ export default function Landing() {
   const activeTask = useStore((s) => s.activeTask);
   const setup = useStore((s) => s.setup);
   const elapsedSec = useStore((s) => s.elapsedSec);
+  const isSceneActive = useStore((s) => s.roomBackground === 'scene');
 
   const active = activeTask();
   const remaining = setup.durationSec > 0 ? Math.max(0, setup.durationSec - elapsedSec) : elapsedSec;
-
+  
   return (
     <div style={containerStyle}>
-      <p style={kickerStyle}>FOCUS · LEARN · GROW</p>
-      <h1 style={headingStyle}>Open your focus corner</h1>
+      <p style={{
+        ...kickerStyle,
+        color: isSceneActive ? '#ffffff' : 'var(--ink-3)',
+        display: 'block',
+        opacity: 1,
+        visibility: 'visible',
+      }}>FOCUS · LEARN · GROW</p>
+      <h1 style={{
+        ...headingStyle,
+        color: isSceneActive ? '#ffffff' : 'var(--ink)',
+        display: 'block',
+        opacity: 1,
+        visibility: 'visible',
+      }}>Open your focus corner</h1>
 
       {sessionActive && active && (
-        <div style={continueBlockStyle}>
+        <div style={continueBlockStyle} className="unselected-card">
           <div style={continueHeaderStyle}>Continue a previous session</div>
           <div style={continueBodyStyle}>
             <strong>{active.name}</strong> · {formatTime(remaining)} left
           </div>
           <div style={continueActionsStyle}>
-            <button onClick={() => setScreen("room")} style={resumeBtnStyle}>
+            <button onClick={() => setScreen("room")} style={resumeBtnStyle} className="btn-primary">
               Resume
             </button>
-            <button onClick={stopFocus} style={dismissBtnStyle} aria-label="Dismiss">
+            <span
+              onClick={stopFocus}
+              style={dismissBtnStyle}
+              aria-label="Dismiss"
+              role="button"
+            >
               ×
-            </button>
+            </span>
           </div>
         </div>
       )}
@@ -45,11 +63,15 @@ export default function Landing() {
 }
 
 const containerStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
   flex: 1,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
+  width: '100%',
+  minHeight: 0,
+  padding: '32px',
+  textAlign: 'center',
   gap: 20,
 };
 

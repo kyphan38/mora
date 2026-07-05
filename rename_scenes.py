@@ -244,6 +244,146 @@ url_to_info = {
         "description": "Lakeside cabin peaceful retreat",
         "ambient": "Waves",
         "gradient": "linear-gradient(135deg, #0284c7, #1e3a8a)"
+    },
+    "flZKsZLY51g": {
+        "id": "home-office-ambience",
+        "name": "Home Office Ambience",
+        "description": "Creative home office space",
+        "ambient": "Cafe Ambience",
+        "gradient": "linear-gradient(135deg, #4b5563, #374151)"
+    },
+    "eE-1c4L8jf8": {
+        "id": "programming-focus",
+        "name": "Programming Focus",
+        "description": "Deep focus study music",
+        "ambient": "Summer Night",
+        "gradient": "linear-gradient(135deg, #1e1b4b, #312e81)"
+    },
+    "KP_zxwGuJLg": {
+        "id": "ocean-deep-work",
+        "name": "Ocean Deep Work",
+        "description": "Ocean views focus flow",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0f766e, #115e59)"
+    },
+    "DmOdfPkq2gk": {
+        "id": "coastal-wave-study",
+        "name": "Coastal Wave Study",
+        "description": "Coastal waves relaxing view",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0e7490, #164e63)"
+    },
+    "_y_LT54Elzg": {
+        "id": "snowy-mountain-ocean",
+        "name": "Snowy Mountain Ocean",
+        "description": "Snowy mountain ocean views",
+        "ambient": "Wind",
+        "gradient": "linear-gradient(135deg, #475569, #334155)"
+    },
+    "G1tbj6S1tg4": {
+        "id": "minimalist-ocean-villa",
+        "name": "Minimalist Ocean Villa",
+        "description": "Minimalist ocean villa beats",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0d9488, #115e59)"
+    },
+    "mAGsnMET6cg": {
+        "id": "flow-state-ambient",
+        "name": "Flow State Ambient",
+        "description": "Deep focus flow state",
+        "ambient": "Forest Birds",
+        "gradient": "linear-gradient(135deg, #15803d, #14532d)"
+    },
+    "KZdhzUVbPIE": {
+        "id": "relaxing-coastal-focus",
+        "name": "Relaxing Coastal Focus",
+        "description": "Relaxing coastal atmosphere",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0ea5e9, #0284c7)"
+    },
+    "eiP0Z-zJ_Q8": {
+        "id": "dark-academia-library",
+        "name": "Dark Academia Library",
+        "description": "Dark academia study library",
+        "ambient": "Fireplace",
+        "gradient": "linear-gradient(135deg, #78350f, #451a03)"
+    },
+    "7tSJRt1eqLY": {
+        "id": "ambient-concentration",
+        "name": "Ambient Concentration",
+        "description": "Ambient sounds concentration",
+        "ambient": "Wind",
+        "gradient": "linear-gradient(135deg, #374151, #1f2937)"
+    },
+    "c42exENs6ws": {
+        "id": "luxury-villa-focus",
+        "name": "Luxury Villa Focus",
+        "description": "Luxury villa coding space",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0f766e, #134e4a)"
+    },
+    "0xH6EkLj1mY": {
+        "id": "coastal-cabin-study",
+        "name": "Coastal Cabin Study",
+        "description": "Coastal cabin ocean view",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0369a1, #075985)"
+    },
+    "o7ywJ8ZtXKQ": {
+        "id": "binaural-study",
+        "name": "Binaural Study",
+        "description": "Binaural study brainwave music",
+        "ambient": "Wind",
+        "gradient": "linear-gradient(135deg, #4f46e5, #3730a3)"
+    },
+    "Ft8-YR_gVqs": {
+        "id": "dark-concentration",
+        "name": "Dark Concentration",
+        "description": "Dark ambient concentration sounds",
+        "ambient": "Forest Night",
+        "gradient": "linear-gradient(135deg, #111827, #030712)"
+    },
+    "GFIZyvNJ8tg": {
+        "id": "calming-ocean-focus",
+        "name": "Calming Ocean Focus",
+        "description": "Calming ocean focus beats",
+        "ambient": "Waves",
+        "gradient": "linear-gradient(135deg, #0e7490, #155e75)"
+    },
+    "vpshjU-yhf4": {
+        "id": "spring-seaside-sunset",
+        "name": "Spring Seaside Sunset",
+        "description": "Spring seaside sunset balcony",
+        "ambient": "Fireplace",
+        "gradient": "linear-gradient(135deg, #ea580c, #9a3412)"
+    },
+    "Ao-zBXUYqJE": {
+        "id": "ambient-soundscapes",
+        "name": "Ambient Soundscapes",
+        "description": "Deep focus ambient soundscapes",
+        "ambient": "Wind",
+        "gradient": "linear-gradient(135deg, #374151, #111827)"
+    },
+    "gjjn7Kd72co": {
+        "id": "cozy-ocean-fireplace",
+        "name": "Cozy Ocean Fireplace",
+        "description": "Ocean view cozy fireplace",
+        "ambient": "Fireplace",
+        "gradient": "linear-gradient(135deg, #c2410c, #7c2d12)"
+    },
+    "KL1ms1KU9ac": {
+        "id": "cozy-morning-jazz",
+        "name": "Cozy Morning Jazz",
+        "description": "Cozy morning focus jazz",
+        "ambient": "Cafe Ambience",
+        "gradient": "linear-gradient(135deg, #ca8a04, #854d0e)"
+    },
+    "4BU9jc7jX2w": {
+        "id": "indoor-cozy-jazz",
+        "name": "Indoor Cozy Jazz",
+        "description": "Indoor cozy jazz playlist",
+        "ambient": "Cafe Ambience",
+        "gradient": "linear-gradient(135deg, #d97706, #92400e)"
     }
 }
 
