@@ -119,6 +119,7 @@ export default function Sound() {
         </div>
         <div style={btnGroupStyle}>
           <button onClick={() => setScreen('corner')} style={ghostBtnStyle}>Back</button>
+          <button onClick={() => setScreen('session')} style={nextBtnStyle}>Session & tasks →</button>
         </div>
       </div>
     </div>
@@ -259,4 +260,14 @@ const ghostBtnStyle: React.CSSProperties = {
   fontFamily: 'var(--font)',
 };
 
-
+const nextBtnStyle: React.CSSProperties = {
+  background: 'var(--accent)',
+  color: '#ffffff',
+  border: '1px solid var(--accent)',
+  borderRadius: 'var(--r-pill)',
+  padding: '8px 22px',
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'var(--font)',
+};

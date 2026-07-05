@@ -121,25 +121,30 @@ describe('Room screen', () => {
     expect(screen.getByText('Paused')).toBeInTheDocument();
   });
 
-  it('Complete now click logs session and advances', () => {
+  it('Complete now opens review sheet', () => {
     seedRoom();
     render(<App />);
     fireEvent.click(screen.getByLabelText('Complete now'));
-    const s = useStore.getState();
-    expect(s.sessions.length).toBe(1);
-    expect(s.tasks[0].done).toBe(true);
-    // Task B now active - appears in timer heading and task list
-    expect(screen.getAllByText('Task B').length).toBeGreaterThanOrEqual(1);
+    // Review sheet appears instead of direct completion
+    expect(screen.getByTestId('review-sheet')).toBeInTheDocument();
+    expect(screen.getByText('Session complete')).toBeInTheDocument();
+    expect(useStore.getState().phase).toBe('review');
   });
 
-  it('all tasks done shows All done and hides Play', () => {
+  it('all tasks done shows All done after review flow', () => {
     seedRoom();
     render(<App />);
+    // Complete task A through review flow
     fireEvent.click(screen.getByLabelText('Complete now'));
+    fireEvent.click(screen.getByTestId('review-mark-done'));
+    fireEvent.click(screen.getByTestId('review-focus-again'));
+    fireEvent.click(screen.getByText('50 min')); // pick duration to return to focus
+    // Complete task B through review flow
     fireEvent.click(screen.getByLabelText('Complete now'));
-    expect(screen.getByText('All done')).toBeInTheDocument();
-    expect(screen.getByText('Done')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Play')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('review-mark-done'));
+    fireEvent.click(screen.getByTestId('review-stop'));
+    // After stop, should navigate to history
+    expect(useStore.getState().screen).toBe('history');
   });
 
   it('adding a task in the room updates store and list', () => {

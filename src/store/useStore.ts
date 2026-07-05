@@ -119,11 +119,7 @@ export const useStore = create<AppStore>((set, get) => ({
     get().setCorner(picked);
   },
   setScreen: (s) => set({ screen: s }),
-  setCorner: (corner) =>
-    set((state) => ({
-      corner,
-      sound: { ...state.sound, ambient: corner.ambient },
-    })),
+  setCorner: (corner) => set({ corner }),
   setAmbient: (name) =>
     set((state) => ({ sound: { ...state.sound, ambient: name } })),
   setMusicStyle: (name) =>

@@ -15,6 +15,8 @@ export default function Session() {
   const setAutoContinue = useStore((s) => s.setAutoContinue);
 
   const [taskInput, setTaskInput] = useState('');
+  const [dragFromIndex, setDragFromIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const handleAddTask = () => {
     addTask(taskInput);
@@ -64,15 +66,26 @@ export default function Session() {
             {tasks.map((t, i) => (
               <li
                 key={t.id}
-                style={taskRowStyle}
+                style={{
+                  ...taskRowStyle,
+                  opacity: dragFromIndex === i ? 0.4 : 1,
+                  borderTopColor: dragOverIndex === i && dragFromIndex !== null && dragFromIndex > i ? 'var(--accent)' : undefined,
+                  borderBottomColor: dragOverIndex === i && dragFromIndex !== null && dragFromIndex < i ? 'var(--accent)' : undefined,
+                }}
                 className="task-row"
                 draggable
                 onDragStart={(e) => {
                   e.dataTransfer.effectAllowed = 'move';
                   e.dataTransfer.setData('text/plain', i.toString());
+                  setDragFromIndex(i);
                 }}
                 onDragOver={(e) => {
                   e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  setDragOverIndex(i);
+                }}
+                onDragLeave={() => {
+                  setDragOverIndex((prev) => prev === i ? null : prev);
                 }}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -80,6 +93,12 @@ export default function Session() {
                   if (!isNaN(fromIndex) && fromIndex !== i) {
                     reorderTasks(fromIndex, i);
                   }
+                  setDragFromIndex(null);
+                  setDragOverIndex(null);
+                }}
+                onDragEnd={() => {
+                  setDragFromIndex(null);
+                  setDragOverIndex(null);
                 }}
               >
                 <svg

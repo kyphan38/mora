@@ -11,6 +11,7 @@ import { sceneUrl, sceneVideoUrl } from '../data/sceneManifest';
 import { getAudioEngine } from '../lib/audio';
 import { CORNERS } from '../data/corners';
 import { AMBIENTS, MUSIC_STYLES } from '../data/sound';
+import { DURATIONS } from '../data/durations';
 
 function extractTintColor(gradient: string | undefined): string {
   if (!gradient) return 'rgba(128,128,128,0.05)';
@@ -41,7 +42,6 @@ export default function Room() {
 
   const setIsRunning = useStore((s) => s.setIsRunning);
   const tickSession = useStore((s) => s.tickSession);
-  const completeCurrent = useStore((s) => s.completeCurrent);
   const stopFocus = useStore((s) => s.stopFocus);
 
   // Pomodoro phase
@@ -60,6 +60,7 @@ export default function Room() {
   const setMusicVolume = useStore((s) => s.setMusicVolume);
   const setCorner = useStore((s) => s.setCorner);
   const setAudioActive = useStore((s) => s.setAudioActive);
+  const setDuration = useStore((s) => s.setDuration);
 
   const [taskInput, setTaskInput] = useState('');
   const [videoError, setVideoError] = useState(false);
@@ -532,6 +533,7 @@ export default function Room() {
                     }}
                     onDragOver={(e) => {
                       e.preventDefault();
+                      e.dataTransfer.dropEffect = 'move';
                     }}
                     onDrop={(e) => {
                       e.preventDefault();
@@ -609,6 +611,27 @@ export default function Room() {
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
+            </div>
+
+            {/* Duration Selection */}
+            <div style={panelSectionStyle}>
+              <label style={panelLabelStyle(isSceneMode)}>duration</label>
+              <div style={panelChipsStyle}>
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d.label}
+                    onClick={() => setDuration(d.label)}
+                    style={{
+                      ...panelChipStyle(isSceneMode),
+                      background: setup.durationLabel === d.label ? 'var(--accent-soft)' : 'transparent',
+                      color: setup.durationLabel === d.label ? 'var(--accent-txt)' : (isSceneMode ? 'rgba(255,255,255,0.7)' : 'var(--ink-2)'),
+                      borderColor: setup.durationLabel === d.label ? 'var(--accent-line)' : (isSceneMode ? 'rgba(255,255,255,0.15)' : 'var(--line-2)'),
+                    }}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {/* Ambient Sound Selection */}

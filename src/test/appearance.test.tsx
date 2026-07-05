@@ -44,7 +44,8 @@ describe('Global appearance & scene mode', () => {
     expect(state.corner).not.toBeNull();
     const cornerIds = CORNERS.map((c) => c.id);
     expect(cornerIds).toContain(state.corner?.id);
-    expect(state.sound.ambient).toBe(state.corner?.ambient);
+    // setCorner no longer overrides ambient, so ambient stays at default
+    expect(state.sound.ambient).toBe('Wind');
   });
 
   it('entering scene with no corner auto-randomizes', () => {

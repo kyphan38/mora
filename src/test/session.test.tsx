@@ -58,14 +58,13 @@ describe('session runtime store logic', () => {
     useStore.getState().tickSession(); // 2
     expect(useStore.getState().sessions.length).toBe(0);
 
-    useStore.getState().tickSession(); // 3 -> triggers completeCurrent
+    useStore.getState().tickSession(); // 3 -> triggers enterReview
 
     const state = useStore.getState();
-    expect(state.sessions.length).toBe(1);
-    expect(state.sessions[0].taskName).toBe('Task A');
-    expect(state.tasks[0].done).toBe(true);
-    expect(state.elapsedSec).toBe(0);
+    // Now enters review phase instead of auto-completing
+    expect(state.phase).toBe('review');
     expect(state.isRunning).toBe(false);
+    expect(state.sessions.length).toBe(0); // not logged until reviewMarkDone
   });
 
   it('completeCurrent logs + advances + resets', () => {

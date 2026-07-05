@@ -31,24 +31,25 @@ describe('Corner screen', () => {
     expect(screen.getByText('Choose the space that fits today\'s state.')).toBeInTheDocument();
   });
 
-  it('clicking a corner sets store.corner and navigates to sound', () => {
+  it('clicking a corner sets store.corner and stays on corner screen', () => {
     render(<App />);
     fireEvent.click(screen.getByText('Alpine Morning Desk'));
     expect(useStore.getState().corner?.name).toBe('Alpine Morning Desk');
-    expect(useStore.getState().screen).toBe('sound');
+    expect(useStore.getState().screen).toBe('corner');
   });
 
-  it('corner pairing sets ambient', () => {
+  it('selecting a corner does not override ambient', () => {
     const { unmount } = render(<App />);
     fireEvent.click(screen.getByText('Alpine Morning Desk'));
+    // Ambient stays at default, not overridden by corner.ambient
     expect(useStore.getState().sound.ambient).toBe('Wind');
     unmount();
 
-    // Reset and select a different corner
+    // Select a different corner - ambient should remain unchanged
     useStore.getState().setScreen('corner');
     render(<App />);
     fireEvent.click(screen.getByText('Autumn Cafe Italy'));
-    expect(useStore.getState().sound.ambient).toBe('Cafe Ambience');
+    expect(useStore.getState().sound.ambient).toBe('Wind');
   });
 });
 

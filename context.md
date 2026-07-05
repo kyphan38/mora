@@ -19,6 +19,8 @@ See src/styles/tokens.css (source of truth). Radius 12px (pills for nav/chips), 
 - [x] Phase 6 - Sound engine (ambient+music+volume, end-of-session chime)
 - [x] Phase 7 - Packaging (macOS + Linux)
 
+- [x] Pomodoro patch - Break scaling, review sheet, autoContinue loop
+
 **Project complete - v0.1.0**
 
 ## Project structure
@@ -85,6 +87,8 @@ See src/styles/tokens.css (source of truth). Radius 12px (pills for nav/chips), 
 - `src/test/roomBg.test.tsx` — unit and integration tests for Room background settings
 - `src/test/roomScene.test.tsx` — unit and integration tests for immersive Room Scene mode
 - `src/test/audioEngineUnit.test.ts` — unit tests for the AudioEngine singleton and dispose behaviors
+- `src/lib/pomodoro.ts` — pure break-scaling helper (breakForSeconds, NEXT_DURATIONS)
+- `src/test/pomodoro.test.tsx` — pomodoro phase machine tests (break mapping, review, break, autoContinue, Room render)
 
 ## Data model
 ```ts
@@ -98,7 +102,7 @@ interface SessionSetup { durationLabel, durationSec }
 ```
 
 ## Persistence
-`PersistedState` shape (version 1): `{ version, tasks, sessions, sound, setup, corner, elapsedSec, isRunning, sessionActive, activeTaskId, audioActive }`.
+`PersistedState` shape (version 1): `{ version, tasks, sessions, sound, setup, corner, elapsedSec, isRunning, sessionActive, activeTaskId, audioActive, autoContinue }`.
 
 Adapters:
 - `createMemoryAdapter(seed?)` - in-closure, deep-cloned on save/load. Used by tests.
@@ -159,6 +163,18 @@ Implemented actions:
 - `completeCurrent()` - completes current active task, resets elapsedSec and isRunning, and sets activeTaskId to next undone task
 - `stopFocus()` - terminates current session and logs partial session if elapsedSec >= 60s
 - `setAudioActive(b)` - sets audioActive flag for setup previews
+
+Pomodoro phase machine:
+- `phase: 'focus' | 'break' | 'review'` — current session phase
+- `lastFocusSec: number` — duration of the last focus session (used to compute break length)
+- `autoContinue: boolean` — when true, skips review sheet (focus→break→focus automatically); default false
+- `setAutoContinue(b)` — toggle autoContinue
+- `enterReview()` — called on focus completion (natural countdown or "Complete now"): if autoContinue, auto-logs session + enters break; else shows review sheet
+- `reviewMarkDone(done)` — done=true: logs session, marks task done, advances activeTaskId; done=false: no-op (keep working)
+- `startBreak()` — enters break phase, starts break timer
+- `finishBreak()` — ends break: if autoContinue, auto-starts next focus; else returns to focus paused
+- `focusAgain(durationSec)` — sets new duration and returns to focus phase
+- `stopAllSessions()` — stops focus, navigates to history
 
 Derived: `canStart()` - true when tasks.length > 0.
 `shouldPlayAudio(state)` - selector function determining if audio should play based on screen and active flags.
@@ -386,5 +402,30 @@ Anti-regression (1): no Sign in / EN on History.
 - **Drag-to-reorder tasks**: Added `reorderTasks(from, to)` store action (immutable splice). Task rows in both `Session.tsx` and `Room.tsx` are now `draggable` with native HTML5 drag events. A subtle 6-dot grip handle (`⋮⋮`) appears faint and darkens on row hover (styled via `.task-row .drag-handle` in `globals.css`).
 - **New tests**: Added `src/test/reorder.test.tsx` (2 tests): store-level `reorderTasks` action + component-level drag-and-drop UI verification.
 
-**Total: 139 tests (11 Phase 1 + 16 Phase 2 + 26 Phase 3 + 20 Phase 4 + 11 Phase 5 + 10 Phase 6 + 6 Phase 7 + 37 Patches + 2 Reorder)**
+### `src/test/pomodoro.test.tsx` (20 tests)
+breakForSeconds mapping (6): 25m→5m, 50m→10m, 1.5h→15m, 2h→20m, Count Up→10m, fallback ratio clamped.
+NEXT_DURATIONS (1): correct labels and seconds.
+enterReview (2): sets review phase when manual; uses elapsedSec for count-up.
+reviewMarkDone (2): true logs+marks+advances; false keeps current.
+startBreak (1): sets break phase running.
+finishBreak (2): manual returns paused; autoContinue auto-starts focus.
+focusAgain (1): sets new duration + resets to focus.
+stopAllSessions (1): stops + navigates to history.
+autoContinue path (2): skips review (focus→break→focus); stops when no undone tasks.
+break phase in tickSession (1): countdown + auto-finish.
+Room review-phase render (1): renders review sheet with all elements.
+
+### Note on updated tests
+- `room.test.tsx`: "Complete now" test updated to verify review sheet appears; "all tasks done" test updated to go through review flow.
+- `session.test.tsx`: "tickSession completes at durationSec" updated to verify review phase instead of direct completion.
+
+### Pomodoro patch (break scaling + review sheet + loop)
+- **Phase machine**: focus → review (or auto-continue: focus → break → focus). On focus completion (natural countdown to 0 or "Complete now"), `enterReview()` is called.
+- **Review sheet**: renders in both Color and Scene modes. Row A: "Mark done" / "Keep working". Row B: "Take a break {Xm}" / "Focus again" (expands duration chips 25/50/1.5h/2h) / "Stop".
+- **Break phase**: amber-tinted timer, "Rest a little" label, "Skip break" control. Auto-calls `finishBreak()` when countdown reaches 0.
+- **autoContinue** (default off, persisted): when on, skips review sheet — focus→break→focus until no undone tasks remain or user stops.
+- **stopAllSessions()**: routes to History screen.
+- **Break scaling** (`breakForSeconds`): 25m→5m, 50m→10m, 1.5h→15m, 2h→20m, Count Up→10m, fallback ratio clamped 5–20m.
+
+**Total: 159 tests (11 Phase 1 + 16 Phase 2 + 26 Phase 3 + 20 Phase 4 + 11 Phase 5 + 10 Phase 6 + 6 Phase 7 + 37 Patches + 2 Reorder + 20 Pomodoro)**
 

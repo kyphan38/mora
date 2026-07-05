@@ -18,9 +18,10 @@ export default function Corner() {
   const itemsPerPage = 8;
   const totalPages = Math.ceil(sortedCorners.length / itemsPerPage);
 
-  const handleClick = (corner: CornerType) => {
-    setCorner(corner);
-    setScreen('sound');
+  const corner = useStore((s) => s.corner);
+
+  const handleClick = (c: CornerType) => {
+    setCorner(c);
   };
 
   return (
@@ -41,6 +42,8 @@ export default function Corner() {
                 ...cardStyle,
                 display: isVisible ? undefined : 'none',
                 order: alphabeticalIndex,
+                borderColor: corner?.id === c.id ? 'var(--accent)' : undefined,
+                boxShadow: corner?.id === c.id ? '0 0 0 2px var(--accent-soft)' : undefined,
               }}
             >
               <div
@@ -62,37 +65,42 @@ export default function Corner() {
         })}
       </div>
 
-      {totalPages > 1 && (
-        <div style={paginationContainerStyle} data-testid="corner-pagination">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
-            disabled={currentPage === 0}
-            style={{
-              ...paginationBtnStyle,
-              opacity: currentPage === 0 ? 0.4 : 1,
-              cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
-            }}
-            data-testid="prev-page-btn"
-          >
-            Prev
-          </button>
-          <span style={pageIndicatorStyle}>
-            Page {currentPage + 1} of {totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
-            disabled={currentPage === totalPages - 1}
-            style={{
-              ...paginationBtnStyle,
-              opacity: currentPage === totalPages - 1 ? 0.4 : 1,
-              cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
-            }}
-            data-testid="next-page-btn"
-          >
-            Next
-          </button>
-        </div>
-      )}
+      <div style={bottomBarStyle}>
+        {totalPages > 1 && (
+          <div style={paginationContainerStyle} data-testid="corner-pagination">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(0, prev - 1))}
+              disabled={currentPage === 0}
+              style={{
+                ...paginationBtnStyle,
+                opacity: currentPage === 0 ? 0.4 : 1,
+                cursor: currentPage === 0 ? 'not-allowed' : 'pointer',
+              }}
+              data-testid="prev-page-btn"
+            >
+              Prev
+            </button>
+            <span style={pageIndicatorStyle}>
+              Page {currentPage + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1))}
+              disabled={currentPage === totalPages - 1}
+              style={{
+                ...paginationBtnStyle,
+                opacity: currentPage === totalPages - 1 ? 0.4 : 1,
+                cursor: currentPage === totalPages - 1 ? 'not-allowed' : 'pointer',
+              }}
+              data-testid="next-page-btn"
+            >
+              Next
+            </button>
+          </div>
+        )}
+        <button onClick={() => setScreen('sound')} style={nextBtnStyle}>
+          Sound →
+        </button>
+      </div>
     </div>
   );
 }
@@ -164,12 +172,30 @@ const cardDescStyle: React.CSSProperties = {
 
 
 
+const bottomBarStyle: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  marginTop: 24,
+};
+
+const nextBtnStyle: React.CSSProperties = {
+  background: 'var(--accent)',
+  color: '#ffffff',
+  border: '1px solid var(--accent)',
+  borderRadius: 'var(--r-pill)',
+  padding: '8px 22px',
+  fontSize: 14,
+  fontWeight: 600,
+  cursor: 'pointer',
+  fontFamily: 'var(--font)',
+  marginLeft: 'auto',
+};
+
 const paginationContainerStyle: React.CSSProperties = {
   display: 'flex',
-  justifyContent: 'center',
   alignItems: 'center',
   gap: 16,
-  marginTop: 24,
 };
 
 const paginationBtnStyle: React.CSSProperties = {
