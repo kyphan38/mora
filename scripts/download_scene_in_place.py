@@ -69,14 +69,14 @@ def save_metadata(filename, title, url):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 def download_and_process_segment(url, filename, start_sec, duration_sec):
-    """Downloads a specific segment and processes it to 1080p muted video."""
+    """Downloads a specific segment and processes it to 1440p muted video."""
     temp_output_path = os.path.join(OUTPUT_DIR, f"temp_{uuid.uuid4().hex[:4]}.mp4")
     final_output_path = os.path.join(OUTPUT_DIR, filename)
 
     print(f"-> Downloading segment (Start: {start_sec}s, Duration: {duration_sec}s) from: {url}")
 
     ydl_opts = {
-        'format': 'bestvideo[height<=1080]/best[height<=1080]',
+        'format': 'bestvideo[height<=1440]/best[height<=1440]',
         'outtmpl': temp_output_path,
         'merge_output_format': 'mp4',
         'download_ranges': lambda info_dict, dict_path: [{
@@ -97,21 +97,41 @@ def download_and_process_segment(url, filename, start_sec, duration_sec):
             os.remove(temp_output_path)
         return False
 
-    print("   Processing with ffmpeg (1080p, Muted)...")
-    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
+    print("   Processing with ffmpeg (1440p, Muted)...")
+    vf_filter = "scale=2560:1440:force_original_aspect_ratio=increase,crop=2560:1440"
     ffmpeg_cmd = [
         "ffmpeg", "-y",
         "-i", temp_output_path,
         "-vf", vf_filter,
         "-an",  
         "-c:v", "libx264",
-        "-crf", "20",
+        "-crf", "16",  # Highly visually lossless for crisp details
         "-preset", "medium",
         final_output_path
     ]
 
     try:
         subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        
+        # Extract high-quality thumbnail
+        base_name = os.path.splitext(filename)[0]
+        jpg_filename = f"{base_name}.jpg"
+        jpg_path = os.path.join(OUTPUT_DIR, jpg_filename)
+        print(f"   Extracting high-quality thumbnail -> {jpg_filename}")
+        ffmpeg_thumb_cmd = [
+            "ffmpeg", "-y",
+            "-ss", "00:00:01",
+            "-i", final_output_path,
+            "-vframes", "1",
+            "-qscale:v", "2",
+            "-f", "image2",
+            jpg_path
+        ]
+        try:
+            subprocess.run(ffmpeg_thumb_cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            print(f"   [WARN] Failed to extract thumbnail: {e}")
+
         print(f"   [SUCCESS] Overwritten -> {filename}\n")
         return True
     except subprocess.CalledProcessError as e:
@@ -125,8 +145,12 @@ def main():
     check_ffmpeg()
     os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+    force_download = "-f" in sys.argv or "--force" in sys.argv
+
     print("=" * 60)
     print("      YouTube Scene Manager (Smart Resume Enabled)      ")
+    if force_download:
+        print("                 --- FORCE MODE ACTIVE ---              ")
     print("=" * 60)
     print("1. Download a NEW custom scene")
     print("2. BATCH OVERWRITE/RESUME scenes from metadata.json")
@@ -140,8 +164,8 @@ def main():
             print("[ERROR] URL and Title cannot be empty.")
             return
 
-        start_sec = float(input("Start time in seconds (default 120): ") or 120.0)
-        duration_sec = float(input("Duration in seconds (default 5): ") or 5.0)
+        start_sec = float(input("Start time in seconds (default 300): ") or 300.0)
+        duration_sec = float(input("Duration in seconds (default 10): ") or 10.0)
 
         rand_id = uuid.uuid4().hex[:6]
         filename = f"scene_{rand_id}.mp4"
@@ -170,7 +194,11 @@ def main():
 
         print(f"\n[INFO] Found {len(entries)} scenes in metadata.json.")
         print(f"Target Rules: Start at 5:00 ({target_start}s) | Duration: {target_duration}s")
-        print("Checking existing files to skip completed ones...\n" + "-"*60)
+        if force_download:
+            print("[INFO] Force download active (-f). Re-downloading all scenes.")
+        else:
+            print("Checking existing files to skip completed ones...")
+        print("-" * 60)
 
         success_count = 0
         failed_entries = []
@@ -182,7 +210,7 @@ def main():
 
             # KIỂM TRA THÔNG MINH: Nếu file đã tồn tại và đúng độ dài 10s (sai số 0.5s) -> SKIP
             current_duration = get_video_duration(final_output_path)
-            if abs(current_duration - target_duration) < 0.5:
+            if not force_download and abs(current_duration - target_duration) < 0.5:
                 print(f"[SKIP] {filename} is already {current_duration:.1f}s. Moving on.")
                 success_count += 1
                 continue
