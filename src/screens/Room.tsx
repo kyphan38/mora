@@ -10,8 +10,9 @@ import { useOsSync } from '../hooks/useOsSync';
 import { sceneUrl, sceneVideoUrl } from '../data/sceneManifest';
 import { getAudioEngine } from '../lib/audio';
 import { CORNERS } from '../data/corners';
-import { AMBIENTS, MUSIC_STYLES } from '../data/sound';
+import { AMBIENTS } from '../data/sound';
 import { DURATIONS } from '../data/durations';
+import { MusicStyleGrid } from '../components/MusicStyleGrid';
 
 function extractTintColor(gradient: string | undefined): string {
   if (!gradient) return 'rgba(128,128,128,0.05)';
@@ -56,7 +57,6 @@ export default function Room() {
   const stopAllSessions = useStore((s) => s.stopAllSessions);
 
   const setAmbient = useStore((s) => s.setAmbient);
-  const setMusicStyle = useStore((s) => s.setMusicStyle);
   const setAmbientVolume = useStore((s) => s.setAmbientVolume);
   const setMusicVolume = useStore((s) => s.setMusicVolume);
   const setCorner = useStore((s) => s.setCorner);
@@ -681,32 +681,7 @@ export default function Room() {
             {/* Music Style Selection */}
             <div style={panelSectionStyle}>
               <label style={panelLabelStyle(isSceneMode)}>music style</label>
-              <div style={panelGridStyle}>
-                {MUSIC_STYLES.map((m) => (
-                  <button
-                    key={m}
-                    onClick={() => {
-                      setMusicStyle(m);
-                      setAudioActive(true);
-                      getAudioEngine().play();
-                    }}
-                    style={{
-                      ...panelMusicCardStyle(isSceneMode),
-                      background: sound.musicStyle === m
-                        ? 'var(--accent-soft)'
-                        : (isSceneMode ? 'rgba(255,255,255,0.06)' : 'var(--surface-2)'),
-                      borderColor: sound.musicStyle === m
-                        ? 'var(--accent-line)'
-                        : (isSceneMode ? 'rgba(255,255,255,0.15)' : 'var(--line)'),
-                      color: sound.musicStyle === m
-                        ? 'var(--accent-txt)'
-                        : (isSceneMode ? '#fff' : 'var(--ink)'),
-                    }}
-                  >
-                    {m}
-                  </button>
-                ))}
-              </div>
+              <MusicStyleGrid variant="panel" isSceneMode={isSceneMode} />
             </div>
 
             {/* Volumes */}
@@ -1371,24 +1346,6 @@ const panelChipStyle = (_isScene: boolean): React.CSSProperties => ({
   fontSize: 12,
   fontWeight: 500,
   cursor: 'pointer',
-  fontFamily: 'var(--font)',
-  transition: 'all var(--dur) var(--ease)',
-});
-
-const panelGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 8,
-};
-
-const panelMusicCardStyle = (_isScene: boolean): React.CSSProperties => ({
-  border: '1px solid',
-  borderRadius: 'var(--r-md)',
-  padding: '10px 8px',
-  fontSize: 12,
-  fontWeight: 500,
-  cursor: 'pointer',
-  textAlign: 'center',
   fontFamily: 'var(--font)',
   transition: 'all var(--dur) var(--ease)',
 });

@@ -1,13 +1,13 @@
 import { useStore } from '../store/useStore';
-import { AMBIENTS, MUSIC_STYLES } from '../data/sound';
+import { AMBIENTS } from '../data/sound';
 import { Stepper } from '../components/Stepper';
 import { getAudioEngine } from '../lib/audio';
+import { MusicStyleGrid } from '../components/MusicStyleGrid';
 
 export default function Sound() {
   const corner = useStore((s) => s.corner);
   const sound = useStore((s) => s.sound);
   const setAmbient = useStore((s) => s.setAmbient);
-  const setMusicStyle = useStore((s) => s.setMusicStyle);
   const setAmbientVolume = useStore((s) => s.setAmbientVolume);
   const setMusicVolume = useStore((s) => s.setMusicVolume);
   const setScreen = useStore((s) => s.setScreen);
@@ -53,26 +53,7 @@ export default function Sound() {
 
         <div style={sectionStyle}>
           <label style={labelStyle}>music style</label>
-          <div style={musicGridStyle}>
-            {MUSIC_STYLES.map((m) => (
-              <button
-                key={m}
-                onClick={() => {
-                  setMusicStyle(m);
-                  setAudioActive(true);
-                  getAudioEngine().play();
-                }}
-                style={{
-                  ...musicCardStyle,
-                  background: sound.musicStyle === m ? 'var(--accent-soft)' : 'var(--surface)',
-                  borderColor: sound.musicStyle === m ? 'var(--accent-line)' : 'var(--line)',
-                  color: sound.musicStyle === m ? 'var(--accent-txt)' : 'var(--ink)',
-                }}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
+          <MusicStyleGrid variant="default" />
         </div>
 
         <div style={slidersStyle}>
@@ -196,24 +177,6 @@ const chipStyle: React.CSSProperties = {
   fontWeight: 500,
   cursor: 'pointer',
   fontFamily: 'var(--font)',
-  transition: 'background var(--dur) var(--ease)',
-};
-
-const musicGridStyle: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'repeat(3, 1fr)',
-  gap: 10,
-};
-
-const musicCardStyle: React.CSSProperties = {
-  border: '1px solid',
-  borderRadius: 'var(--r-md)',
-  padding: '14px 16px',
-  fontSize: 14,
-  fontWeight: 500,
-  cursor: 'pointer',
-  fontFamily: 'var(--font)',
-  textAlign: 'center',
   transition: 'background var(--dur) var(--ease)',
 };
 

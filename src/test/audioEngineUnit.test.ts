@@ -78,7 +78,7 @@ describe('AudioEngine unit tests', () => {
     const engine = createAudioEngine();
     engine.setAmbient('Wind');
     engine.setMusic('Nature');
-    
+
     engine.dispose();
 
     const audioCalls = (window.Audio as any).mock.results;
@@ -89,5 +89,58 @@ describe('AudioEngine unit tests', () => {
     expect(musicMock.pause).toHaveBeenCalled();
     expect(ambientMock.src).toBe('/audio/ambient/wind.mp3');
     expect(musicMock.src).toBe('/audio/music/nature.mp3');
+  });
+
+  it('setMusicUrl plays an arbitrary URL directly, bypassing the preset resolver', () => {
+    const engine = createAudioEngine();
+    engine.setMusicUrl('blob:http://localhost/abc-123');
+
+    const audioCalls = (window.Audio as any).mock.results;
+    const musicMock = audioCalls[1].value;
+
+    expect(musicMock.src).toBe('blob:http://localhost/abc-123');
+  });
+
+  it('setMusic and setMusicUrl are detected as changes against each other', () => {
+    const engine = createAudioEngine();
+    engine.setMusic('Nature');
+    engine.setMusicUrl('blob:http://localhost/custom');
+
+    const audioCalls = (window.Audio as any).mock.results;
+    const musicMock = audioCalls[1].value;
+    expect(musicMock.src).toBe('blob:http://localhost/custom');
+
+    // Switching back to a preset name is detected as a change even though we just came from a URL.
+    engine.setMusic('Piano');
+    expect(musicMock.src).toBe('/audio/music/piano.mp3');
+
+    // Switching back to the same custom URL a second time is a no-op (src untouched) since it's unchanged.
+    engine.setMusic('Piano');
+    expect(musicMock.src).toBe('/audio/music/piano.mp3');
+  });
+
+  it('setMusicUrl(null) clears the music source', () => {
+    const engine = createAudioEngine();
+    engine.setMusicUrl('blob:http://localhost/custom');
+    engine.setMusicUrl(null);
+
+    const audioCalls = (window.Audio as any).mock.results;
+    const musicMock = audioCalls[1].value;
+    expect(musicMock.src).toBe('');
+  });
+
+  it('setMusicUrl only calls play when playing and a non-null url is given', () => {
+    const engine = createAudioEngine();
+    engine.play();
+    const audioCalls = (window.Audio as any).mock.results;
+    const musicMock = audioCalls[1].value;
+    musicMock.play.mockClear();
+
+    engine.setMusicUrl('blob:http://localhost/custom');
+    expect(musicMock.play).toHaveBeenCalled();
+
+    musicMock.play.mockClear();
+    engine.setMusicUrl(null);
+    expect(musicMock.play).not.toHaveBeenCalled();
   });
 });

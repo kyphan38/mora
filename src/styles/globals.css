@@ -278,6 +278,24 @@ input[type=range].volume-slider:hover::-moz-range-thumb {
   cursor: not-allowed;
 }
 
+/* Custom music track card: hover-reveal remove icon (mirrors .task-row-actions) */
+.custom-track-remove {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out, color 0.15s ease;
+}
+
+.custom-track-card:hover .custom-track-remove {
+  opacity: 1;
+}
+
+.custom-track-remove:hover {
+  color: var(--ink) !important;
+}
+
+[data-scene="true"] .custom-track-remove:hover {
+  color: #ffffff !important;
+}
+
 /* Pagination buttons styling */
 .pagination-btn {
   background: var(--surface-2);

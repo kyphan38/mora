@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session } from '../types';
+import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack } from '../types';
 import { DURATIONS } from '../data/durations';
 import { uid } from '../lib/uid';
 import { CORNERS } from '../data/corners';
@@ -20,6 +20,10 @@ interface AppStore {
   setMusicStyle: (name: string) => void;
   setAmbientVolume: (v: number) => void;
   setMusicVolume: (v: number) => void;
+  customTracks: CustomTrack[];
+  addCustomTrack: (track: CustomTrack) => void;
+  selectCustomTrack: (id: string) => void;
+  removeCustomTrack: (id: string) => void;
   setDuration: (label: string) => void;
   addTask: (name: string) => void;
   removeTask: (id: string) => void;
@@ -45,6 +49,7 @@ interface AppStore {
     activeTaskId?: string | null;
     audioActive?: boolean;
     autoContinue?: boolean;
+    customTracks?: CustomTrack[];
   }) => void;
   clearSessions: () => void;
 
@@ -88,7 +93,9 @@ export const useStore = create<AppStore>((set, get) => ({
     musicStyle: 'Nature',
     ambientVolume: 18,
     musicVolume: 6,
+    customTrackId: null,
   },
+  customTracks: [],
   setup: {
     durationLabel: '50 min',
     durationSec: 3000,
@@ -124,11 +131,21 @@ export const useStore = create<AppStore>((set, get) => ({
   setAmbient: (name) =>
     set((state) => ({ sound: { ...state.sound, ambient: name } })),
   setMusicStyle: (name) =>
-    set((state) => ({ sound: { ...state.sound, musicStyle: name } })),
+    set((state) => ({ sound: { ...state.sound, musicStyle: name, customTrackId: null } })),
   setAmbientVolume: (v) =>
     set((state) => ({ sound: { ...state.sound, ambientVolume: clamp(v) } })),
   setMusicVolume: (v) =>
     set((state) => ({ sound: { ...state.sound, musicVolume: clamp(v) } })),
+  addCustomTrack: (track) => set(() => ({ customTracks: [track] })),
+  selectCustomTrack: (id) =>
+    set((state) => ({ sound: { ...state.sound, customTrackId: id } })),
+  removeCustomTrack: (id) =>
+    set((state) => ({
+      customTracks: state.customTracks.filter((t) => t.id !== id),
+      sound: state.sound.customTrackId === id
+        ? { ...state.sound, customTrackId: null }
+        : state.sound,
+    })),
   setDuration: (label) => {
     const dur = DURATIONS.find((d) => d.label === label);
     if (dur) {
@@ -157,10 +174,15 @@ export const useStore = create<AppStore>((set, get) => ({
       return {
         tasks: newTasks,
         activeTaskId: firstUndone ? firstUndone.id : null,
+        isRunning: firstUndone ? state.isRunning : false,
+        sessionActive: firstUndone ? state.sessionActive : false,
       };
     }),
   reorderTasks: (from, to) =>
     set((state) => {
+      if (from < 0 || from >= state.tasks.length || to < 0 || to >= state.tasks.length) {
+        return {};
+      }
       const copy = [...state.tasks];
       const [moved] = copy.splice(from, 1);
       if (moved) {
@@ -182,6 +204,8 @@ export const useStore = create<AppStore>((set, get) => ({
       return {
         tasks: newTasks,
         activeTaskId: firstUndone ? firstUndone.id : null,
+        isRunning: firstUndone ? state.isRunning : false,
+        sessionActive: firstUndone ? state.sessionActive : false,
       };
     }),
   clearCompletedTasks: () =>
@@ -250,6 +274,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.sessionActive !== undefined) update.sessionActive = p.sessionActive;
     if (p.audioActive !== undefined) update.audioActive = p.audioActive;
     if (p.autoContinue !== undefined) update.autoContinue = p.autoContinue;
+    if (p.customTracks !== undefined) update.customTracks = p.customTracks;
 
     // Auto-heal activeTaskId on load
     const tasksList = p.tasks !== undefined ? p.tasks : get().tasks;

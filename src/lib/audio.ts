@@ -3,6 +3,7 @@ import { ambientUrl, musicUrl } from '../data/audioManifest';
 export interface AudioEngine {
   setAmbient(name: string): void;
   setMusic(name: string): void;
+  setMusicUrl(url: string | null): void;
   setAmbientVolume(gain: number): void;
   setMusicVolume(gain: number): void;
   play(): void;
@@ -14,6 +15,7 @@ export interface AudioEngine {
 export const noopAudioEngine: AudioEngine = {
   setAmbient: () => {},
   setMusic: () => {},
+  setMusicUrl: () => {},
   setAmbientVolume: () => {},
   setMusicVolume: () => {},
   play: () => {},
@@ -50,7 +52,7 @@ export function createAudioEngine(): AudioEngine {
   musicAudio.loop = true;
 
   let ambientName = '';
-  let musicName = '';
+  let musicKey = '';
   let playing = false;
 
   const engine: AudioEngine = {
@@ -68,8 +70,8 @@ export function createAudioEngine(): AudioEngine {
     },
 
     setMusic(name: string) {
-      if (name === musicName) return;
-      musicName = name;
+      if (name === musicKey) return;
+      musicKey = name;
       try {
         musicAudio.src = musicUrl(name);
         if (playing) {
@@ -77,6 +79,20 @@ export function createAudioEngine(): AudioEngine {
         }
       } catch (err) {
         console.error('Failed to set music track:', err);
+      }
+    },
+
+    setMusicUrl(url: string | null) {
+      const key = url ?? '';
+      if (key === musicKey) return;
+      musicKey = key;
+      try {
+        musicAudio.src = url ?? '';
+        if (playing && url) {
+          musicAudio.play().catch(() => {});
+        }
+      } catch (err) {
+        console.error('Failed to set custom music track:', err);
       }
     },
 

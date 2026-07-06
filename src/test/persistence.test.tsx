@@ -16,9 +16,10 @@ const makeSeed = (): PersistedState => ({
   sessions: [
     { id: 's1', taskName: 'Task 0', minutes: 25, startedAt: 500, endedAt: 2000, corner: 'X', ambient: 'Wind' },
   ],
-  sound: { ambient: 'Rain', musicStyle: 'Lo-fi', ambientVolume: 50, musicVolume: 30 },
+  sound: { ambient: 'Rain', musicStyle: 'Lo-fi', ambientVolume: 50, musicVolume: 30, customTrackId: null },
   setup: { durationLabel: '25 min', durationSec: 1500 },
   corner: { id: 'c1', name: 'Corner1', description: 'desc', ambient: 'Rain', gradient: '' },
+  customTracks: [],
 });
 
 // jsdom's localStorage may be incomplete - provide a shim
@@ -77,6 +78,22 @@ describe('migrate', () => {
     expect(result).not.toBeNull();
     expect(result!.version).toBe(PERSIST_VERSION);
     expect(result!.tasks).toEqual(old.tasks);
+  });
+
+  it('backfills customTrackId and customTracks for a legacy v1 record', () => {
+    const legacy = {
+      version: 1,
+      tasks: [],
+      sessions: [],
+      sound: { ambient: 'Wind', musicStyle: 'Nature', ambientVolume: 18, musicVolume: 6 },
+      setup: { durationLabel: '50 min', durationSec: 3000 },
+      corner: null,
+    } as unknown as PersistedState;
+    const result = migrate(legacy);
+    expect(result).not.toBeNull();
+    expect(result!.version).toBe(PERSIST_VERSION);
+    expect(result!.sound.customTrackId).toBeNull();
+    expect(result!.customTracks).toEqual([]);
   });
 });
 

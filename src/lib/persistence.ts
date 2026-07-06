@@ -1,6 +1,6 @@
-import type { Task, Session, SoundConfig, SessionSetup, Corner } from '../types';
+import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack } from '../types';
 
-export const PERSIST_VERSION = 1;
+export const PERSIST_VERSION = 2;
 
 export interface PersistedState {
   version: number;
@@ -16,6 +16,7 @@ export interface PersistedState {
   activeTaskId?: string | null;
   audioActive?: boolean;
   autoContinue?: boolean;
+  customTracks?: CustomTrack[];
 }
 
 export interface StorageAdapter {
@@ -97,6 +98,7 @@ export function toPersisted(s: {
   activeTaskId?: string | null;
   audioActive?: boolean;
   autoContinue?: boolean;
+  customTracks?: CustomTrack[];
 }): PersistedState {
   return {
     version: PERSIST_VERSION,
@@ -112,10 +114,16 @@ export function toPersisted(s: {
     activeTaskId: s.activeTaskId ?? null,
     audioActive: s.audioActive ?? false,
     autoContinue: s.autoContinue ?? false,
+    customTracks: s.customTracks ?? [],
   };
 }
 
 export function migrate(raw: PersistedState | null): PersistedState | null {
   if (!raw) return null;
-  return { ...raw, version: PERSIST_VERSION };
+  return {
+    ...raw,
+    version: PERSIST_VERSION,
+    sound: raw.sound ? { ...raw.sound, customTrackId: raw.sound.customTrackId ?? null } : raw.sound,
+    customTracks: raw.customTracks ?? [],
+  };
 }

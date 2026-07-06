@@ -30,6 +30,15 @@ export interface SoundConfig {
   musicStyle: string;
   ambientVolume: number; // 0..100
   musicVolume: number;   // 0..100
+  customTrackId: string | null; // id of the selected custom uploaded track, takes precedence over musicStyle when set
+}
+
+export interface CustomTrack {
+  id: string;
+  name: string;      // display name (original filename)
+  mimeType: string;
+  size: number;       // bytes
+  createdAt: number;  // epoch ms
 }
 
 export interface SessionSetup {

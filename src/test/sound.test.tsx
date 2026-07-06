@@ -9,6 +9,7 @@ import { type NotifyBridge, createNotifyBridge } from '../lib/notify';
 class MockAudioEngine implements AudioEngine {
   setAmbient = vi.fn();
   setMusic = vi.fn();
+  setMusicUrl = vi.fn();
   setAmbientVolume = vi.fn();
   setMusicVolume = vi.fn();
   play = vi.fn();

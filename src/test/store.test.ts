@@ -21,6 +21,43 @@ describe('useStore', () => {
     expect(sound.musicStyle).toBe('Nature');
     expect(sound.ambientVolume).toBe(18);
     expect(sound.musicVolume).toBe(6);
+    expect(sound.customTrackId).toBeNull();
+  });
+
+  it('initial customTracks is empty', () => {
+    expect(useStore.getState().customTracks).toEqual([]);
+  });
+
+  it('addCustomTrack replaces any existing custom track (single slot)', () => {
+    const trackA = { id: 'a', name: 'Song A.mp3', mimeType: 'audio/mpeg', size: 100, createdAt: 1 };
+    const trackB = { id: 'b', name: 'Song B.mp3', mimeType: 'audio/mpeg', size: 200, createdAt: 2 };
+    useStore.getState().addCustomTrack(trackA);
+    expect(useStore.getState().customTracks).toEqual([trackA]);
+    useStore.getState().addCustomTrack(trackB);
+    expect(useStore.getState().customTracks).toEqual([trackB]);
+  });
+
+  it('selectCustomTrack sets sound.customTrackId', () => {
+    useStore.getState().selectCustomTrack('track-1');
+    expect(useStore.getState().sound.customTrackId).toBe('track-1');
+  });
+
+  it('removeCustomTrack clears the track and resets customTrackId only if it was active', () => {
+    const track = { id: 'a', name: 'Song A.mp3', mimeType: 'audio/mpeg', size: 100, createdAt: 1 };
+    useStore.getState().addCustomTrack(track);
+    useStore.getState().selectCustomTrack('a');
+    useStore.getState().removeCustomTrack('a');
+    expect(useStore.getState().customTracks).toEqual([]);
+    expect(useStore.getState().sound.customTrackId).toBeNull();
+  });
+
+  it('removeCustomTrack does not touch customTrackId when removing an inactive track', () => {
+    const track = { id: 'a', name: 'Song A.mp3', mimeType: 'audio/mpeg', size: 100, createdAt: 1 };
+    useStore.getState().addCustomTrack(track);
+    useStore.getState().setMusicStyle('Piano');
+    useStore.getState().removeCustomTrack('a');
+    expect(useStore.getState().sound.customTrackId).toBeNull();
+    expect(useStore.getState().sound.musicStyle).toBe('Piano');
   });
 
   it('initial setup is 50 min / 3000s', () => {
