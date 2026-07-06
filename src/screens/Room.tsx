@@ -33,6 +33,7 @@ export default function Room() {
   const addTask = useStore((s) => s.addTask);
   const toggleTask = useStore((s) => s.toggleTask);
   const reorderTasks = useStore((s) => s.reorderTasks);
+  const clearCompletedTasks = useStore((s) => s.clearCompletedTasks);
   const roomBackground = useStore((s) => s.roomBackground);
   const setRoomBackground = useStore((s) => s.setRoomBackground);
 
@@ -576,6 +577,15 @@ export default function Room() {
 
           <div style={isSceneMode ? immersiveFooterStyle : footerStyle}>
             <span>{leftCount} left</span>
+            {doneCount > 0 && (
+              <button
+                onClick={clearCompletedTasks}
+                style={isSceneMode ? immersiveClearBtnStyle : clearBtnStyle}
+                data-testid="clear-completed-btn"
+              >
+                Clear completed
+              </button>
+            )}
             <span>{doneCount} done</span>
           </div>
         </div>
@@ -1519,5 +1529,27 @@ const reviewDurationChip: React.CSSProperties = {
   fontWeight: 500,
   cursor: 'pointer',
   fontFamily: 'var(--font)',
+};
+
+const clearBtnStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  fontSize: 12,
+  color: 'var(--ink-3)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font)',
+  transition: 'color var(--dur) var(--ease)',
+};
+
+const immersiveClearBtnStyle: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  padding: 0,
+  fontSize: 12,
+  color: 'rgba(255,255,255,0.4)',
+  cursor: 'pointer',
+  fontFamily: 'var(--font)',
+  transition: 'color var(--dur) var(--ease)',
 };
 

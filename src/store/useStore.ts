@@ -27,6 +27,7 @@ interface AppStore {
   activeTask: () => Task | undefined;
   addSession: (s: Session) => void;
   toggleTask: (id: string) => void;
+  clearCompletedTasks: () => void;
   roomBackground: 'color' | 'scene';
   setRoomBackground: (m: 'color' | 'scene') => void;
   completeActive: (elapsedSec: number) => void;
@@ -130,17 +131,34 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => ({ sound: { ...state.sound, musicVolume: clamp(v) } })),
   setDuration: (label) => {
     const dur = DURATIONS.find((d) => d.label === label);
-    if (dur) set({ setup: { durationLabel: dur.label, durationSec: dur.seconds } });
+    if (dur) {
+      set({
+        setup: { durationLabel: dur.label, durationSec: dur.seconds },
+        elapsedSec: 0,
+      });
+    }
   },
   addTask: (name) => {
     const trimmed = name.trim();
     if (!trimmed) return;
-    set((state) => ({
-      tasks: [...state.tasks, { id: uid(), name: trimmed, done: false, createdAt: Date.now() }],
-    }));
+    set((state) => {
+      const newTasks = [...state.tasks, { id: uid(), name: trimmed, done: false, createdAt: Date.now() }];
+      const firstUndone = newTasks.find((t) => !t.done);
+      return {
+        tasks: newTasks,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+      };
+    });
   },
   removeTask: (id) =>
-    set((state) => ({ tasks: state.tasks.filter((t) => t.id !== id) })),
+    set((state) => {
+      const newTasks = state.tasks.filter((t) => t.id !== id);
+      const firstUndone = newTasks.find((t) => !t.done);
+      return {
+        tasks: newTasks,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+      };
+    }),
   reorderTasks: (from, to) =>
     set((state) => {
       const copy = [...state.tasks];
@@ -148,15 +166,33 @@ export const useStore = create<AppStore>((set, get) => ({
       if (moved) {
         copy.splice(to, 0, moved);
       }
-      return { tasks: copy };
+      const firstUndone = copy.find((t) => !t.done);
+      return {
+        tasks: copy,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+      };
     }),
   activeTask: () => get().tasks.find((t) => !t.done),
   addSession: (s) =>
     set((state) => ({ sessions: [s, ...state.sessions] })),
   toggleTask: (id) =>
-    set((state) => ({
-      tasks: state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)),
-    })),
+    set((state) => {
+      const newTasks = state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      const firstUndone = newTasks.find((t) => !t.done);
+      return {
+        tasks: newTasks,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+      };
+    }),
+  clearCompletedTasks: () =>
+    set((state) => {
+      const newTasks = state.tasks.filter((t) => !t.done);
+      const firstUndone = newTasks.find((t) => !t.done);
+      return {
+        tasks: newTasks,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+      };
+    }),
   completeActive: (elapsedSec) => {
     const state = get();
     const t = state.tasks.find((task) => !task.done);
@@ -173,9 +209,12 @@ export const useStore = create<AppStore>((set, get) => ({
       corner: state.corner?.name ?? '',
       ambient: state.sound.ambient,
     };
+    const updatedTasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
+    const firstUndone = updatedTasks.find((task) => !task.done);
     set({
       sessions: [session, ...state.sessions],
-      tasks: state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task)),
+      tasks: updatedTasks,
+      activeTaskId: firstUndone ? firstUndone.id : null,
     });
   },
   stopActive: (elapsedSec) => {
@@ -320,8 +359,13 @@ export const useStore = create<AppStore>((set, get) => ({
       get().completeActive(elapsed);
       const nextUndone = get().tasks.find((t) => !t.done);
       set({ activeTaskId: nextUndone ? nextUndone.id : null });
+    } else {
+      set({
+        phase: 'focus',
+        elapsedSec: 0,
+        isRunning: true,
+      });
     }
-    // If not done, keep current activeTaskId
   },
 
   startBreak: () => {
@@ -353,10 +397,12 @@ export const useStore = create<AppStore>((set, get) => ({
       return;
     }
     // Manual: go to ready state (paused)
+    const firstUndone = state.tasks.find((t) => !t.done);
     set({
       phase: 'focus',
       elapsedSec: 0,
       isRunning: false,
+      activeTaskId: firstUndone ? firstUndone.id : null,
     });
   },
 
