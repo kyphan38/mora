@@ -72,6 +72,17 @@ export default function Room() {
     setVideoError(false);
   }, [corner?.id]);
 
+  useEffect(() => {
+    if (!showSettings) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowSettings(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showSettings]);
+
   const active = tasks.find((t) => t.id === activeTaskId) || activeTask();
   const activeTaskName = active ? active.name : '';
 
@@ -292,8 +303,12 @@ export default function Room() {
 
             {phase === 'break' ? (
               <div style={controlsStyle}>
-                <button onClick={finishBreak} style={immersiveCtrlBtnStyle} aria-label="Skip break">
-                  Skip break
+                <button onClick={finishBreak} style={immersiveSkipBreakBtnStyle} aria-label="Skip break">
+                  <span>Skip break</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                    <polygon points="5 4 15 12 5 20" fill="currentColor" />
+                    <line x1="19" y1="5" x2="19" y2="19" />
+                  </svg>
                 </button>
               </div>
             ) : active && phase === 'focus' && (
@@ -360,8 +375,12 @@ export default function Room() {
 
             {phase === 'break' ? (
               <div style={controlsStyle}>
-                <button onClick={finishBreak} style={ctrlBtnStyle} aria-label="Skip break">
-                  Skip break
+                <button onClick={finishBreak} style={skipBreakBtnStyle} aria-label="Skip break">
+                  <span>Skip break</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+                    <polygon points="5 4 15 12 5 20" fill="currentColor" />
+                    <line x1="19" y1="5" x2="19" y2="19" />
+                  </svg>
                 </button>
               </div>
             ) : active && phase === 'focus' && (
@@ -1551,5 +1570,37 @@ const immersiveClearBtnStyle: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'var(--font)',
   transition: 'color var(--dur) var(--ease)',
+};
+
+const skipBreakBtnStyle: React.CSSProperties = {
+  background: 'var(--surface-2)',
+  color: 'var(--ink-2)',
+  border: '1px solid var(--line)',
+  borderRadius: 'var(--r-pill, 100px)',
+  padding: '6px 14px',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+  fontFamily: 'var(--font)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'all var(--dur) var(--ease)',
+};
+
+const immersiveSkipBreakBtnStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.08)',
+  color: 'rgba(255,255,255,0.85)',
+  border: '1px solid rgba(255,255,255,0.2)',
+  borderRadius: 'var(--r-pill, 100px)',
+  padding: '6px 14px',
+  fontSize: 12,
+  fontWeight: 500,
+  cursor: 'pointer',
+  fontFamily: 'var(--font)',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transition: 'all var(--dur) var(--ease)',
 };
 

@@ -248,9 +248,14 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.elapsedSec !== undefined) update.elapsedSec = p.elapsedSec;
     if (p.isRunning !== undefined) update.isRunning = p.isRunning;
     if (p.sessionActive !== undefined) update.sessionActive = p.sessionActive;
-    if (p.activeTaskId !== undefined) update.activeTaskId = p.activeTaskId;
     if (p.audioActive !== undefined) update.audioActive = p.audioActive;
     if (p.autoContinue !== undefined) update.autoContinue = p.autoContinue;
+
+    // Auto-heal activeTaskId on load
+    const tasksList = p.tasks !== undefined ? p.tasks : get().tasks;
+    const firstUndone = tasksList.find((t) => !t.done);
+    update.activeTaskId = p.activeTaskId || (firstUndone ? firstUndone.id : null);
+
     set(update);
   },
   clearSessions: () => set({ sessions: [] }),
@@ -282,9 +287,11 @@ export const useStore = create<AppStore>((set, get) => ({
     }
 
     // Focus phase
-    if (!state.activeTaskId) return;
+    const currentTaskId = state.activeTaskId || state.tasks.find((t) => !t.done)?.id;
+    if (!currentTaskId) return;
+
     const elapsed = state.elapsedSec + 1;
-    set({ elapsedSec: elapsed });
+    set({ elapsedSec: elapsed, activeTaskId: currentTaskId });
     if (state.setup.durationSec > 0 && elapsed >= state.setup.durationSec) {
       get().enterReview();
     }
