@@ -1,4 +1,2 @@
-import { slug } from '../lib/soundFormat';
-
-export const sceneUrl = (name: string) => `/scenes/${slug(name)}.jpg`;
-export const sceneVideoUrl = (name: string) => `/scenes/${slug(name)}.mp4`;
+export const sceneUrl = (id: string) => `/scenes/${id}.jpg`;
+export const sceneVideoUrl = (id: string) => `/scenes/${id}.mp4`;

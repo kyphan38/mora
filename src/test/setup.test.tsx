@@ -16,9 +16,9 @@ describe('Corner screen', () => {
   it('renders all corners', () => {
     render(<App />);
     const names = [
-      'Alpine Escapes House', 'Alpine Morning Desk', 'Autumn Cafe Italy',
-      'Autumn Lakeside Cafe', 'Calm Water Cabin', 'Clear Water Firelight',
-      'Coastal Beach Lofi', 'Countryside Morning River'
+      'Beautiful Courtyard Jazz', 'Chill Fireplace Lounge', 'Cozy Garden Cafe',
+      'Evening Living Room Jazz', 'Quiet Reading Jazz', 'Quiet Window Corner',
+      'Serene Porch Jazz', 'Warm Café Jazz'
     ];
     names.forEach((name) => {
       expect(screen.getByText(name)).toBeInTheDocument();
@@ -33,14 +33,14 @@ describe('Corner screen', () => {
 
   it('clicking a corner sets store.corner and stays on corner screen', () => {
     render(<App />);
-    fireEvent.click(screen.getByText('Alpine Morning Desk'));
-    expect(useStore.getState().corner?.name).toBe('Alpine Morning Desk');
+    fireEvent.click(screen.getByText('Beautiful Courtyard Jazz'));
+    expect(useStore.getState().corner?.name).toBe('Beautiful Courtyard Jazz');
     expect(useStore.getState().screen).toBe('corner');
   });
 
   it('selecting a corner does not override ambient', () => {
     const { unmount } = render(<App />);
-    fireEvent.click(screen.getByText('Alpine Morning Desk'));
+    fireEvent.click(screen.getByText('Beautiful Courtyard Jazz'));
     // Ambient stays at default, not overridden by corner.ambient
     expect(useStore.getState().sound.ambient).toBe('Wind');
     unmount();
@@ -48,7 +48,7 @@ describe('Corner screen', () => {
     // Select a different corner - ambient should remain unchanged
     useStore.getState().setScreen('corner');
     render(<App />);
-    fireEvent.click(screen.getByText('Autumn Cafe Italy'));
+    fireEvent.click(screen.getByText('Chill Fireplace Lounge'));
     expect(useStore.getState().sound.ambient).toBe('Wind');
   });
 

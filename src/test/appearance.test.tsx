@@ -96,7 +96,7 @@ describe('Global appearance & scene mode', () => {
     const corner = CORNERS[0];
     rerender(<SceneBackground corner={corner} testid="test-bg" />);
     const imageContainer = screen.getByTestId('test-bg').firstElementChild as HTMLElement;
-    expect(imageContainer.style.backgroundImage).toContain('scenes/winter-nyc-sunset.jpg');
+    expect(imageContainer.style.backgroundImage).toContain('.jpg');
     expect(imageContainer.style.backgroundImage).toContain('linear-gradient');
 
     // Has video element

@@ -10,9 +10,9 @@ describe('Room immersive scene tests', () => {
     useStore.setState(useStore.getInitialState());
   });
 
-  it('sceneVideoUrl maps corner names to mp4 files', () => {
-    expect(sceneVideoUrl('Autumn Lakeside Cabin')).toBe('/scenes/autumn-lakeside-cabin.mp4');
-    expect(sceneVideoUrl('Alpine Morning Desk')).toBe('/scenes/alpine-morning-desk.mp4');
+  it('sceneVideoUrl maps corner IDs to mp4 files', () => {
+    expect(sceneVideoUrl('autumn-lakeside-cabin')).toBe('/scenes/autumn-lakeside-cabin.mp4');
+    expect(sceneVideoUrl('alpine-morning-desk')).toBe('/scenes/alpine-morning-desk.mp4');
   });
 
   it('renders Room in scene mode with correct elements', () => {

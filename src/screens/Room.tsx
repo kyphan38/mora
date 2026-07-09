@@ -207,7 +207,7 @@ export default function Room() {
   const mainStyleOverride: React.CSSProperties = {
     ...mainStyle,
     background: isSceneMode ? undefined : tintColor,
-    backgroundImage: isSceneMode ? `url("${sceneUrl(corner.name)}"), ${corner.gradient}` : undefined,
+    backgroundImage: isSceneMode ? `url("${sceneUrl(corner.id)}"), ${corner.gradient}` : undefined,
     backgroundSize: isSceneMode ? 'cover, cover' : undefined,
     backgroundPosition: isSceneMode ? 'center, center' : undefined,
     backgroundRepeat: isSceneMode ? 'no-repeat, no-repeat' : undefined,
@@ -223,7 +223,7 @@ export default function Room() {
             <div
               style={{
                 ...baseImgStyle,
-                backgroundImage: `url("${sceneUrl(corner.name)}"), ${corner.gradient}`
+                backgroundImage: `url("${sceneUrl(corner.id)}"), ${corner.gradient}`
               }}
             />
             {!videoError && (
@@ -237,7 +237,7 @@ export default function Room() {
                 style={videoStyle}
                 data-testid="scene-video"
               >
-                <source src={sceneVideoUrl(corner.name)} type="video/mp4" />
+                <source src={sceneVideoUrl(corner.id)} type="video/mp4" />
               </video>
             )}
             <div style={scrimStyle} />
@@ -755,7 +755,7 @@ export default function Room() {
                         style={{
                           height: 48,
                           width: '100%',
-                          backgroundImage: `url("${sceneUrl(c.name)}"), ${c.gradient}`,
+                          backgroundImage: `url("${sceneUrl(c.id)}"), ${c.gradient}`,
                           backgroundSize: 'cover, cover',
                           backgroundPosition: 'center, center',
                           backgroundRepeat: 'no-repeat, no-repeat',

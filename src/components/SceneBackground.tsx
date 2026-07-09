@@ -42,7 +42,7 @@ export function SceneBackground({ corner, testid }: SceneBackgroundProps) {
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundImage: `url("${sceneUrl(corner.name)}"), ${corner.gradient}`,
+          backgroundImage: `url("${sceneUrl(corner.id)}"), ${corner.gradient}`,
           backgroundSize: 'cover, cover',
           backgroundPosition: 'center, center',
           backgroundRepeat: 'no-repeat, no-repeat',
@@ -66,7 +66,7 @@ export function SceneBackground({ corner, testid }: SceneBackgroundProps) {
           }}
           data-testid="scene-video"
         >
-          <source src={sceneVideoUrl(corner.name)} type="video/mp4" />
+          <source src={sceneVideoUrl(corner.id)} type="video/mp4" />
         </video>
       )}
 

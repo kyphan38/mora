@@ -88,6 +88,8 @@ def main():
         'force_keyframes_at_cuts': True,
         'quiet': True,
         'overwrites': True,
+        'js_runtimes': {'node': {}},
+        'remote_components': ['ejs:github'],
     }
 
     try:

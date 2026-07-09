@@ -82,16 +82,16 @@ describe('Room settings panel', () => {
     // Open settings panel
     fireEvent.click(screen.getByTestId('room-settings-toggle'));
 
-    // Find and click Autumn Lakeside Cafe scene item
-    const autumnBtn = screen.getByRole('button', { name: /Autumn Lakeside Cafe/ });
-    fireEvent.click(autumnBtn);
+    // Find and click Beautiful Courtyard Jazz scene item
+    const sceneBtn = screen.getByRole('button', { name: /Beautiful Courtyard Jazz/ });
+    fireEvent.click(sceneBtn);
 
     // Assert store corner updated
-    expect(useStore.getState().corner?.id).toBe('autumn-lakeside-cafe');
-    expect(useStore.getState().corner?.name).toBe('Autumn Lakeside Cafe');
+    expect(useStore.getState().corner?.id).toBe('scene_d5aa07');
+    expect(useStore.getState().corner?.name).toBe('Beautiful Courtyard Jazz');
 
     // Assert background image updated in UI
     const roomMain = screen.getByTestId('room-main');
-    expect(roomMain.style.backgroundImage).toContain('autumn-lakeside-cafe');
+    expect(roomMain.style.backgroundImage).toContain('scene_d5aa07');
   });
 });

@@ -61,7 +61,7 @@ export default function Corner() {
                 <div
                   style={{
                     ...thumbStyle,
-                    backgroundImage: `url("${sceneUrl(c.name)}"), ${c.gradient}`,
+                    backgroundImage: `url("${sceneUrl(c.id)}"), ${c.gradient}`,
                     backgroundSize: 'cover, cover',
                     backgroundPosition: 'center, center',
                     backgroundRepeat: 'no-repeat, no-repeat',
