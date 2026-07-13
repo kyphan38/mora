@@ -14,9 +14,9 @@ describe('Corner screen pagination & sorting', () => {
 
     // Page 1 should show the first 8 items alphabetically:
     const visiblePage1Names = [
-      'Beautiful Courtyard Jazz', 'Chill Fireplace Lounge', 'Cozy Garden Cafe',
-      'Evening Living Room Jazz', 'Quiet Reading Jazz', 'Quiet Window Corner',
-      'Serene Porch Jazz', 'Warm Café Jazz'
+      'Beautiful Courtyard Jazz', 'Calm Guitar Melodies', 'Chill Fireplace Lounge',
+      'Coastal Cabin Fireplace', 'Cozy Garden Cafe', 'Cozy Ocean Sunset',
+      'Evening Living Room Jazz', 'Quiet Reading Jazz'
     ];
 
     visiblePage1Names.forEach((name) => {
@@ -25,8 +25,8 @@ describe('Corner screen pagination & sorting', () => {
       expect(button).not.toHaveStyle('display: none');
     });
 
-    // Warm Coffee Shop Jazz (W) should be hidden on Page 1 (index 8 -> Page 2)
-    const hiddenText = screen.getByText('Warm Coffee Shop Jazz');
+    // Quiet Window Corner should be hidden on Page 1 (index 8 -> Page 2)
+    const hiddenText = screen.getByText('Quiet Window Corner');
     const hiddenBtn = hiddenText.closest('button');
     expect(hiddenBtn).toHaveStyle('display: none');
   });
@@ -38,8 +38,8 @@ describe('Corner screen pagination & sorting', () => {
     const nextBtn = screen.getByTestId('next-page-btn');
     fireEvent.click(nextBtn);
 
-    // Warm Coffee Shop Jazz (W) should now be visible on Page 2
-    const hiddenText = screen.getByText('Warm Coffee Shop Jazz');
+    // Quiet Window Corner should now be visible on Page 2
+    const hiddenText = screen.getByText('Quiet Window Corner');
     const hiddenBtn = hiddenText.closest('button');
     expect(hiddenBtn).not.toHaveStyle('display: none');
 
