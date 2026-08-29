@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-label="mora">
+  <rect width="128" height="128" rx="30" fill="#dc2626"/>
+  <g transform="translate(22 22) scale(3.5)" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8"/>
+    <path class="hand-h" d="M12 12V7.9"/>
+    <path class="hand-m" d="M12 12h3.3"/>
+  </g>
+</svg>
