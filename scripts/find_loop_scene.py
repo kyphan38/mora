@@ -21,7 +21,7 @@ except ImportError:
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import video_quality as vq
+import app.mora.scripts.video_quality as vq
 
 METADATA_PATH = "/Users/kyphan/ws/mora/public/scenes/metadata.json"
 OUTPUT_DIR = "/Users/kyphan/ws/mora/public/scenes"
@@ -292,7 +292,7 @@ def main():
 
         result = search_best_loop(frames, cut_positions)
         if result is None:
-            print("\n[RESULT] Video không có loop — không tìm được đoạn nào tránh được scene-cut.")
+            print("\n[RESULT] Video không có loop - không tìm được đoạn nào tránh được scene-cut.")
             print("          Vui lòng chọn video khác.")
             return
 

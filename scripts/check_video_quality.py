@@ -6,7 +6,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import video_quality as vq
+import app.mora.scripts.video_quality as vq
 
 SCENES_DIR = "/Users/kyphan/ws/mora/public/scenes"
 
@@ -66,7 +66,7 @@ def main():
         print("\n💡 Lưu ý: bộ tiêu chí này bắt lỗi 'nén quá tay so với độ phân giải' (BPP thấp)")
         print("   và 'vỡ macroblock'. Nó KHÔNG bắt được trường hợp nguồn gốc chỉ là 1080p")
         print("   bị scale/crop ép lên 1440p rồi encode CRF thấp (bitrate vẫn cao, ảnh vẫn mờ")
-        print("   vì không có chi tiết thật để mã hoá) — muốn bắt case đó phải so sánh với")
+        print("   vì không có chi tiết thật để mã hoá) - muốn bắt case đó phải so sánh với")
         print("   độ phân giải gốc trên YouTube (yt-dlp -F <url>).")
     else:
         print("\n[OK] Không có file nào bị flag theo tiêu chí BPP/blockiness/profile.")
