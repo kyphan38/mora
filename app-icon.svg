@@ -1,9 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
-  <!-- Rounded square background -->
-  <rect width="1024" height="1024" rx="256" fill="#eef0f1" />
-  <!-- Centered logo mark scaled 32x -->
-  <g transform="translate(128, 128) scale(32)">
-    <rect x="2" y="2" width="20" height="20" rx="6" fill="#748158" />
-    <circle cx="15" cy="10" r="5" fill="#eef0f1" />
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 128 128" fill="none" role="img" aria-label="mora">
+  <rect width="128" height="128" rx="30" fill="#dc2626"/>
+  <g transform="translate(22 22) scale(3.5)" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="8"/>
+    <path class="hand-h" d="M12 12V7.9"/>
+    <path class="hand-m" d="M12 12h3.3"/>
   </g>
 </svg>
