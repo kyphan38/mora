@@ -7,61 +7,70 @@ import { getCustomTrack } from '../platform/customTrackDb';
 /** A track saved on this device (desktop build, or not yet moved to the cloud). */
 const customTracksLocal = (id: string) => useStore.getState().customTracks.some((t) => t.id === id);
 
+/**
+ * Keeps the one audio engine in step with the store. Source, volume and
+ * play state are separate effects on purpose: moving a volume slider must
+ * never reload a track (that restarted it from the beginning).
+ */
 export function useGlobalAudio() {
-  const sound = useStore((s) => s.sound);
+  const ambient = useStore((s) => s.sound.ambient);
+  const ambientVolume = useStore((s) => s.sound.ambientVolume);
+  const musicVolume = useStore((s) => s.sound.musicVolume);
+  const musicStyle = useStore((s) => s.sound.musicStyle);
+  const customTrackId = useStore((s) => s.sound.customTrackId);
   const muted = useStore((s) => s.muted);
   const removeCustomTrack = useStore((s) => s.removeCustomTrack);
-  const userTracks = useStore((s) => s.userTracks);
+  // A string, so a new tracks list with the same URL does not reload the music.
+  const cloudUrl = useStore((s) => (customTrackId ? (s.userTracks.find((t) => t.id === customTrackId)?.url ?? '') : ''));
+  const tracksLoaded = useStore((s) => s.userTracks.length > 0);
   const active = useStore(shouldPlayAudio);
 
   useEffect(() => {
+    getAudioEngine().setAmbient(ambient);
+  }, [ambient]);
+
+  useEffect(() => {
+    const engine = getAudioEngine();
+    // Mute keeps the chosen levels; it only sends silence.
+    engine.setAmbientVolume(muted ? 0 : volumeToGain(ambientVolume));
+    engine.setMusicVolume(muted ? 0 : volumeToGain(musicVolume));
+  }, [ambientVolume, musicVolume, muted]);
+
+  useEffect(() => {
+    const engine = getAudioEngine();
     let cancelled = false;
     let createdUrl: string | null = null;
-    const engine = getAudioEngine();
-    engine.setAmbient(sound.ambient);
-    // Mute keeps the chosen levels; it only sends silence.
-    engine.setAmbientVolume(muted ? 0 : volumeToGain(sound.ambientVolume));
-    engine.setMusicVolume(muted ? 0 : volumeToGain(sound.musicVolume));
 
-    const customTrackId = sound.customTrackId;
-    const cloud = customTrackId ? userTracks.find((t) => t.id === customTrackId) : undefined;
-    if (cloud) {
-      engine.setMusicUrl(cloud.url);
-    } else if (customTrackId && userTracks.length === 0 && !customTracksLocal(customTrackId)) {
-      // A cloud track whose list has not loaded yet: keep the music quiet until it does.
+    if (!customTrackId) {
+      engine.setMusic(musicStyle);
+    } else if (cloudUrl) {
+      engine.setMusicUrl(cloudUrl);
+    } else if (!tracksLoaded && !customTracksLocal(customTrackId)) {
+      // A cloud track whose list has not loaded yet: stay quiet until it does.
       engine.setMusicUrl(null);
-    } else if (customTrackId) {
-      getCustomTrack(customTrackId).then((rec) => {
+    } else {
+      void getCustomTrack(customTrackId).then((rec) => {
         if (cancelled) return;
         if (rec) {
           createdUrl = URL.createObjectURL(rec.blob);
           engine.setMusicUrl(createdUrl);
         } else {
-          // Blob missing (e.g. site data cleared) - fall back to the last preset and prune the dangling entry.
-          engine.setMusicUrl(null);
-          engine.setMusic(sound.musicStyle);
+          // Blob missing (site data cleared): back to the style, drop the dangling entry.
+          engine.setMusic(musicStyle);
           removeCustomTrack(customTrackId);
         }
       });
-    } else {
-      engine.setMusicUrl(null);
-      engine.setMusic(sound.musicStyle);
     }
 
     return () => {
       cancelled = true;
-      if (createdUrl) {
-        URL.revokeObjectURL(createdUrl);
-      }
+      if (createdUrl) URL.revokeObjectURL(createdUrl);
     };
-  }, [sound.ambient, sound.musicStyle, sound.ambientVolume, sound.musicVolume, sound.customTrackId, muted, removeCustomTrack, userTracks]);
+  }, [customTrackId, cloudUrl, tracksLoaded, musicStyle, removeCustomTrack]);
 
   useEffect(() => {
     const engine = getAudioEngine();
-    if (active) {
-      engine.play();
-    } else {
-      engine.pause();
-    }
+    if (active) engine.play();
+    else engine.pause();
   }, [active]);
 }
