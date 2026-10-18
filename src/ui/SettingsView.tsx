@@ -4,7 +4,6 @@ import { loadTheme, saveTheme, type Theme } from '../platform/prefs';
 import { Words, Label } from './Words';
 import { LogiSettings } from './LogiSettings';
 import { useAuth, signOut } from '../platform/auth';
-import { isTauri } from '../platform/persistence';
 
 const KEYS: [string, string][] = [
   ['space', 'play / pause'],
@@ -16,7 +15,6 @@ const KEYS: [string, string][] = [
   ['m', 'mute'],
   ['h', 'history'],
   ['?', 'this page'],
-  ['⌘⇧M', 'play / pause from anywhere (desktop)'],
 ];
 
 export function SettingsView() {
@@ -123,7 +121,7 @@ export function SettingsView() {
         )}
       </section>
 
-      {!isTauri() && user && (
+      {user && (
         <section>
           <Label>account</Label>
           <div className="flex items-baseline gap-4 text-[14px]">

@@ -4,7 +4,6 @@ import { DURATIONS } from '../data/durations';
 import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
 import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../core/pomodoro';
-import { mergeOutbox, type LogiBlock } from '../core/logiLink';
 import { liveElapsed, TAKEOVER_SEC, type LiveTimer } from '../core/liveModel';
 
 export type Phase = 'focus' | 'break' | 'review';
@@ -59,7 +58,6 @@ interface AppStore {
     dailyGoalMin?: number;
     muted?: boolean;
     logi?: LogiLink;
-    outbox?: LogiBlock[];
     hiddenScenes?: string[];
   }) => void;
   clearSessions: () => void;
@@ -126,14 +124,11 @@ interface AppStore {
   muted: boolean;
   setMuted: (b: boolean) => void;
 
-  /** Link to logi: finished blocks are queued and sent there. Off by default. */
+  /** Live link to logi (account-wide, synced in prefs). Off by default. */
   logi: LogiLink;
   setLogi: (patch: Partial<LogiLink>) => void;
-  outbox: LogiBlock[];
-  enqueueBlocks: (blocks: LogiBlock[]) => void;
-  dropFromOutbox: (ids: string[]) => void;
-  /** Last send result for Settings. Not persisted. */
-  logiStatus: { state: 'idle' | 'sending' | 'ok' | 'error'; message: string; at: number };
+  /** What the Cloud Function last did with logi, for Settings. Not persisted. */
+  logiStatus: { state: 'idle' | 'ok' | 'error'; message: string; at: number };
   setLogiStatus: (s: AppStore['logiStatus']) => void;
 
   /** Music the owner uploaded (cloud only, mirrored from Firestore). Not persisted locally. */
@@ -165,15 +160,13 @@ interface AppStore {
     userTracks?: UserTrack[];
     prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes'>> & {
       sound?: Omit<SoundConfig, 'customTrackId'> & { customTrackId?: string | null };
-      logi?: { enabled: boolean; url: string };
+      logi?: { enabled: boolean };
     };
   }) => void;
 }
 
 export interface LogiLink {
   enabled: boolean;
-  url: string;
-  token: string;
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -237,8 +230,7 @@ export const useStore = create<AppStore>((set, get) => ({
   notes: [],
   dailyGoalMin: 0,
   muted: false,
-  logi: { enabled: false, url: 'https://logi.kyphan38.com', token: '' },
-  outbox: [],
+  logi: { enabled: false },
   logiStatus: { state: 'idle', message: '', at: 0 },
   userScenes: [],
   userTracks: [],
@@ -406,8 +398,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.longBreak !== undefined) update.longBreak = p.longBreak;
     if (p.dailyGoalMin !== undefined) update.dailyGoalMin = p.dailyGoalMin;
     if (p.muted !== undefined) update.muted = p.muted;
-    if (p.logi !== undefined) update.logi = p.logi;
-    if (p.outbox !== undefined) update.outbox = p.outbox;
+    if (p.logi !== undefined) update.logi = { enabled: p.logi.enabled === true };
     if (p.hiddenScenes !== undefined) update.hiddenScenes = p.hiddenScenes;
     update.runSyncAt = null;
 
@@ -714,11 +705,6 @@ export const useStore = create<AppStore>((set, get) => ({
   setMuted: (b) => set({ muted: b }),
 
   setLogi: (patch) => set((s) => ({ logi: { ...s.logi, ...patch } })),
-  enqueueBlocks: (blocks) => set((s) => ({ outbox: mergeOutbox(s.outbox, blocks) })),
-  dropFromOutbox: (ids) => {
-    const drop = new Set(ids);
-    set((s) => ({ outbox: s.outbox.filter((b) => !drop.has(b.id)) }));
-  },
   setLogiStatus: (logiStatus) => set({ logiStatus }),
 
   applyLive: (l, now = Date.now()) => {

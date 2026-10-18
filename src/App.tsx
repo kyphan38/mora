@@ -3,7 +3,6 @@ import { useStore } from './store/useStore';
 import type { Corner } from './types';
 import { useGlobalAudio } from './hooks/useGlobalAudio';
 import { useSessionRuntime } from './hooks/useSessionRuntime';
-import { useLogiSync } from './hooks/useLogiSync';
 import { useCloudSync } from './hooks/useCloudSync';
 import { FocusView } from './ui/FocusView';
 import { HistoryView } from './ui/HistoryView';
@@ -12,26 +11,20 @@ import { SceneLayer } from './ui/SceneLayer';
 import { Sheet } from './ui/Sheet';
 import { SignInView } from './ui/SignInView';
 import { useAuth, startAuth } from './platform/auth';
-import { isTauri } from './platform/persistence';
 
-/**
- * Web and PWA need a signed-in account (sync); the Tauri build is local-only
- * and has no sign-in, because Google blocks sign-in inside embedded webviews.
- */
+/** mora needs a signed-in account: everything syncs across devices. */
 export default function App() {
   const status = useAuth((s) => s.status);
-  const local = isTauri();
   useEffect(() => {
-    if (!local) startAuth();
-  }, [local]);
-  if (!local && status !== 'signed-in') return <SignInView />;
+    startAuth();
+  }, []);
+  if (status !== 'signed-in') return <SignInView />;
   return <MoraApp />;
 }
 
 function MoraApp() {
   useGlobalAudio();
   useSessionRuntime();
-  useLogiSync();
   useCloudSync();
   const screen = useStore((s) => s.screen);
   const setScreen = useStore((s) => s.setScreen);

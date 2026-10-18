@@ -4,7 +4,6 @@ import {
   selectAdapter,
   toPersisted,
   migrate,
-  isTauri,
 } from './persistence';
 
 const CLOCK_SAVE_MS = 15_000;
@@ -42,7 +41,6 @@ export async function initPersistence(
   }
 
   let timer: ReturnType<typeof setTimeout> | null = null;
-  let closeUnsub: (() => void) | null = null;
 
   let lastSaveAt = 0;
   const doSave = async () => {
@@ -67,33 +65,11 @@ export async function initPersistence(
     }
   });
 
-  if (isTauri()) {
-    (async () => {
-      try {
-        const { getCurrentWindow } = await import('@tauri-apps/api/window');
-        const win = getCurrentWindow();
-        closeUnsub = await win.onCloseRequested(async (event) => {
-          event.preventDefault();
-          useStore.getState().setIsRunning(false);
-          try {
-            await doSave();
-          } finally {
-            await win.destroy();
-          }
-        });
-      } catch (err) {
-        console.error('Failed to register onCloseRequested handler:', err);
-      }
-    })();
-  }
 
   return {
     unsubscribe: () => {
       if (timer) clearTimeout(timer);
       unsub();
-      if (closeUnsub) {
-        closeUnsub();
-      }
     },
     saveNow: async () => {
       if (timer) clearTimeout(timer);

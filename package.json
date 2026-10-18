@@ -7,10 +7,7 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.build.json && vite build",
     "preview": "vite preview",
-    "tauri": "tauri",
     "test": "vitest run",
-    "build:desktop": "tauri build",
-    "build:desktop:debug": "tauri build --debug",
     "icons": "node scripts/make-icons.mjs",
     "rules": "node scripts/rules.mjs",
     "emu": "npm run rules -- --emu && firebase emulators:start --config firebase.emu.json --only auth,firestore,storage --project demo-mora",
@@ -18,10 +15,6 @@
     "test:emu": "npm run rules -- --emu && VITE_USE_EMULATORS=1 firebase emulators:exec --config firebase.emu.json --only auth,firestore,storage --project demo-mora 'vitest run --config vitest.emu.config.ts'"
   },
   "dependencies": {
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-global-shortcut": "^2.3.2",
-    "@tauri-apps/plugin-notification": "^2.3.3",
-    "@tauri-apps/plugin-store": "^2",
     "firebase": "^12.19.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -29,7 +22,6 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",
-    "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.6.0",
     "@testing-library/react": "^16.1.0",
     "@types/node": "^26.1.0",

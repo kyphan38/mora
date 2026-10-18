@@ -133,7 +133,6 @@ export interface SyncedPrefs {
   autoContinue: boolean;
   dailyGoalMin: number;
   logiEnabled: boolean;
-  logiUrl: string;
   hiddenScenes: string[];
 }
 

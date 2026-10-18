@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import 'fake-indexeddb/auto';
 import App from '../App';
 import { useStore } from '../store/useStore';
@@ -168,9 +168,6 @@ describe('Focus screen', () => {
 
 describe('Sound sheet', () => {
   beforeEach(() => resetCustomTrackDbForTest());
-  afterEach(() => {
-    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
-  });
 
   it('opens, changes sound, and closes with Escape', () => {
     seed();
@@ -204,30 +201,6 @@ describe('Sound sheet', () => {
     expect(st().customTracks).toEqual([]);
   });
 
-  it('desktop: uploading a track selects it; a second one replaces it; remove clears it', async () => {
-    // The desktop build keeps one track on the device; the web uses the cloud.
-    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
-    render(<App />);
-    fireEvent.click(screen.getByTestId('room-settings-toggle'));
-    const input = screen.getByTestId('custom-track-input');
-    fireEvent.change(input, { target: { files: [new File(['a'], 'first.mp3', { type: 'audio/mpeg' })] } });
-    await waitFor(() => expect(st().customTracks.length).toBe(1));
-    expect(st().sound.customTrackId).toBe(st().customTracks[0].id);
-    expect(screen.getByRole('radio', { name: 'first' })).toBeInTheDocument();
-
-    fireEvent.change(input, { target: { files: [new File(['b'], 'second.mp3', { type: 'audio/mpeg' })] } });
-    await waitFor(() => expect(st().customTracks[0]?.name).toBe('second.mp3'));
-    expect(st().customTracks.length).toBe(1);
-
-    fireEvent.click(screen.getByRole('radio', { name: 'Piano' }));
-    expect(st().sound.customTrackId).toBeNull();
-    expect(st().customTracks.length).toBe(1);
-
-    // remove acts on the selected track
-    fireEvent.click(screen.getByRole('radio', { name: 'second' }));
-    fireEvent.click(screen.getByText('remove'));
-    expect(st().customTracks).toEqual([]);
-  });
 });
 
 describe('Settings screen', () => {

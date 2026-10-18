@@ -1,18 +1,16 @@
 import { useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import { useOsSync } from './useOsSync';
 import { getAudioEngine } from '../platform/audio';
 import { createNotifyBridge } from '../platform/notify';
 import { sessionCompleteNotification } from '../core/soundFormat';
-import { sessionTimer } from '../core/sessionTimer';
 import { setScreenAwake, wakeLockLost } from '../platform/pwa';
 
 const SYNC_MS = 250;
 
 /**
  * App-level session runtime: keeps the clock in step with the wall clock,
- * chimes and notifies at natural phase ends, and drives the hotkey and tray
- * on every screen (not only the Room).
+ * keeps a phone screen awake while running, and chimes and notifies at
+ * natural phase ends.
  */
 export function useSessionRuntime() {
   const isRunning = useStore((s) => s.isRunning);
@@ -57,25 +55,4 @@ export function useSessionRuntime() {
       }
     });
   }, [notify]);
-
-  const { pushTick } = useOsSync({
-    onToggle: () => useStore.getState().togglePlay(),
-  });
-
-  const sessionActive = useStore((s) => s.sessionActive);
-  const phase = useStore((s) => s.phase);
-  const lastFocusSec = useStore((s) => s.lastFocusSec);
-  const longBreak = useStore((s) => s.longBreak);
-  const durationSec = useStore((s) => s.setup.durationSec);
-  const elapsedSec = useStore((s) => s.elapsedSec);
-  const taskName = useStore((s) => s.tasks.find((t) => !t.done)?.name ?? '');
-
-  useEffect(() => {
-    if (!sessionActive) {
-      pushTick(null, '');
-      return;
-    }
-    const timer = sessionTimer({ phase, lastFocusSec, longBreak, setup: { durationSec }, elapsedSec, isRunning });
-    pushTick(timer, phase === 'break' ? 'break' : taskName);
-  }, [sessionActive, phase, lastFocusSec, longBreak, durationSec, elapsedSec, isRunning, taskName, pushTick]);
 }

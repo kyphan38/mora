@@ -4,7 +4,7 @@ import { getAudioEngine } from '../platform/audio';
 import { volumeToGain } from '../core/soundFormat';
 import { getCustomTrack } from '../platform/customTrackDb';
 
-/** A track saved on this device (desktop build, or not yet moved to the cloud). */
+/** A track still saved on this device from before cloud tracks (moves up once). */
 const customTracksLocal = (id: string) => useStore.getState().customTracks.some((t) => t.id === id);
 
 /**

@@ -1,10 +1,7 @@
 import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack, Note } from '../types';
-import type { LogiBlock } from '../core/logiLink';
 
 interface LogiLink {
   enabled: boolean;
-  url: string;
-  token: string;
 }
 
 type Phase = 'focus' | 'break' | 'review';
@@ -34,7 +31,6 @@ export interface PersistedState {
   dailyGoalMin?: number;
   muted?: boolean;
   logi?: LogiLink;
-  outbox?: LogiBlock[];
   hiddenScenes?: string[];
 }
 
@@ -72,36 +68,8 @@ export function createLocalStorageAdapter(key = 'mora-state'): StorageAdapter {
   };
 }
 
-export function createTauriAdapter(file = 'mora.json'): StorageAdapter {
-  return {
-    async load() {
-      try {
-        const { load } = await import('@tauri-apps/plugin-store');
-        const store = await load(file);
-        const state = await store.get<PersistedState>('state');
-        return state ?? null;
-      } catch {
-        return null;
-      }
-    },
-    async save(state) {
-      try {
-        const { load } = await import('@tauri-apps/plugin-store');
-        const store = await load(file);
-        await store.set('state', state);
-        await store.save();
-      } catch {
-        // swallow
-      }
-    },
-  };
-}
-
-export const isTauri = () =>
-  typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window;
-
 export function selectAdapter(): StorageAdapter {
-  return isTauri() ? createTauriAdapter() : createLocalStorageAdapter();
+  return createLocalStorageAdapter();
 }
 
 export function toPersisted(s: {
@@ -126,7 +94,6 @@ export function toPersisted(s: {
   dailyGoalMin?: number;
   muted?: boolean;
   logi?: LogiLink;
-  outbox?: LogiBlock[];
   hiddenScenes?: string[];
 }): PersistedState {
   return {
@@ -152,7 +119,6 @@ export function toPersisted(s: {
     dailyGoalMin: s.dailyGoalMin ?? 0,
     muted: s.muted ?? false,
     ...(s.logi ? { logi: s.logi } : {}),
-    outbox: s.outbox ?? [],
     hiddenScenes: s.hiddenScenes ?? [],
   };
 }

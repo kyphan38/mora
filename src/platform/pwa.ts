@@ -1,9 +1,6 @@
-import { isTauri } from './persistence';
+// Helpers for the installable web app (PWA).
 
-// Browser-only helpers for the installable web app. The desktop (Tauri)
-// build skips all of them: it has its own window, storage and notifications.
-
-const isWeb = () => typeof window !== 'undefined' && !isTauri();
+const isWeb = () => typeof window !== 'undefined';
 
 /** Offline shell. Only in a production build: in dev a cache would serve old code. */
 export async function registerServiceWorker(): Promise<void> {

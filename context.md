@@ -1,28 +1,27 @@
 # mora - context
 
-A quiet focus timer. Local-first, single user, no account. Runs as a desktop
-app (Tauri v2) today; the same build is meant to become a PWA for phones.
+A quiet focus timer for one user. Web app + PWA only (the Tauri desktop
+build was removed 2026-10-18). Google sign-in, data synced with Firebase.
 Plan and decisions: `PLAN-improve.md`.
 
 ## Stack
 
 Vite 5 + React 18 + TypeScript, Zustand 4, Tailwind v4, Vitest + Testing
-Library (jsdom). Tauri plugins: store, global-shortcut, notification.
+Library (jsdom). Firebase (Auth, Firestore, Storage, Functions).
 
 ## Layout of `src/`
 
 - `core/` pure logic, no React, no device APIs: `timer` (format, remaining),
   `sessionTimer`, `pomodoro` (break lengths), `format` (dates, minutes),
-  `trayFormat`, `soundFormat`, `uid`.
-- `platform/` everything that touches the device, each with a no-op or web
-  fallback, loaded with dynamic imports (never a top-level `@tauri-apps/*`
-  import): `persistence` + `persist` (Tauri store / localStorage / memory),
-  `audio`, `notify`, `os` (tray + hotkey), `customTrackDb` (IndexedDB),
-  `prefs` (theme).
+  `soundFormat`, `uid`.
+- `platform/` everything that touches the device or Firebase:
+  `persistence` + `persist` (localStorage / memory), `audio`, `notify`,
+  `customTrackDb` (IndexedDB, only for the one-time move to the cloud),
+  `prefs` (theme), `firebase` / `firestore` / `storage` / `functions`.
 - `store/useStore.ts` the single store: tasks, sessions, sound, setup,
   session runtime, pomodoro phase.
-- `hooks/` `useSessionRuntime` (wall-clock sync, chime + notification,
-  hotkey + tray), `useGlobalAudio`, `useOsSync`, `useIdle`.
+- `hooks/` `useSessionRuntime` (wall-clock sync, wake lock, chime +
+  notification), `useGlobalAudio`, `useCloudSync`, `useIdle`.
 - `ui/` components. `data/` scenes, sounds, durations. `styles/globals.css`
   tokens and motion.
 
@@ -65,7 +64,7 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - `public/sw.js`: HTML stale-while-revalidate, `/assets` `/icons`
   `/scenes/*.jpg` cache-first, audio/video never cached (size, Range
   requests). Bump `CACHE` when the strategy changes.
-- `platform/pwa.ts`: register the SW (production web only, never in Tauri),
+- `platform/pwa.ts`: register the SW (production only),
   ask for persistent storage, ask notification permission on the first
   Play, hold a screen wake lock while running.
 - Notifications on the web go through the SW registration when there is
@@ -85,9 +84,8 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 
 ## Sign-in and Firebase
 
-Web/PWA require Google sign-in with the one allowed email
-(`platform/auth.ts`, `ui/SignInView.tsx`); the Tauri build skips it and
-stays local. `platform/firebase.ts` is lazy (nothing loads on import),
+Google sign-in with the one allowed email is always required
+(`platform/auth.ts`, `ui/SignInView.tsx`). `platform/firebase.ts` is lazy (nothing loads on import),
 uses a persistent offline cache, and its auth domain is the page host on
 https (proxied by `vercel.json` to `kyphan38-mora-app.firebaseapp.com`) so
 iPhone Safari sign-in works. Rules: edit `firestore.rules.template`, run
@@ -95,7 +93,7 @@ iPhone Safari sign-in works. Rules: edit `firestore.rules.template`, run
 Emulators: `npm run emu`, then `npm run dev:emu`. Tests mock
 `platform/auth` in `src/test/setup.ts`. Plan: `PLAN-sync.md`.
 
-## Cloud sync (web/PWA, signed in)
+## Cloud sync
 
 `hooks/useCloudSync.ts` lazy-loads `platform/sync.ts` once signed in.
 Firestore `users/{uid}/tasks|sessions|notes/{id}` and `prefs/main`;
@@ -103,7 +101,7 @@ doc shapes in `core/syncModel.ts` (clamped to what the rules accept).
 Snapshots apply through `store.applyRemote`; local changes are diffed by
 fingerprint against the last remote copy and written in batches (deletes
 included). First sync per device merges by id (`mora.synced.<uid>` in
-localStorage). Device-only: mute, theme, logi token (the chosen track syncs).
+localStorage). Device-only: mute, theme (the chosen track and "send to logi" sync).
 Integration tests: `PATH=/opt/homebrew/opt/openjdk@21/bin:$PATH npm run
 test:emu` (emulators: auth 9199, firestore 8180, storage 9399; rules from the
 `*.emu.rules` files). `npm run emu` + launch config `mora-emu` (port 1430)
@@ -121,14 +119,14 @@ leader to log the block, then finishes it itself. Each device has a random
 ## Deploy (web)
 
 Vercel project `mora` from GitHub `kyphan38/mora`, single Vite app (not
-"Services"; `src-tauri` is ignored via `.vercelignore`). `vercel.json`:
+"Services"). `vercel.json`:
 SPA rewrite to `index.html`, `sw.js` and `index.html` never cached,
 `/assets` immutable. Domain: `mora.kyphan38.com` (CNAME to Vercel). No
 Firebase project kyphan38-mora-app (env `VITE_FIREBASE_*`, `VITE_ALLOWED_USER_EMAIL`).
 
 ## Link to logi
 
-Web/PWA, live (PLAN-live-logi.md): every run of the clock has a `runId`.
+Live (PLAN-live-logi.md), off by default (Settings, synced per account): every run of the clock has a `runId`.
 Function `liveToLogi` watches `live/current` and calls logi
 `/api/ingest/mora/live` start/stop (one logi record `mora_<runId>` per
 run, token `MORA_INGEST_TOKEN`). Stopping a mora record in logi triggers
@@ -136,26 +134,12 @@ logi's `moraStopped`, which calls mora's `stopFromLogi` (token
 `LOGI_CONTROL_TOKEN`): the timer stops on every device and the block is
 saved. Rules in `functions/src/live.ts` (tested from src/test). Status in
 `users/{uid}/meta/logi`.
-Desktop (Tauri, no account) sends from the device as below.
-
-Off by default (Settings → send to logi). Each logged session becomes a
-block `{id, kind, label, startAt, endAt}` in a persisted `outbox`
-(`core/logiLink.ts`); the block ends at the session end and lasts its
-focused minutes. `hooks/useLogiSync.ts` queues sessions that just ended
-(not history loaded from storage), sends up to 50 per request to
-`<logi>/api/ingest/mora` with `Bearer <token>`, retries on `online` and
-every 5 minutes, drops accepted and permanently rejected blocks, keeps
-`write-failed` ones. logi stores each block as doc `mora_<id>` (resends
-are safe), source `mora`. Edits or deletes in mora History after sending
-are not synced. logi side: `logi/src/app/api/ingest/mora/route.ts`, env
-`MORA_INGEST_TOKEN`.
 
 ## Commands
 
 - `npm run dev` web dev server (port 1420)
 - `npm test` all tests; `npm run build` type check + build
-- `npm run tauri dev` desktop dev; `npm run build:desktop` bundle (see
-  `RELEASE.md`)
+- `npm run test:emu` emulator tests (Java 21, see Cloud sync)
 
 ## Assets
 
@@ -173,10 +157,10 @@ listed in Firestore `users/{uid}/scenes`; defaults can only be hidden
 a slow CSS drift, `still: true`). Portrait screens use `<id>.portrait.mp4|jpg` when the scene has
 `portrait: true` (`scripts/make-portrait.sh` cuts 9:16 from the middle).
 Scene video is saved on the device after the first play
-(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. Own music (web): `ui/MusicPicker.tsx` + `platform/trackUpload.ts`, Storage
+(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. Own music: `ui/MusicPicker.tsx` + `platform/trackUpload.ts`, Storage
 `users/{uid}/audio/`, Firestore `users/{uid}/tracks`; the chosen track id
 syncs in prefs; a device-saved track (IndexedDB) moves up once
-(`migrateLocalTrack`). Desktop keeps one track in IndexedDB.
+(`migrateLocalTrack`).
 Sounds: Cloud Storage `defaults/audio/ambient|music/<slug>.mp3` (slug from
 `core/soundFormat.slug`), staged in `media/audio/`, uploaded with
 `scripts/upload-defaults.sh audio`; the engine plays the device copy when

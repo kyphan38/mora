@@ -1,5 +1,5 @@
-// Firestore client, in its own module so the sign-in screen and the desktop
-// build never download it; sync code imports it on demand.
+// Firestore client, in its own module so the sign-in screen never downloads
+// it; sync code imports it on demand.
 import {
   connectFirestoreEmulator,
   getFirestore,

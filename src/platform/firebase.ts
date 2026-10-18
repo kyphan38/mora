@@ -1,5 +1,5 @@
-// Firebase client (web and PWA only; the Tauri build stays local and never loads it).
-// Lazy: nothing runs on import, so tests and the desktop build need no config.
+// Firebase client.
+// Lazy: nothing runs on import, so tests need no config.
 //
 // VITE_USE_EMULATORS=1 talks to the local Auth (9199) / Firestore (8180) emulators with the
 // fake project 'demo-mora', so development never touches real data.

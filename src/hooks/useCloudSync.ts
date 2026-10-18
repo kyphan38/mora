@@ -1,17 +1,16 @@
 import { useEffect } from 'react';
 import { useAuth } from '../platform/auth';
-import { isTauri } from '../platform/persistence';
 import { useStore } from '../store/useStore';
 
-/** Syncs tasks, history, notes, settings and the running timer while signed in (web/PWA only). */
+/** Syncs tasks, history, notes, settings and the running timer while signed in . */
 export function useCloudSync() {
   const uid = useAuth((s) => s.user?.uid ?? null);
 
   useEffect(() => {
-    if (!uid || isTauri()) return;
+    if (!uid) return;
     let stop: (() => void) | null = null;
     let cancelled = false;
-    // Loaded on demand so the desktop build and tests never pull Firestore in.
+    // Loaded on demand so the sign-in screen and tests never pull Firestore in.
     void Promise.all([import('../platform/sync'), import('../platform/liveSync')]).then(([{ startSync }, { startLiveSync }]) => {
       if (cancelled) return;
       const stopData = startSync(uid);

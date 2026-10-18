@@ -67,13 +67,3 @@ describe('sign-in gate (web)', () => {
     expect(fa.signInWithPopup).toHaveBeenCalledTimes(1);
   });
 });
-
-describe('desktop (Tauri)', () => {
-  it('skips sign-in: the local app opens directly', () => {
-    act(() => useAuth.setState({ status: 'signed-out', user: null }));
-    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
-    render(<App />);
-    expect(screen.getByTestId('room-timer-card')).toBeInTheDocument();
-    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
-  });
-});

@@ -13,7 +13,7 @@ import {
 
 // jsdom's Blob polyfill isn't recognized by Node's structuredClone (which fake-indexeddb/
 // real IndexedDB implementations use internally), so tests use Node's native Blob to
-// faithfully exercise the same clone path a real browser/Tauri webview would use.
+// faithfully exercise the same clone path a real browser would use.
 const makeRecord = (id: string): CustomTrackRecord => ({
   id,
   name: `${id}.mp3`,

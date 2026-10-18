@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useAuth } from '../platform/auth';
-import { isTauri } from '../platform/persistence';
 import { CORNERS } from '../data/corners';
 import { cornerFromUserScene, sceneImage } from '../data/sceneManifest';
 import type { Corner, UserScene } from '../types';
@@ -24,7 +23,7 @@ export function ScenePicker() {
   const toggleHiddenScene = useStore((s) => s.toggleHiddenScene);
   const showAllScenes = useStore((s) => s.showAllScenes);
   const uid = useAuth((s) => s.user?.uid ?? null);
-  const canUpload = !!uid && !isTauri();
+  const canUpload = !!uid;
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [picked, setPicked] = useState<File | null>(null);

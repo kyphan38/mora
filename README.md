@@ -7,5 +7,5 @@ npm install
 npm run dev
 ```
 
-Desktop app: `npm run tauri dev`. Build and release: `RELEASE.md`.
+Web app + PWA at https://mora.kyphan38.com (Vercel).
 How the code is laid out: `context.md`.

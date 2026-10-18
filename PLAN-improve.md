@@ -298,3 +298,9 @@ Không lấy:
   hàng đợi gửi, tự thử lại, phần cài đặt "send to logi" (tắt mặc định),
   nút gửi lại 7 ngày gần nhất. Đã thử CORS từ mora sang logi local.
   Owner cần: tạo token, đặt vào Vercel của logi, dán vào mora Settings.
+
+## Bỏ bản desktop (2026-10-18)
+
+Owner chỉ dùng web + PWA. Đã xoá `src-tauri/`, workflow release,
+`RELEASE.md`, tray/hotkey (`os.ts`, `useOsSync`), cách gửi logi cũ từ máy
+(`useLogiSync`, outbox) và các nhánh `isTauri`. Đăng nhập luôn bắt buộc.

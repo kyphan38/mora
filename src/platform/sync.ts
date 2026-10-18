@@ -76,7 +76,6 @@ function localPrefs(s: State): SyncedPrefs {
     autoContinue: s.autoContinue,
     dailyGoalMin: s.dailyGoalMin,
     logiEnabled: s.logi.enabled,
-    logiUrl: s.logi.url,
     hiddenScenes: s.hiddenScenes,
   };
 }
@@ -231,7 +230,7 @@ export function startSync(uid: string, onReady?: () => void): () => void {
               corner: d.cornerId ? findCorner(d.cornerId) : null,
               autoContinue: d.autoContinue,
               dailyGoalMin: d.dailyGoalMin,
-              logi: { enabled: d.logiEnabled, url: d.logiUrl },
+              logi: { enabled: d.logiEnabled === true },
               hiddenScenes: Array.isArray(d.hiddenScenes) ? d.hiddenScenes : [],
             },
           }),

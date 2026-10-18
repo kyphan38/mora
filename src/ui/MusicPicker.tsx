@@ -2,10 +2,7 @@ import { useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { MUSIC_STYLES } from '../data/sound';
 import { getAudioEngine } from '../platform/audio';
-import { putCustomTrack, deleteCustomTrack } from '../platform/customTrackDb';
 import { useAuth } from '../platform/auth';
-import { isTauri } from '../platform/persistence';
-import { uid } from '../core/uid';
 import { Words } from './Words';
 
 const TRACK = 'track:';
@@ -14,42 +11,29 @@ const MAX_BYTES = 50 * 1024 * 1024;
 
 type Upload = { name: string; progress: number; cancel: () => void } | null;
 
-/**
- * Music styles plus your own tracks. Signed in on the web, tracks live in
- * the cloud (every device has them, several allowed). The desktop build keeps
- * one track on the device.
- */
+/** Music styles plus your own tracks, stored in the cloud so every device has them. */
 export function MusicPicker() {
   const sound = useStore((s) => s.sound);
   const userTracks = useStore((s) => s.userTracks);
-  const localTrack = useStore((s) => s.customTracks[0] ?? null);
   const setMusicStyle = useStore((s) => s.setMusicStyle);
   const selectCustomTrack = useStore((s) => s.selectCustomTrack);
-  const addCustomTrack = useStore((s) => s.addCustomTrack);
-  const removeCustomTrack = useStore((s) => s.removeCustomTrack);
   const ownerUid = useAuth((s) => s.user?.uid ?? null);
-  const cloud = !!ownerUid && !isTauri();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [upload, setUpload] = useState<Upload>(null);
   const preview = () => getAudioEngine().play();
 
-  const tracks = cloud
-    ? userTracks.map((t) => ({ id: t.id, name: t.name }))
-    : localTrack
-      ? [{ id: localTrack.id, name: localTrack.name.replace(/\.[^./]+$/, '') }]
-      : [];
-  const selected = tracks.find((t) => t.id === sound.customTrackId);
+  const selected = userTracks.find((t) => t.id === sound.customTrackId);
   const options = [
     ...MUSIC_STYLES.map((m) => ({ value: m, label: m })),
-    ...tracks.map((t) => ({ value: TRACK + t.id, label: t.name })),
+    ...userTracks.map((t) => ({ value: TRACK + t.id, label: t.name })),
   ];
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file) return;
+    if (!file || !ownerUid) return;
     if (!file.type.startsWith('audio/') && !ACCEPTED_EXTENSIONS.test(file.name)) {
       setError('Choose an MP3, WAV, M4A or OGG file.');
       return;
@@ -59,48 +43,25 @@ export function MusicPicker() {
       return;
     }
     setError(null);
-    if (cloud && ownerUid) {
-      const { uploadTrack } = await import('../platform/trackUpload');
-      const h = uploadTrack(ownerUid, file, (p) => setUpload((u) => (u ? { ...u, progress: p } : u)));
-      setUpload({ name: file.name.replace(/\.[^./]+$/, ''), progress: 0, cancel: h.cancel });
-      try {
-        const t = await h.done;
-        selectCustomTrack(t.id);
-        preview();
-      } catch (err) {
-        if ((err as { code?: string }).code !== 'storage/canceled') setError('Upload failed. Try again.');
-      } finally {
-        setUpload(null);
-      }
-      return;
-    }
-    // Desktop: one track on the device.
-    const id = uid();
-    const meta = { id, name: file.name, mimeType: file.type, size: file.size, createdAt: Date.now() };
+    const { uploadTrack } = await import('../platform/trackUpload');
+    const h = uploadTrack(ownerUid, file, (p) => setUpload((u) => (u ? { ...u, progress: p } : u)));
+    setUpload({ name: file.name.replace(/\.[^./]+$/, ''), progress: 0, cancel: h.cancel });
     try {
-      await putCustomTrack({ ...meta, blob: file });
-    } catch {
-      setError('Could not save that file.');
-      return;
+      const t = await h.done;
+      selectCustomTrack(t.id);
+      preview();
+    } catch (err) {
+      if ((err as { code?: string }).code !== 'storage/canceled') setError('Upload failed. Try again.');
+    } finally {
+      setUpload(null);
     }
-    if (localTrack) deleteCustomTrack(localTrack.id);
-    addCustomTrack(meta);
-    selectCustomTrack(id);
-    preview();
   };
 
   const removeSelected = async () => {
-    if (!selected) return;
-    if (cloud && ownerUid) {
-      const track = userTracks.find((t) => t.id === selected.id);
-      if (!track) return;
-      setMusicStyle(sound.musicStyle);
-      const { deleteTrack } = await import('../platform/trackUpload');
-      await deleteTrack(ownerUid, track).catch(() => setError('Could not delete. Try again.'));
-      return;
-    }
-    deleteCustomTrack(selected.id);
-    removeCustomTrack(selected.id);
+    if (!selected || !ownerUid) return;
+    setMusicStyle(sound.musicStyle);
+    const { deleteTrack } = await import('../platform/trackUpload');
+    await deleteTrack(ownerUid, selected).catch(() => setError('Could not delete. Try again.'));
   };
 
   return (
@@ -118,7 +79,7 @@ export function MusicPicker() {
       <div className="mt-2 flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[12px] text-faint">
         {!upload && (
           <button type="button" className="hover:text-ink" onClick={() => fileRef.current?.click()}>
-            {!cloud && localTrack ? 'replace your track' : 'add your track'}
+            add your track
           </button>
         )}
         {selected && !upload && (
