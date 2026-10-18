@@ -91,3 +91,7 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
   cho bucket; app đọc URL từ Storage; `public/scenes` rời khỏi repo,
   file gốc giữ ở `media/scenes/` (ngoài git); danh sách chuyển sang
   `src/data/scenes.json`. Script cắt scene giờ xuất vào `media/scenes/`.
+- **V2 xong (2026-10-18):** `platform/mediaCache.ts` + `useCachedMedia`:
+  lần đầu phát từ mạng và lưu bản sao nền vào Cache Storage
+  (`mora-media-v1`), lần sau phát từ máy (chạy offline). Tối đa 500MB, bỏ
+  file lâu không dùng trước. Đã thử với file thật trên Storage.

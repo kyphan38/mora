@@ -154,14 +154,14 @@ describe('Focus screen', () => {
     expect(Number(ring.getAttribute('stroke-dashoffset'))).toBeCloseTo(total / 2, 3);
   });
 
-  it('scene mode draws the scene behind the clock', () => {
+  it('scene mode draws the scene behind the clock', async () => {
     seed();
     useStore.setState({ roomBackground: 'scene', corner: CORNERS[0] });
     const { container } = render(<App />);
     const root = container.firstChild as HTMLElement;
     expect(root.getAttribute('data-scene')).toBe('true');
     expect(screen.getByTestId('room-scene-bg')).toBeInTheDocument();
-    const src = screen.getByTestId('scene-video').querySelector('source')!;
+    const src = (await screen.findByTestId('scene-video')).querySelector('source')!;
     expect(src.getAttribute('src')).toBe(sceneVideoUrl(CORNERS[0].id));
   });
 });

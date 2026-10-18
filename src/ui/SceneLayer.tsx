@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { sceneUrl, sceneVideoUrl } from '../data/sceneManifest';
+import { useCachedMedia } from '../hooks/useCachedMedia';
 import type { Corner } from '../types';
 
 const CROSSFADE_MS = 900;
@@ -36,6 +37,8 @@ export function SceneLayer({ corner, visible }: { corner: Corner; visible: boole
 function SceneSlide({ corner, top, playVideo }: { corner: Corner; top: boolean; playVideo: boolean }) {
   const [videoOn, setVideoOn] = useState(false);
   const [videoError, setVideoError] = useState(false);
+  // Device copy when saved; first play streams and saves in the background.
+  const videoSrc = useCachedMedia(playVideo ? sceneVideoUrl(corner.id) : null);
 
   return (
     <div className={`absolute inset-0 ${top ? 'scene-in' : ''}`}>
@@ -43,7 +46,7 @@ function SceneSlide({ corner, top, playVideo }: { corner: Corner; top: boolean; 
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url("${sceneUrl(corner.id)}"), ${corner.gradient}` }}
       />
-      {playVideo && !videoError && (
+      {playVideo && !videoError && videoSrc && (
         <video
           autoPlay
           loop
@@ -55,7 +58,7 @@ function SceneSlide({ corner, top, playVideo }: { corner: Corner; top: boolean; 
           style={{ opacity: videoOn ? 1 : 0 }}
           data-testid="scene-video"
         >
-          <source src={sceneVideoUrl(corner.id)} type="video/mp4" />
+          <source src={videoSrc} type="video/mp4" />
         </video>
       )}
     </div>

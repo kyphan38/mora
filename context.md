@@ -143,6 +143,8 @@ Scenes: list in `src/data/scenes.json` (descriptions in
 (public read, URLs from `data/sceneManifest.ts`). Local staging in
 `media/scenes/` (git-ignored); `scripts/upload-defaults.sh` uploads new
 files (gsutil, long cache). Bucket CORS: `storage.cors.json`
-(`gsutil cors set storage.cors.json gs://kyphan38-mora-app.firebasestorage.app`). `public/audio/ambient|music/<slug>.mp3`
+(`gsutil cors set storage.cors.json gs://kyphan38-mora-app.firebasestorage.app`).
+Scene video is saved on the device after the first play
+(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. `public/audio/ambient|music/<slug>.mp3`
 where slug comes from `core/soundFormat.slug`. Missing files degrade to a
 gradient or silence. Scene tools live in `scripts/`.
