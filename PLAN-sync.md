@@ -106,3 +106,14 @@ liệu thật khi chạy test.
 
 Màn đăng nhập phải theo kiểu "đồng hồ là màn hình" của mora, không chép
 nguyên màn login của hodi.
+
+## Tiến độ
+
+- **S0 xong** (owner): bật Google, authorized domains, OAuth redirect URI.
+- **S1 xong (2026-10-18):** Firebase client (khởi tạo lười, cache offline,
+  emulator `npm run emu` + `npm run dev:emu`), đăng nhập Google bắt buộc
+  trên web/PWA (màn đăng nhập là đồng hồ giờ trong ngày), tài khoản khác bị
+  đăng xuất ngay, Tauri bỏ qua đăng nhập. Proxy `/__/auth` và
+  `/__/firebase` trong `vercel.json`; service worker bỏ qua `/__/`.
+  Rules (template + `npm run rules`) đã deploy lên `kyphan38-mora-app`.
+  7 biến `VITE_*` đã đặt trên Vercel (production + preview).

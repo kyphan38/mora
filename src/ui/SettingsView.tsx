@@ -3,6 +3,8 @@ import { useStore } from '../store/useStore';
 import { loadTheme, saveTheme, type Theme } from '../platform/prefs';
 import { Words, Label } from './Words';
 import { LogiSettings } from './LogiSettings';
+import { useAuth, signOut } from '../platform/auth';
+import { isTauri } from '../platform/persistence';
 
 const KEYS: [string, string][] = [
   ['space', 'play / pause'],
@@ -28,6 +30,7 @@ export function SettingsView() {
   const clearSessions = useStore((s) => s.clearSessions);
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [confirmClear, setConfirmClear] = useState(false);
+  const user = useAuth((s) => s.user);
 
   return (
     <div className="space-y-7">
@@ -119,6 +122,18 @@ export function SettingsView() {
           </button>
         )}
       </section>
+
+      {!isTauri() && user && (
+        <section>
+          <Label>account</Label>
+          <div className="flex items-baseline gap-4 text-[14px]">
+            <span className="min-w-0 truncate text-muted">{user.email}</span>
+            <button type="button" className="text-faint hover:text-ink" onClick={() => void signOut()}>
+              Sign out
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Keyboards only: hidden on touch screens. */}
       <section className="[@media(hover:none)]:hidden">

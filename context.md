@@ -83,13 +83,25 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - A restored session is always paused. Clock-only changes are saved at
   most every 15s.
 
+## Sign-in and Firebase
+
+Web/PWA require Google sign-in with the one allowed email
+(`platform/auth.ts`, `ui/SignInView.tsx`); the Tauri build skips it and
+stays local. `platform/firebase.ts` is lazy (nothing loads on import),
+uses a persistent offline cache, and its auth domain is the page host on
+https (proxied by `vercel.json` to `kyphan38-mora-app.firebaseapp.com`) so
+iPhone Safari sign-in works. Rules: edit `firestore.rules.template`, run
+`npm run rules`, deploy with `firebase deploy --only firestore:rules`.
+Emulators: `npm run emu`, then `npm run dev:emu`. Tests mock
+`platform/auth` in `src/test/setup.ts`. Plan: `PLAN-sync.md`.
+
 ## Deploy (web)
 
 Vercel project `mora` from GitHub `kyphan38/mora`, single Vite app (not
 "Services"; `src-tauri` is ignored via `.vercelignore`). `vercel.json`:
 SPA rewrite to `index.html`, `sw.js` and `index.html` never cached,
 `/assets` immutable. Domain: `mora.kyphan38.com` (CNAME to Vercel). No
-Firebase: data stays on each device.
+Firebase project kyphan38-mora-app (env `VITE_FIREBASE_*`, `VITE_ALLOWED_USER_EMAIL`).
 
 ## Link to logi
 

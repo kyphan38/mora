@@ -7,7 +7,7 @@
 //   *.mp4, *.mp3         not touched: big files and Range requests (iOS Safari)
 //                        are safer straight from the network.
 
-const CACHE = 'mora-v2';
+const CACHE = 'mora-v3';
 const SHELL = ['/', '/manifest.webmanifest', '/favicon.svg', '/icons/icon-192.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -64,6 +64,8 @@ self.addEventListener('fetch', (event) => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
+  // Firebase sign-in pages (proxied to firebaseapp.com) must never get the cached shell.
+  if (url.pathname.startsWith('/__/')) return;
   if (/\.(mp4|mp3|m4a|wav|ogg)$/i.test(url.pathname)) return;
 
   if (req.mode === 'navigate') {

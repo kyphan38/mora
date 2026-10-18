@@ -25,3 +25,9 @@ dist-ssr
 __pycache__/
 reference/
 new_config/
+firestore.rules
+firebase-debug.log
+firestore-debug.log
+.emulator-data/
+.vercel
+.env

@@ -1,0 +1,80 @@
+rules_version = '2';
+
+// ============================================================
+// mora - Firestore rules
+//
+// Single user. Besides the uid, the email must be the owner's and verified,
+// so a stranger who signs in with Google on this project gets nothing.
+//
+// __ALLOWED_EMAIL__ is filled in by scripts/rules.mjs into firestore.rules
+// (gitignored). Edit this template, not the output.
+// ============================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function allowed() {
+      return request.auth != null
+        && request.auth.token.email == '__ALLOWED_EMAIL__'
+        && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(uid) {
+      return allowed() && request.auth.uid == uid;
+    }
+
+    function shortText(s, max) {
+      return s is string && s.size() <= max;
+    }
+
+    function validTask(d) {
+      return shortText(d.name, 200) && d.name.size() > 0
+        && d.done is bool
+        && d.order is number
+        && d.updatedAt is int
+        && (!d.keys().hasAny(['kind']) || d.kind in ['learn', 'work'])
+        && (!d.keys().hasAny(['est']) || (d.est is int && d.est >= 1 && d.est <= 99))
+        && (!d.keys().hasAny(['blocks']) || (d.blocks is int && d.blocks >= 0));
+    }
+
+    function validSession(d) {
+      return shortText(d.taskName, 200)
+        && d.minutes is int && d.minutes >= 1 && d.minutes <= 600
+        && d.startedAt is int && d.endedAt is int && d.endedAt >= d.startedAt
+        && d.updatedAt is int
+        && (!d.keys().hasAny(['kind']) || d.kind in ['learn', 'work'])
+        && (!d.keys().hasAny(['note']) || shortText(d.note, 500));
+    }
+
+    function validNote(d) {
+      return shortText(d.text, 500) && d.text.size() > 0 && d.createdAt is int;
+    }
+
+    match /users/{uid} {
+      match /tasks/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validTask(request.resource.data);
+      }
+      match /sessions/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validSession(request.resource.data);
+      }
+      match /notes/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validNote(request.resource.data);
+      }
+      // prefs/main (settings) and live/current (running timer): small maps.
+      match /prefs/{id} {
+        allow read, write: if isOwner(uid) && request.resource.data.size() <= 30;
+      }
+      match /live/{id} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    // Everything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
