@@ -41,6 +41,23 @@ Look: gray tokens from `ws/app/DESIGN.md`, system font, theme
 script in `index.html`). Scene mode (`data-scene` on the root) draws
 `SceneLayer` (photo + muted video + scrim) and swaps tokens to light text.
 
+## Motion
+
+Short, opacity/transform only, all in `styles/globals.css` (`fade-in`,
+`fade-out`, `sheet-up`, `sheet-down`, `rise`, `pop`, `row-out`,
+`scene-in`, `breathe`). `prefers-reduced-motion` turns them off; JS exit
+delays (`usePresence`, task removal, `useFlip`) are skipped then too.
+
+- Sheets slide in and out (`usePresence` keeps them mounted 200ms).
+- Scenes cross-fade (`SceneLayer` keeps the old slide under the new one);
+  the video fades in once it plays; plain/scene fades the whole layer.
+- Task rows: FLIP slide on reorder (`useFlip`), fade out on remove.
+- The ring fills smoothly; the ring middle cross-fades on phase or task
+  change; Play/Pause icon pops.
+- Audio: play fades in (800ms), pause fades out (450ms) before pausing,
+  track changes fade the old track out first (350ms). See
+  `platform/audio.ts`.
+
 ## Timer rules
 
 - Time follows the wall clock: `syncClock(now)` adds whole seconds since

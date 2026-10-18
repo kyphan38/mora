@@ -14,7 +14,7 @@ const ACCEPTED_EXTENSIONS = /\.(mp3|wav|m4a|ogg)$/i;
 const CUSTOM = '__custom__';
 
 /** Sound and scene, picked while focusing. Picks preview right away. */
-export function SoundSheet({ onClose }: { onClose: () => void }) {
+export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const sound = useStore((s) => s.sound);
   const corner = useStore((s) => s.corner);
   const customTrack = useStore((s) => s.customTracks[0] ?? null);
@@ -69,7 +69,7 @@ export function SoundSheet({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <Sheet label="Sound and scene" onClose={onClose} testId="room-settings-panel">
+    <Sheet open={open} label="Sound and scene" onClose={onClose} testId="room-settings-panel">
       <div className="space-y-6">
         <section>
           <Label>ambient</Label>

@@ -45,94 +45,131 @@ export function createAudioEngine(): AudioEngine {
     return instance;
   }
 
-  const ambientAudio = new Audio();
-  ambientAudio.loop = true;
+  // Sound never starts or stops with a hard cut: every change is a short fade.
+  const FADE_IN_MS = 800;
+  const FADE_OUT_MS = 450;
+  const SWAP_MS = 350;
+  const STEP_MS = 30;
 
-  const musicAudio = new Audio();
-  musicAudio.loop = true;
+  interface Channel {
+    el: HTMLAudioElement;
+    key: string;
+    target: number;
+    timer: ReturnType<typeof setInterval> | null;
+    swapping: boolean;
+  }
 
-  let ambientName = '';
-  let musicKey = '';
+  const makeChannel = (): Channel => {
+    const el = new Audio();
+    el.loop = true;
+    return { el, key: '', target: 1, timer: null, swapping: false };
+  };
+  const ambient = makeChannel();
+  const music = makeChannel();
   let playing = false;
+
+  const stopFade = (c: Channel) => {
+    if (c.timer) clearInterval(c.timer);
+    c.timer = null;
+  };
+
+  // Moves volume toward `to` (or toward the live target when `to` is null).
+  const fade = (c: Channel, to: number | null, ms: number, done?: () => void) => {
+    stopFade(c);
+    const from = c.el.volume;
+    const steps = Math.max(1, Math.round(ms / STEP_MS));
+    let i = 0;
+    c.timer = setInterval(() => {
+      i += 1;
+      const end = to ?? c.target;
+      try {
+        c.el.volume = Math.max(0, Math.min(1, from + (end - from) * (i / steps)));
+      } catch {
+        // Some WebViews refuse volume writes; the fade just becomes a cut.
+      }
+      if (i >= steps) {
+        stopFade(c);
+        done?.();
+      }
+    }, STEP_MS);
+  };
+
+  const startChannel = (c: Channel) => {
+    if (!c.el.src) return;
+    if (c.el.paused !== false) {
+      try {
+        c.el.volume = 0;
+      } catch {
+        /* ignore */
+      }
+    }
+    c.el.play().catch(() => {});
+    fade(c, null, FADE_IN_MS);
+  };
+
+  // Changes the source. While playing, fade the old track out first.
+  const setSource = (c: Channel, key: string, src: string, autoplay: boolean) => {
+    if (key === c.key) return;
+    c.key = key;
+    if (!playing || !c.el.src) {
+      c.el.src = src;
+      if (playing && autoplay) startChannel(c);
+      return;
+    }
+    c.swapping = true;
+    fade(c, 0, SWAP_MS, () => {
+      c.swapping = false;
+      c.el.src = src;
+      if (playing && autoplay) startChannel(c);
+    });
+  };
+
+  const setTarget = (c: Channel, gain: number) => {
+    c.target = Math.max(0, Math.min(1, gain));
+    // A running fade reads the live target; otherwise apply now.
+    if (!c.timer && !c.swapping && (playing || c.el.paused !== false)) {
+      try {
+        c.el.volume = c.target;
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   const engine: AudioEngine = {
     setAmbient(name: string) {
-      if (name === ambientName) return;
-      ambientName = name;
-      try {
-        ambientAudio.src = ambientUrl(name);
-        if (playing) {
-          ambientAudio.play().catch(() => {});
-        }
-      } catch (err) {
-        console.error('Failed to set ambient track:', err);
-      }
+      setSource(ambient, name, ambientUrl(name), true);
     },
 
     setMusic(name: string) {
-      if (name === musicKey) return;
-      musicKey = name;
-      try {
-        musicAudio.src = musicUrl(name);
-        if (playing) {
-          musicAudio.play().catch(() => {});
-        }
-      } catch (err) {
-        console.error('Failed to set music track:', err);
-      }
+      setSource(music, name, musicUrl(name), true);
     },
 
     setMusicUrl(url: string | null) {
-      const key = url ?? '';
-      if (key === musicKey) return;
-      musicKey = key;
-      try {
-        musicAudio.src = url ?? '';
-        if (playing && url) {
-          musicAudio.play().catch(() => {});
-        }
-      } catch (err) {
-        console.error('Failed to set custom music track:', err);
-      }
+      setSource(music, url ?? '', url ?? '', !!url);
     },
 
     setAmbientVolume(gain: number) {
-      try {
-        ambientAudio.volume = Math.max(0, Math.min(1, gain));
-      } catch (err) {
-        console.error('Failed to set ambient volume:', err);
-      }
+      setTarget(ambient, gain);
     },
 
     setMusicVolume(gain: number) {
-      try {
-        musicAudio.volume = Math.max(0, Math.min(1, gain));
-      } catch (err) {
-        console.error('Failed to set music volume:', err);
-      }
+      setTarget(music, gain);
     },
 
     play() {
       playing = true;
-      try {
-        if (ambientAudio.src) {
-          ambientAudio.play().catch(() => {});
-        }
-        if (musicAudio.src) {
-          musicAudio.play().catch(() => {});
-        }
-      } catch (err) {
-        console.error('Failed to play audio:', err);
-      }
+      startChannel(ambient);
+      startChannel(music);
     },
 
     pause() {
       playing = false;
-      try {
-        ambientAudio.pause();
-        musicAudio.pause();
-      } catch (err) {
-        console.error('Failed to pause audio:', err);
+      for (const c of [ambient, music]) {
+        if (!c.el.src) continue;
+        fade(c, 0, FADE_OUT_MS, () => {
+          if (!playing) c.el.pause();
+        });
       }
     },
 
@@ -179,11 +216,9 @@ export function createAudioEngine(): AudioEngine {
 
     dispose() {
       playing = false;
-      try {
-        ambientAudio.pause();
-        musicAudio.pause();
-      } catch (err) {
-        console.error('Failed to dispose audio engine:', err);
+      for (const c of [ambient, music]) {
+        stopFade(c);
+        c.el.pause();
       }
     },
   };

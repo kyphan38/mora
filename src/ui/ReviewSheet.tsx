@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { breakForSeconds, NEXT_DURATIONS } from '../core/pomodoro';
 import { Sheet } from './Sheet';
@@ -7,7 +7,7 @@ import { Words } from './Words';
 const WORD = 'text-[14px] text-faint transition-colors hover:text-ink';
 
 /** Shown when a focus block ends. A choice is required, so it does not close on its own. */
-export function ReviewSheet() {
+export function ReviewSheet({ open }: { open: boolean }) {
   const active = useStore((s) => s.tasks.find((t) => !t.done));
   const lastFocusSec = useStore((s) => s.lastFocusSec);
   const durationSec = useStore((s) => s.setup.durationSec);
@@ -17,12 +17,18 @@ export function ReviewSheet() {
   const stopAllSessions = useStore((s) => s.stopAllSessions);
   const [markedDone, setMarkedDone] = useState(false);
   const [pickDuration, setPickDuration] = useState(false);
+  useEffect(() => {
+    if (open) {
+      setMarkedDone(false);
+      setPickDuration(false);
+    }
+  }, [open]);
 
   const breakMin = Math.round(breakForSeconds(lastFocusSec) / 60);
   const line = markedDone ? (active ? `Next: ${active.name}` : 'All tasks done') : (active?.name ?? 'Task completed');
 
   return (
-    <Sheet label="Session complete" testId="review-sheet">
+    <Sheet open={open} label="Session complete" testId="review-sheet">
       <h2 className="text-[17px] font-medium">Session complete</h2>
       <p className="mt-1 truncate text-[15px] text-muted">{line}</p>
 

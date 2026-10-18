@@ -253,3 +253,10 @@ Mục tiêu: tối giản, sau này chạy được trên điện thoại (PWA) 
   (`CLAUDE_CONTEXT.md` đã xoá).
 - Tiếp theo: **R2** chuyển động (cross-fade scene, fade âm thanh, sheet,
   danh sách task), rồi **R3** PWA.
+
+- **R2 xong (2026-10-18):** fade âm thanh (vào 800ms, ra 450ms, đổi bài
+  nhỏ dần bài cũ trước), cross-fade scene + video hiện dần khi chạy được,
+  sheet trượt vào/ra, task trượt khi đổi thứ tự và mờ dần khi xoá, giữa
+  vòng đồng hồ cross-fade khi đổi phase/task, nút Play/Pause "pop". Tắt hết
+  khi máy bật reduced motion. 170 test pass.
+- Tiếp theo: **R3** PWA.

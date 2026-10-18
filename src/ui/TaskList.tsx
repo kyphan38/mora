@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useFlip } from '../hooks/useFlip';
+import { reducedMotion } from '../hooks/usePresence';
 import { useStore } from '../store/useStore';
 import { UpIcon, DownIcon, CloseIcon } from './Icons';
 
@@ -14,6 +16,18 @@ export function TaskList() {
   const reorderTasks = useStore((s) => s.reorderTasks);
   const clearCompletedTasks = useStore((s) => s.clearCompletedTasks);
   const [draft, setDraft] = useState('');
+  const [leaving, setLeaving] = useState<string | null>(null);
+  const flip = useFlip(tasks.map((t) => t.id));
+
+  // A removed row fades out first; the rows below then slide up (FLIP).
+  const remove = (id: string) => {
+    if (reducedMotion()) return removeTask(id);
+    setLeaving(id);
+    setTimeout(() => {
+      removeTask(id);
+      setLeaving(null);
+    }, 180);
+  };
 
   const activeId = tasks.find((t) => !t.done)?.id;
   const doneCount = tasks.filter((t) => t.done).length;
@@ -38,7 +52,11 @@ export function TaskList() {
 
       <ul className="mt-1">
         {tasks.map((t, i) => (
-          <li key={t.id} className="task-row group rise flex items-center gap-3 py-2">
+          <li
+            key={t.id}
+            ref={flip(t.id)}
+            className={`task-row group flex items-center gap-3 py-2 ${leaving === t.id ? 'row-out' : 'rise'}`}
+          >
             <input
               type="checkbox"
               checked={t.done}
@@ -46,7 +64,7 @@ export function TaskList() {
               aria-label={`Toggle ${t.name}`}
               className="h-4 w-4 shrink-0 appearance-none rounded-full border border-line-strong transition-colors checked:border-faint checked:bg-faint"
             />
-            <span className={`min-w-0 truncate text-[15px] ${t.done ? 'text-faint line-through' : ''}`}>
+            <span className={`min-w-0 truncate text-[15px] transition-colors duration-300 ${t.done ? 'text-faint line-through' : ''}`}>
               {t.name}
             </span>
             {t.id === activeId && <span className="shrink-0 font-mono text-[11px] text-faint">now</span>}
@@ -71,7 +89,7 @@ export function TaskList() {
             >
               <DownIcon />
             </button>
-            <button type="button" className={ROW_TOOL} onClick={() => removeTask(t.id)} aria-label={`Remove ${t.name}`}>
+            <button type="button" className={ROW_TOOL} onClick={() => remove(t.id)} aria-label={`Remove ${t.name}`}>
               <CloseIcon />
             </button>
           </li>
