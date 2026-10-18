@@ -10,10 +10,6 @@ const customProps: Record<string, Partial<Corner>> = {
   "scene_850ce5": { description: "A calm seat by the window", ambient: "Rain on Window" },
   "scene_185b83": { description: "Warm cafe with soft jazz", ambient: "Cafe Ambience" },
   "scene_2459b0": { description: "Porch view, slow afternoon", ambient: "Wind" },
-  "scene_971b43": { description: "Small cafe in a green garden", ambient: "Cafe Ambience" },
-  "scene_e443ea": { description: "Coffee shop on a quiet day", ambient: "Cafe Ambience" },
-  "scene_d5aa07": { description: "Courtyard with plants and stone", ambient: "Wind" },
-  "scene_784adf": { description: "Calm room with guitar music", ambient: "Room Tone" },
   "scene_072605": { description: "Cabin by the sea, fire on", ambient: "Fireplace" },
   "scene_6be729": { description: "Ocean sunset from the room", ambient: "Waves" },
 };

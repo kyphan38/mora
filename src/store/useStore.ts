@@ -325,7 +325,8 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.sessions !== undefined) update.sessions = p.sessions;
     if (p.sound !== undefined) update.sound = p.sound;
     if (p.setup !== undefined) update.setup = p.setup;
-    if (p.corner !== undefined) update.corner = p.corner;
+    // A saved scene may have been removed from the app since; fall back to a current one.
+    if (p.corner !== undefined) update.corner = p.corner && (CORNERS.find((c) => c.id === p.corner!.id) ?? CORNERS[0] ?? null);
     if (p.roomBackground !== undefined) update.roomBackground = p.roomBackground;
     if (p.elapsedSec !== undefined) update.elapsedSec = p.elapsedSec;
     if (p.isRunning !== undefined) update.isRunning = p.isRunning;

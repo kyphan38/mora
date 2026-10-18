@@ -12,3 +12,14 @@ describe('corner data', () => {
     for (const c of CORNERS) expect(AMBIENTS).toContain(c.ambient);
   });
 });
+
+import { useStore } from '../store/useStore';
+
+describe('removed scenes', () => {
+  it('a saved scene that no longer exists falls back to a current one', () => {
+    useStore.getState().hydrate({
+      corner: { id: 'scene_971b43', name: 'Cozy Garden Cafe', description: '', ambient: 'Wind', gradient: '' },
+    });
+    expect(CORNERS.map((c) => c.id)).toContain(useStore.getState().corner?.id);
+  });
+});

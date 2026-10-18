@@ -9,6 +9,7 @@ import {
 } from '../platform/persistence';
 import { initPersistence } from '../platform/persist';
 import { useStore } from '../store/useStore';
+import { CORNERS } from '../data/corners';
 
 const makeSeed = (): PersistedState => ({
   version: PERSIST_VERSION,
@@ -18,7 +19,8 @@ const makeSeed = (): PersistedState => ({
   ],
   sound: { ambient: 'Rain', musicStyle: 'Lo-fi', ambientVolume: 50, musicVolume: 30, customTrackId: null },
   setup: { durationLabel: '25 min', durationSec: 1500 },
-  corner: { id: 'c1', name: 'Corner1', description: 'desc', ambient: 'Rain', gradient: '' },
+  // A real scene: hydrate replaces scenes the app no longer has.
+  corner: CORNERS[0],
   customTracks: [],
 });
 
