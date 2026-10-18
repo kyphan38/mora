@@ -86,3 +86,4 @@ Owner cần: tạo token thứ hai và đặt vào cả hai project (mình đưa
 - **Chờ owner:** đặt secret `LOGI_CONTROL_TOKEN` (cùng một giá trị) ở cả
   hai project, rồi deploy functions hai bên.
 - **mora deploy xong (2026-10-18):** `liveToLogi`, `stopFromLogi` chạy; 2 Function cũ đã xoá. `stopFromLogi` trả 401 khi không có token (đúng). Còn: secret bên logi + deploy `moraStopped`.
+- **logi deploy xong (2026-10-18):** `moraStopped` chạy (lần đầu lỗi quyền Eventarc, thử lại sau 2,5 phút thì được; bộ lọc deploy phải ghi `functions:logi:moraStopped` vì codebase tên `logi`). Toàn bộ L1-L5 đã chạy.
