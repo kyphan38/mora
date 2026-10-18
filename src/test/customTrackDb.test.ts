@@ -9,7 +9,7 @@ import {
   isIndexedDbAvailable,
   resetCustomTrackDbForTest,
   type CustomTrackRecord,
-} from '../lib/customTrackDb';
+} from '../platform/customTrackDb';
 
 // jsdom's Blob polyfill isn't recognized by Node's structuredClone (which fake-indexeddb/
 // real IndexedDB implementations use internally), so tests use Node's native Blob to

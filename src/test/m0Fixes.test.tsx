@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, act } from '@testing-library/react';
 import { useStore } from '../store/useStore';
-import { createMemoryAdapter, toPersisted, PERSIST_VERSION } from '../lib/persistence';
-import { initPersistence } from '../lib/persist';
-import { noopAudioEngine } from '../lib/audio';
+import { createMemoryAdapter, toPersisted, PERSIST_VERSION } from '../platform/persistence';
+import { initPersistence } from '../platform/persist';
+import { noopAudioEngine } from '../platform/audio';
 import App from '../App';
 
 function seed(durationLabel = '25 min') {

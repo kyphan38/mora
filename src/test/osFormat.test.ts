@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { EV, trayTitle, buildTick } from '../lib/osFormat';
-import { type TimerState } from '../lib/timer';
+import { EV, trayTitle, buildTick } from '../core/trayFormat';
+import { type TimerState } from '../core/timer';
 
 describe('osFormat pure functions', () => {
   it('EV constants have the exact string values', () => {

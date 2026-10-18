@@ -1,9 +1,9 @@
 import { render, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { useOsSync } from '../hooks/useOsSync';
-import { type OsBridge } from '../lib/os';
-import { EV } from '../lib/osFormat';
-import { type TimerState } from '../lib/timer';
+import { type OsBridge } from '../platform/os';
+import { EV } from '../core/trayFormat';
+import { type TimerState } from '../core/timer';
 
 class MockOsBridge implements OsBridge {
   updateTray = vi.fn().mockResolvedValue(undefined);

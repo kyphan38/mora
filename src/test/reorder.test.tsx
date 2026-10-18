@@ -26,11 +26,12 @@ describe('reorderTasks store action', () => {
   });
 
   it('clicking the Up/Down buttons reorders tasks in UI', () => {
-    useStore.getState().setScreen('room');
+    useStore.getState().setScreen('focus');
     useStore.getState().addTask('Task A');
     useStore.getState().addTask('Task B');
 
     render(<App />);
+    fireEvent.click(document.querySelector('[data-testid="tasks-toggle-btn"]') as Element);
 
     const rows = document.querySelectorAll('.task-row');
     expect(rows.length).toBe(2);

@@ -6,8 +6,8 @@ import {
   migrate,
   PERSIST_VERSION,
   type PersistedState,
-} from '../lib/persistence';
-import { initPersistence } from '../lib/persist';
+} from '../platform/persistence';
+import { initPersistence } from '../platform/persist';
 import { useStore } from '../store/useStore';
 
 const makeSeed = (): PersistedState => ({
@@ -150,8 +150,8 @@ describe('initPersistence', () => {
 
 describe('import side-effect free', () => {
   it('importing persistence modules does not auto-run', async () => {
-    await import('../lib/persistence');
-    await import('../lib/persist');
+    await import('../platform/persistence');
+    await import('../platform/persist');
     expect(useStore.getState().tasks).toEqual([]);
     expect(mockLS.length).toBe(0);
   });

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { volumeToGain, sessionCompleteNotification, slug } from '../lib/soundFormat';
+import { volumeToGain, sessionCompleteNotification, slug } from '../core/soundFormat';
 import { ambientUrl, musicUrl } from '../data/audioManifest';
 
 describe('soundFormat pure tests', () => {

@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useStore, shouldPlayAudio } from '../store/useStore';
-import { getAudioEngine } from '../lib/audio';
-import { volumeToGain } from '../lib/soundFormat';
-import { getCustomTrack } from '../lib/customTrackDb';
+import { getAudioEngine } from '../platform/audio';
+import { volumeToGain } from '../core/soundFormat';
+import { getCustomTrack } from '../platform/customTrackDb';
 
 export function useGlobalAudio() {
   const sound = useStore((s) => s.sound);

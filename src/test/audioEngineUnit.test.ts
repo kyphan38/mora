@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createAudioEngine, resetAudioEngineInstanceForTest } from '../lib/audio';
+import { createAudioEngine, resetAudioEngineInstanceForTest } from '../platform/audio';
 
 class MockHTMLAudioElement {
   src = '';

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { createAudioEngine } from '../lib/audio';
-import { createNotifyBridge } from '../lib/notify';
+import { createAudioEngine } from '../platform/audio';
+import { createNotifyBridge } from '../platform/notify';
 
 describe('audio engine and notify bridge off-Tauri', () => {
   it('noop engine safe', () => {

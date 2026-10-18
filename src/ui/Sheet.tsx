@@ -1,0 +1,48 @@
+import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+
+/**
+ * Bottom sheet on phones, a centered panel on wide screens.
+ * Esc or a tap outside closes it, unless `onClose` is omitted (a choice is required).
+ */
+export function Sheet({
+  label,
+  onClose,
+  children,
+  testId,
+}: {
+  label: string;
+  onClose?: () => void;
+  children: ReactNode;
+  testId?: string;
+}) {
+  useEffect(() => {
+    if (!onClose) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center md:items-center"
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+    >
+      <div className="fade-in absolute inset-0 bg-black/30" onClick={onClose} aria-hidden="true" />
+      <div
+        className="sheet-up relative max-h-[85dvh] w-full max-w-lg overflow-y-auto rounded-t-[10px] border border-line bg-surface px-5 pt-5 pb-[calc(env(safe-area-inset-bottom)+20px)] backdrop-blur-xl md:rounded-[10px] md:pb-5"
+        data-testid={testId}
+      >
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}

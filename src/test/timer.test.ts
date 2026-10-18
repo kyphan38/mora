@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatTime, remainingSec, type TimerState } from '../lib/timer';
+import { formatTime, remainingSec, type TimerState } from '../core/timer';
 
 const timer = (totalSec: number, elapsedSec: number): TimerState => ({
   mode: totalSec > 0 ? 'countdown' : 'countup',
@@ -24,6 +24,7 @@ describe('timer helpers', () => {
     expect(formatTime(3000)).toBe('50:00');
     expect(formatTime(65)).toBe('01:05');
     expect(formatTime(0)).toBe('00:00');
-    expect(formatTime(5400)).toBe('90:00');
+    expect(formatTime(5400)).toBe('1:30:00');
+    expect(formatTime(3599)).toBe('59:59');
   });
 });

@@ -18,7 +18,7 @@ describe('Global appearance & scene mode', () => {
     expect(appRoot.getAttribute('data-scene')).toBeNull();
   });
 
-  it('scene mode sets data-scene in the Room only', () => {
+  it('scene mode sets data-scene; it stays behind sheets', () => {
     const { container, rerender } = render(<App />);
 
     // Toggle to scene mode
@@ -33,7 +33,7 @@ describe('Global appearance & scene mode', () => {
     act(() => {
       useStore.getState().setScreen('history');
     });
-    expect(appRoot.getAttribute('data-scene')).toBeNull();
+    expect(appRoot.getAttribute('data-scene')).toBe('true');
   });
 
   it('randomScene picks a corner from CORNERS and pairs ambient', () => {

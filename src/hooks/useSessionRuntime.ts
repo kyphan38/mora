@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { useOsSync } from './useOsSync';
-import { getAudioEngine } from '../lib/audio';
-import { createNotifyBridge } from '../lib/notify';
-import { sessionCompleteNotification } from '../lib/soundFormat';
-import { sessionTimer } from '../lib/sessionTimer';
+import { getAudioEngine } from '../platform/audio';
+import { createNotifyBridge } from '../platform/notify';
+import { sessionCompleteNotification } from '../core/soundFormat';
+import { sessionTimer } from '../core/sessionTimer';
 
 const SYNC_MS = 250;
 

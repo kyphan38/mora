@@ -1,6 +1,4 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
-import Room from '../screens/Room';
 import { useStore } from '../store/useStore';
 
 describe('Regression Audits', () => {
@@ -124,28 +122,6 @@ describe('Regression Audits', () => {
 
   // Zone 4: UI Event Handlers (Escape Key and Duration Resets)
   describe('UI Event Handlers (Escape Key and Duration Resets)', () => {
-    it('pressing Escape key closes the settings panel layout state', () => {
-      useStore.setState({
-        tasks: [{ id: 't1', name: 'Task 1', done: false, createdAt: 100 }],
-        activeTaskId: 't1',
-        screen: 'room',
-      });
-
-      render(<Room />);
-
-      // Settings initially closed
-      expect(screen.queryByTestId('room-settings-panel')).not.toBeInTheDocument();
-
-      // Open settings
-      const toggleBtn = screen.getByTestId('room-settings-toggle');
-      fireEvent.click(toggleBtn);
-      expect(screen.getByTestId('room-settings-panel')).toBeInTheDocument();
-
-      // Press Escape
-      fireEvent.keyDown(window, { key: 'Escape', code: 'Escape' });
-      expect(screen.queryByTestId('room-settings-panel')).not.toBeInTheDocument();
-    });
-
     it('selecting a new duration setting instantly overrides and resets countdown tracking references', () => {
       useStore.setState({
         elapsedSec: 450,

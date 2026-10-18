@@ -189,3 +189,53 @@ phá tính chất local của mora.
 - [ ] M3 tính năng
 - [ ] M4 liên kết logi
 - [ ] M5 dọn dẹp
+
+---
+
+## 9. Dọn dẹp và refactor (owner yêu cầu thêm, 2026-10-18)
+
+### Đã làm
+
+- Xoá code chết: hook `useSound`, method widget cũ, event STOP, action
+  không ai gọi, lệnh Rust `greet`, plugin `opener`, 5 script scene cũ.
+- Bỏ tính năng thừa (owner chọn): màn Landing, wizard 3 bước
+  (Corner/Sound/Session + Stepper), nút Color/Scene trên nav, nút Shuffle,
+  pill trạng thái + nhãn + dòng scene trên timer, scene nền ngoài Room,
+  cờ `audioActive`. Room là màn chính, bấm Play là bắt đầu phiên.
+- Giữ lại: Hide Tasks, upload nhạc riêng, Count Up, Auto-continue.
+
+### Hướng refactor (owner chọn)
+
+Mục tiêu: tối giản, sau này chạy được trên điện thoại (PWA) và desktop
+(Tauri) từ một code. Học từ hodi/legi.
+
+- **Stack:** giữ Vite + React + Zustand, thêm Tailwind v4. Bỏ inline style.
+- **Token:** đúng DESIGN.md (xám), theme `system · light · dark`, đặt bằng
+  script trong `<head>` trước lần vẽ đầu. Font hệ thống.
+- **Cấu trúc thư mục:**
+  - `src/core/` logic thuần (timer, pomodoro, format).
+  - `src/platform/` mọi thứ đụng tới thiết bị (lưu trữ, âm thanh,
+    thông báo, tray/phím tắt, theme). Web và Tauri khác nhau chỉ ở đây.
+  - `src/ui/` component. `src/store/` Zustand.
+- **Màn hình:** nav chữ `focus · history · settings` (như hodi TopBar), mờ
+  đi khi timer chạy.
+  - Focus: một cột hẹp. Tên task, số giờ lớn, chọn duration bằng chữ,
+    một nút Play đậm, `done` / `stop` / `skip` là chữ. Danh sách task dạng
+    dòng trơn, nút sửa hiện khi rê chuột. Chữ `sound` mở sheet chọn âm
+    thanh và scene.
+  - History: nhóm theo ngày, meta nhỏ.
+  - Settings: theme, nền color/scene, auto-continue, xoá lịch sử.
+- **Sheet** như legi (trượt lên trên điện thoại, panel giữa trên máy tính).
+- **Dữ liệu:** local trên mỗi thiết bị. Lớp lưu trữ tách riêng để sau này
+  thêm sync (Firebase) mà không sửa UI.
+
+### Phase mới (thay M1-M3 cũ)
+
+| Phase | Nội dung |
+|---|---|
+| **R1** | Tailwind + token + theme, tách `core/platform/ui`, viết lại 3 màn hình |
+| **R2** | Chuyển động (cũ M2) |
+| **R3** | PWA: manifest, service worker, icon, kiểm tra trên iPhone |
+| **M3** | Tính năng (phím tắt, zen, ghi chú, history tốt hơn, pomodoro) |
+| **M4** | Liên kết logi |
+| **M5** | Dọn dẹp cuối, docs, CSP, thử `tauri dev` |

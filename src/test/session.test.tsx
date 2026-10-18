@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore, shouldPlayAudio } from '../store/useStore';
-import { toPersisted } from '../lib/persistence';
+import { toPersisted } from '../platform/persistence';
 
 describe('session runtime store logic', () => {
   beforeEach(() => {
     useStore.setState(useStore.getInitialState());
   });
 
-  it('startFocus sets sessionActive, activeTaskId=first undone, screen=room, elapsed 0, isRunning false', () => {
+  it('startFocus sets sessionActive, activeTaskId=first undone, screen=focus, elapsed 0, isRunning false', () => {
     const store = useStore.getState();
     store.addTask('Task A');
     store.addTask('Task B');
@@ -16,7 +16,7 @@ describe('session runtime store logic', () => {
 
     const state = useStore.getState();
     expect(state.sessionActive).toBe(true);
-    expect(state.screen).toBe('room');
+    expect(state.screen).toBe('focus');
     expect(state.elapsedSec).toBe(0);
     expect(state.isRunning).toBe(false);
     expect(state.activeTaskId).toBe(state.tasks[0].id);
@@ -117,7 +117,7 @@ describe('session runtime store logic', () => {
     expect(updated.activeTaskId).toBe('task-123');
   });
 
-  it('navigate room->history->room preserves elapsed', () => {
+  it('navigate focus->history->focus preserves elapsed', () => {
     useStore.setState({
       tasks: [{ id: 't1', name: 'Preserve Task', done: false, createdAt: 1000 }],
       activeTaskId: 't1',
@@ -129,7 +129,7 @@ describe('session runtime store logic', () => {
     useStore.getState().setScreen('history');
     expect(useStore.getState().elapsedSec).toBe(120);
 
-    useStore.getState().setScreen('room');
+    useStore.getState().setScreen('focus');
     expect(useStore.getState().elapsedSec).toBe(120);
     expect(useStore.getState().isRunning).toBe(true);
   });

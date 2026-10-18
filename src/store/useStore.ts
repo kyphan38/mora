@@ -1,9 +1,9 @@
 import { create } from 'zustand';
 import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack } from '../types';
 import { DURATIONS } from '../data/durations';
-import { uid } from '../lib/uid';
+import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
-import { breakForSeconds } from '../lib/pomodoro';
+import { breakForSeconds } from '../core/pomodoro';
 
 export type Phase = 'focus' | 'break' | 'review';
 
@@ -119,7 +119,7 @@ function buildSession(
 }
 
 export const useStore = create<AppStore>((set, get) => ({
-  screen: 'room',
+  screen: 'focus',
   corner: null,
   sound: {
     ambient: 'Wind',
@@ -313,7 +313,7 @@ export const useStore = create<AppStore>((set, get) => ({
       elapsedSec: 0,
       isRunning: false,
       activeTaskId: firstUndone ? firstUndone.id : null,
-      screen: 'room',
+      screen: 'focus',
       phase: 'focus',
       runSyncAt: null,
       focusStartedAt: null,

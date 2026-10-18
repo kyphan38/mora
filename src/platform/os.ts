@@ -1,5 +1,5 @@
 import { isTauri } from './persistence';
-import { EV } from './osFormat';
+import { EV } from '../core/trayFormat';
 
 export interface OsBridge {
   updateTray(title: string): Promise<void>;

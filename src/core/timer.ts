@@ -10,8 +10,11 @@ export function remainingSec(s: TimerState): number {
   return s.elapsedSec;
 }
 
+/** mm:ss, or h:mm:ss from one hour up. */
 export function formatTime(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return `${String(m).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  const mmss = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return h > 0 ? `${h}:${mmss}` : mmss;
 }

@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import App from '../App';
 import { useStore } from '../store/useStore';
-import { formatMinutes, formatClock, isToday, dayLabel } from '../screens/History';
+import { formatMinutes, formatClock, isToday, dayLabel } from '../core/format';
 
 beforeEach(() => {
   useStore.setState(useStore.getInitialState());
@@ -66,43 +66,25 @@ function seedSessions() {
 }
 
 describe('History screen', () => {
-  it('renders sessions from store in newest-first order', () => {
+  it('groups sessions by day, newest first', () => {
     seedSessions();
     render(<App />);
-    expect(screen.getByText('Read chapter')).toBeInTheDocument();
-    expect(screen.getByText('Write notes')).toBeInTheDocument();
-    // Newest first: Read chapter before Write notes in the DOM
     const items = screen.getAllByText(/Read chapter|Write notes/);
-    expect(items[0].textContent).toBe('Read chapter');
-    expect(items[1].textContent).toBe('Write notes');
+    expect(items.map((i) => i.textContent)).toEqual(['Read chapter', 'Write notes']);
+    expect(screen.getByText('Today')).toBeInTheDocument();
+    expect(screen.getByText('Yesterday')).toBeInTheDocument();
   });
 
-  it('today stats correct', () => {
+  it('today stats count only today', () => {
     seedSessions();
     render(<App />);
-    // 1 session today, 50 minutes
-    expect(screen.getByText('Sessions today')).toBeInTheDocument();
-    expect(screen.getByText('Focused today')).toBeInTheDocument();
-    // "50m" appears in stat card and in the session row - use getAllByText
-    expect(screen.getAllByText('50m').length).toBeGreaterThanOrEqual(1);
-    // The stat value for sessions today is "1"
-    expect(screen.getAllByText('1').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('sessions-today').textContent).toBe('1');
+    expect(screen.getByTestId('focused-today').textContent).toBe('50m');
   });
 
   it('empty state', () => {
-    useStore.getState().setScreen('history');
+    useStore.setState({ screen: 'history' });
     render(<App />);
-    expect(screen.getByText('No sessions yet.')).toBeInTheDocument();
-  });
-
-  it('Clear asks once, then empties sessions', () => {
-    seedSessions();
-    render(<App />);
-    expect(screen.getByText('Read chapter')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Clear'));
-    expect(useStore.getState().sessions.length).toBe(2);
-    fireEvent.click(screen.getByText('Clear all'));
-    expect(useStore.getState().sessions.length).toBe(0);
     expect(screen.getByText('No sessions yet.')).toBeInTheDocument();
   });
 });

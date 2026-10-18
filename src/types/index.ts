@@ -1,4 +1,4 @@
-export type Screen = 'room' | 'history';
+export type Screen = 'focus' | 'history' | 'settings';
 
 export interface Corner {
   id: string;

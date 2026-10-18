@@ -6,8 +6,8 @@ beforeEach(() => {
 });
 
 describe('useStore', () => {
-  it('initial screen is the Room', () => {
-    expect(useStore.getState().screen).toBe('room');
+  it('initial screen is Focus', () => {
+    expect(useStore.getState().screen).toBe('focus');
   });
 
   it('setScreen updates screen', () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { breakForSeconds, NEXT_DURATIONS } from '../lib/pomodoro';
+import { breakForSeconds, NEXT_DURATIONS } from '../core/pomodoro';
 import { useStore } from '../store/useStore';
 import App from '../App';
 
@@ -264,7 +264,7 @@ describe('break phase in tickSession', () => {
 describe('Room review-phase render', () => {
   it('renders review sheet with correct elements', () => {
     seedRoom();
-    useStore.getState().setScreen('room');
+    useStore.getState().setScreen('focus');
     useStore.setState({ phase: 'review', lastFocusSec: 3000 });
 
     render(<App />);

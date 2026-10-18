@@ -1,54 +1,40 @@
-import { useStore } from "./store/useStore";
-import { AppShell } from "./components/AppShell";
-import Room from "./screens/Room";
-import History from "./screens/History";
+import { useStore } from './store/useStore';
+import { useGlobalAudio } from './hooks/useGlobalAudio';
+import { useSessionRuntime } from './hooks/useSessionRuntime';
+import { FocusView } from './ui/FocusView';
+import { HistoryView } from './ui/HistoryView';
+import { SettingsView } from './ui/SettingsView';
+import { SceneLayer } from './ui/SceneLayer';
+import { Sheet } from './ui/Sheet';
 
-import { useGlobalAudio } from "./hooks/useGlobalAudio";
-import { useSessionRuntime } from "./hooks/useSessionRuntime";
-
-function App() {
+export default function App() {
   useGlobalAudio();
   useSessionRuntime();
   const screen = useStore((s) => s.screen);
+  const setScreen = useStore((s) => s.setScreen);
+  const corner = useStore((s) => s.corner);
   const roomBackground = useStore((s) => s.roomBackground);
 
-  const isRoom = screen === 'room';
-  // The scene background only lives in the Room; other screens stay plain.
-  const isScene = isRoom && roomBackground === 'scene';
+  const scene = roomBackground === 'scene' && corner ? corner : null;
+  const back = () => setScreen('focus');
 
   return (
-    <div className="app" data-scene={isScene ? "true" : undefined} style={{ position: 'relative' }}>
-      <AppShell>
-        {isRoom ? (
-          <Room />
-        ) : (
-          <div style={nonRoomWrapperStyle}>
-            <div style={nonRoomInnerStyle} className="screen-content">
-              <History />
-            </div>
-          </div>
-        )}
-      </AppShell>
+    <div className="relative min-h-dvh" data-scene={scene ? 'true' : undefined}>
+      {scene && <SceneLayer corner={scene} />}
+      <main className="relative z-10" data-testid="room-main">
+        <FocusView />
+      </main>
+      {/* History and Settings open over the clock; it stays the home. */}
+      {screen === 'history' && (
+        <Sheet label="History" onClose={back} testId="history-sheet">
+          <HistoryView />
+        </Sheet>
+      )}
+      {screen === 'settings' && (
+        <Sheet label="Settings" onClose={back} testId="settings-sheet">
+          <SettingsView />
+        </Sheet>
+      )}
     </div>
   );
 }
-
-const nonRoomWrapperStyle: React.CSSProperties = {
-  width: '100%',
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: 0,
-};
-
-const nonRoomInnerStyle: React.CSSProperties = {
-  width: '100%',
-  maxWidth: 1160,
-  margin: '0 auto',
-  flex: 1,
-  display: 'flex',
-  flexDirection: 'column',
-  minHeight: 0,
-};
-
-export default App;

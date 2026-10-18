@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { type TimerState } from '../lib/timer';
-import { type OsBridge, createOsBridge } from '../lib/os';
-import { EV, buildTick, trayTitle } from '../lib/osFormat';
+import { type TimerState } from '../core/timer';
+import { type OsBridge, createOsBridge } from '../platform/os';
+import { EV, buildTick, trayTitle } from '../core/trayFormat';
 
 export function useOsSync(args: {
   bridge?: OsBridge;
