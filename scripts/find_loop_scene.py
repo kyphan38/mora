@@ -2,6 +2,10 @@
 """Tự động tìm 1 điểm cắt trong video YouTube để loop mượt (không giật khi lặp lại),
 rồi tải đúng đoạn đó về ở chất lượng cao (giống pipeline của download_scene_in_place.py).
 
+Cũng chạy được với file video đã tải về (Pexels, Pixabay, Mixkit...):
+    python3 scripts/find_loop_scene.py ~/Downloads/train.mp4 "Train Window" https://www.pexels.com/video/...
+File local được encode 1080p, không tiếng, faststart, nhắm khoảng 15MB trở xuống.
+
 Nếu video không có đoạn nào loop đủ mượt trong khoảng thời gian đã phân tích,
 script sẽ báo rõ và KHÔNG tạo file, để bạn chọn video khác."""
 import os
@@ -144,6 +148,41 @@ def download_and_process_segment(url, filename, start_sec, duration_sec):
             os.remove(temp_output_path)
 
 
+LOCAL_MAX_MB = 15
+
+
+def process_local_segment(src, filename, start_sec, duration_sec):
+    """Cut [start, start+duration] from a local file: 1080p, muted, web-friendly.
+    Starts at CRF 23 and steps up if the file is over LOCAL_MAX_MB."""
+    final_output_path = os.path.join(OUTPUT_DIR, filename)
+    vf_filter = "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080"
+    for crf in (23, 26, 29):
+        print(f"-> Encoding 1080p (CRF {crf})...")
+        cmd = [
+            "ffmpeg", "-y",
+            "-ss", f"{start_sec:.2f}", "-i", src, "-t", f"{duration_sec:.2f}",
+            "-vf", vf_filter, "-an",
+            "-c:v", "libx264", "-crf", str(crf), "-preset", "slow",
+            "-pix_fmt", "yuv420p", "-movflags", "+faststart",
+            final_output_path,
+        ]
+        try:
+            subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError as e:
+            print(f"   [ERROR] ffmpeg failed: {e}")
+            return False
+        size_mb = os.path.getsize(final_output_path) / 1_000_000
+        print(f"   {size_mb:.1f} MB")
+        if size_mb <= LOCAL_MAX_MB:
+            break
+
+    jpg_path = os.path.join(OUTPUT_DIR, f"{os.path.splitext(filename)[0]}.jpg")
+    thumb = ["ffmpeg", "-y", "-ss", "00:00:01", "-i", final_output_path, "-vframes", "1", "-qscale:v", "3", jpg_path]
+    subprocess.run(thumb, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    print(f"   [SUCCESS] -> {filename}")
+    return True
+
+
 def download_analysis_proxy(url, max_minutes):
     """Tải bản 144p nhẹ, dùng ffmpeg trim tại local để tránh bị YouTube throttle băng thông."""
     temp_full_path = os.path.join(OUTPUT_DIR, f"temp_full_144p_{uuid.uuid4().hex[:4]}.mp4")
@@ -265,19 +304,31 @@ def main():
     print("   Tự động tìm điểm loop mượt trong 1 video YouTube")
     print("=" * 60)
 
-    url = input("Nhập URL video YouTube: ").strip()
+    args = sys.argv[1:]
+    url = (args[0] if args else input("YouTube URL or a local video file: ")).strip()
     if not url:
         print("[ERROR] URL không được để trống.")
         return
-    title = input("Nhập tên Scene: ").strip()
+    local = os.path.isfile(os.path.expanduser(url))
+    if local:
+        url = os.path.expanduser(url)
+    title = (args[1] if len(args) > 1 else input("Nhập tên Scene: ")).strip()
     if not title:
         print("[ERROR] Tên Scene không được để trống.")
         return
 
-    max_minutes_raw = input("Phân tích bao nhiêu phút đầu video? (mặc định 15): ").strip()
-    max_minutes = float(max_minutes_raw) if max_minutes_raw else 15.0
-
-    proxy_path = download_analysis_proxy(url, max_minutes)
+    if local:
+        # Keep the source page for the license record.
+        source = (args[2] if len(args) > 2 else input("Source page URL (for the license, optional): ")).strip()
+        max_minutes = 15.0
+        # Analyse the file itself: a temp copy keeps the cleanup below simple.
+        proxy_path = os.path.join(OUTPUT_DIR, f"temp_proxy_{uuid.uuid4().hex[:4]}.mp4")
+        shutil.copy(url, proxy_path)
+    else:
+        source = url
+        max_minutes_raw = input("Phân tích bao nhiêu phút đầu video? (mặc định 15): ").strip()
+        max_minutes = float(max_minutes_raw) if max_minutes_raw else 15.0
+        proxy_path = download_analysis_proxy(url, max_minutes)
     if not proxy_path:
         return
 
@@ -317,6 +368,13 @@ def main():
 
     rand_id = uuid.uuid4().hex[:6]
     filename = f"scene_{rand_id}.mp4"
+
+    if local:
+        # Our own encode: the BPP check below is for re-encoded YouTube streams.
+        if process_local_segment(url, filename, start_sec, duration_sec):
+            save_metadata(filename, title, source or f"local:{os.path.basename(url)}")
+            print(f"\n[DONE] Saved scene '{title}' -> {filename}. Add a description in src/data/corners.ts.")
+        return
 
     if not download_and_process_segment(url, filename, start_sec, duration_sec):
         return
