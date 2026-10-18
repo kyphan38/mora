@@ -313,3 +313,14 @@ describe('portrait scenes', () => {
     expect(CORNERS.every((c) => c.portrait)).toBe(true);
   });
 });
+
+describe('still scenes', () => {
+  it('a photo scene draws no video and drifts slowly', async () => {
+    useStore.setState({ roomBackground: 'scene', corner: { ...CORNERS[0], still: true } });
+    st().addTask('A');
+    const { container } = render(<App />);
+    await new Promise((r) => setTimeout(r, 20));
+    expect(screen.queryByTestId('scene-video')).not.toBeInTheDocument();
+    expect(container.querySelector('.drift')).not.toBeNull();
+  });
+});

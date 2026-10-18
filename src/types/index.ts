@@ -11,6 +11,8 @@ export interface Corner {
   image?: string;
   /** Has a 9:16 phone version (<id>.portrait.mp4/.jpg). */
   portrait?: boolean;
+  /** A photo, no video: shown with a slow drift. */
+  still?: boolean;
 }
 
 /** A scene the owner uploaded (Firestore users/{uid}/scenes/{id}). */

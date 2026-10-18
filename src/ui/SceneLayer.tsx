@@ -41,13 +41,13 @@ function SceneSlide({ corner, top, playVideo }: { corner: Corner; top: boolean; 
   // Phones held upright get the 9:16 cut when the scene has one. Device copy
   // when saved; the first play streams and saves in the background.
   const portrait = usePortrait();
-  const videoSrc = useCachedMedia(playVideo ? sceneVideo(corner, portrait) : null);
+  const videoSrc = useCachedMedia(playVideo && !corner.still ? sceneVideo(corner, portrait) : null);
   useEffect(() => setVideoOn(false), [videoSrc]);
 
   return (
     <div className={`absolute inset-0 ${top ? 'scene-in' : ''}`}>
       <div
-        className="absolute inset-0 bg-cover bg-center"
+        className={`absolute inset-0 bg-cover bg-center ${corner.still ? 'drift' : ''}`}
         style={{ backgroundImage: `url("${sceneImage(corner, portrait)}"), ${corner.gradient}` }}
       />
       {playVideo && !videoError && videoSrc && (

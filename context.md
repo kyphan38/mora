@@ -165,7 +165,9 @@ files (gsutil, long cache). Bucket CORS: `storage.cors.json`
 Owner uploads (`ui/ScenePicker.tsx`, `platform/sceneUpload.ts`): Storage
 `users/{uid}/scenes/<id>.mp4|jpg` (thumbnail taken in the browser),
 listed in Firestore `users/{uid}/scenes`; defaults can only be hidden
-(`hiddenScenes`, synced in prefs). Portrait screens use `<id>.portrait.mp4|jpg` when the scene has
+(`hiddenScenes`, synced in prefs). New scenes from a downloaded file: `python3 scripts/import_scene.py <file>
+"Title" [source]` (video: seamless crossfade loop; photo: still scene with
+a slow CSS drift, `still: true`). Portrait screens use `<id>.portrait.mp4|jpg` when the scene has
 `portrait: true` (`scripts/make-portrait.sh` cuts 9:16 from the middle).
 Scene video is saved on the device after the first play
 (`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. Sounds: Cloud Storage `defaults/audio/ambient|music/<slug>.mp3` (slug from

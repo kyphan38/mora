@@ -115,3 +115,8 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
   Đã thử thật với Storage trên trình duyệt.
 - **Kết quả:** bản deploy web từ ~250MB còn vài MB; mọi scene và âm thanh
   tải một lần trên mỗi máy rồi chạy offline.
+- **Thêm 26 scene (2026-10-18):** 14 video Pexels (4K) + 12 ảnh
+  Unsplash/Pexels của owner, nhập bằng `scripts/import_scene.py` (video:
+  đoạn ≤20s hoà mờ cuối vào đầu để lặp liền, 1080p 2-13MB, bản dọc; ảnh:
+  2560px + bản dọc, trong app trôi chậm). Owner yêu cầu chỉ lọc theo chất
+  lượng; cả 26 đều đạt nên giữ hết. Tổng 34 scene.

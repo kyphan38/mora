@@ -232,6 +232,20 @@ input[type="range"]::-moz-range-thumb {
   animation: scene-in 900ms var(--ease-soft) both;
 }
 
+/* Photo scenes move a little, so they never feel frozen. */
+@keyframes drift {
+  from {
+    transform: scale(1.02) translate3d(-0.6%, 0, 0);
+  }
+  to {
+    transform: scale(1.08) translate3d(0.6%, -0.6%, 0);
+  }
+}
+.drift {
+  animation: drift 60s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
 /* A slow fade in and out for "running"; never blinks. */
 @keyframes breathe {
   0%,
