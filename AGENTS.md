@@ -1,6 +1,6 @@
 # Agent instructions (mora)
 
-Read `CLAUDE_CONTEXT.md` first, then `context.md`.
+Read `context.md` first. Keep it current when the structure or the rules change.
 
 ## Git: no co-author
 

@@ -239,3 +239,17 @@ Mục tiêu: tối giản, sau này chạy được trên điện thoại (PWA) 
 | **M3** | Tính năng (phím tắt, zen, ghi chú, history tốt hơn, pomodoro) |
 | **M4** | Liên kết logi |
 | **M5** | Dọn dẹp cuối, docs, CSP, thử `tauri dev` |
+
+### Cập nhật 2026-10-18 (tối)
+
+- Owner: hodi/legi chỉ để tham khảo cách tối giản, mora phải có cá tính
+  riêng. Chọn hướng **"Đồng hồ là màn hình"**: không có nav chữ, đồng hồ
+  lớn ở giữa với vòng tiến độ mảnh; task, âm thanh + scene, history,
+  settings đều là sheet nổi lên trên đồng hồ; thanh icon dưới cùng tự mờ
+  khi đang tập trung. "Hide tasks" không còn cần: task nằm trong sheet,
+  mặc định đóng.
+- **R1 xong:** Tailwind v4 + token xám + theme, tách `core/platform/ui`,
+  giao diện mới, 164 test pass. Docs gộp vào `context.md`
+  (`CLAUDE_CONTEXT.md` đã xoá).
+- Tiếp theo: **R2** chuyển động (cross-fade scene, fade âm thanh, sheet,
+  danh sách task), rồi **R3** PWA.
