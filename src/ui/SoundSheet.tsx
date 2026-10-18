@@ -29,6 +29,8 @@ export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => vo
   const setCorner = useStore((s) => s.setCorner);
   const setRoomBackground = useStore((s) => s.setRoomBackground);
   const roomBackground = useStore((s) => s.roomBackground);
+  const muted = useStore((s) => s.muted);
+  const setMuted = useStore((s) => s.setMuted);
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
@@ -72,6 +74,19 @@ export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => vo
     <Sheet open={open} label="Sound and scene" onClose={onClose} testId="room-settings-panel">
       <div className="space-y-6">
         <section>
+          <Label>sound</Label>
+          <Words
+            label="Sound"
+            options={[
+              { value: 'on', label: 'on' },
+              { value: 'off', label: 'off' },
+            ]}
+            value={muted ? 'off' : 'on'}
+            onChange={(v) => setMuted(v === 'off')}
+          />
+        </section>
+
+        <section className={`transition-opacity ${muted ? 'opacity-40' : ''}`}>
           <Label>ambient</Label>
           <Words
             label="Ambient"
@@ -96,7 +111,7 @@ export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => vo
           />
         </section>
 
-        <section>
+        <section className={`transition-opacity ${muted ? 'opacity-40' : ''}`}>
           <Label>music</Label>
           <Words
             label="Music"

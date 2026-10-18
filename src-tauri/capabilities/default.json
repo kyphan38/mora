@@ -9,6 +9,7 @@
     "core:event:default",
     "core:window:allow-show",
     "core:window:allow-set-focus",
+    "core:window:allow-set-fullscreen",
     "core:tray:default",
     "core:menu:default",
     "core:app:default",

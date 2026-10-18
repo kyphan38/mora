@@ -15,6 +15,10 @@ export function TaskList() {
   const removeTask = useStore((s) => s.removeTask);
   const reorderTasks = useStore((s) => s.reorderTasks);
   const clearCompletedTasks = useStore((s) => s.clearCompletedTasks);
+  const setTaskKind = useStore((s) => s.setTaskKind);
+  const notes = useStore((s) => s.notes);
+  const noteToTask = useStore((s) => s.noteToTask);
+  const removeNote = useStore((s) => s.removeNote);
   const [draft, setDraft] = useState('');
   const [leaving, setLeaving] = useState<string | null>(null);
   const flip = useFlip(tasks.map((t) => t.id));
@@ -44,7 +48,8 @@ export function TaskList() {
         <input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Add a task…"
+          autoFocus={tasks.length === 0}
+          placeholder="Add a task…  (~3 = three blocks)"
           aria-label="Add a task"
           className="w-full border-b border-line bg-transparent py-2 text-[15px] transition-colors placeholder:text-faint focus:border-line-strong"
         />
@@ -69,6 +74,20 @@ export function TaskList() {
             </span>
             {t.id === activeId && <span className="shrink-0 font-mono text-[11px] text-faint">now</span>}
             <span className="flex-1" />
+            {(t.est || t.blocks) && (
+              <span className="shrink-0 font-mono text-[11px] text-faint" aria-label="Blocks done">
+                {t.blocks ?? 0}
+                {t.est ? `/${t.est}` : ''}
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setTaskKind(t.id, (t.kind ?? 'learn') === 'learn' ? 'work' : 'learn')}
+              className="w-9 shrink-0 text-right font-mono text-[11px] text-faint hover:text-ink"
+              aria-label={`Kind of ${t.name}: ${t.kind ?? 'learn'}`}
+            >
+              {t.kind ?? 'learn'}
+            </button>
             <button
               type="button"
               className={ROW_TOOL}
@@ -104,6 +123,30 @@ export function TaskList() {
               clear done
             </button>
           )}
+        </div>
+      )}
+
+      {notes.length > 0 && (
+        <div className="mt-6" aria-label="Parked thoughts">
+          <h3 className="font-mono text-[11px] tracking-[0.08em] text-faint uppercase">parked</h3>
+          <ul className="mt-1">
+            {notes.map((n) => (
+              <li key={n.id} className="rise flex items-baseline gap-3 py-2">
+                <span className="min-w-0 flex-1 truncate text-[14px] text-muted">{n.text}</span>
+                <button type="button" className="text-[12px] text-faint hover:text-ink" onClick={() => noteToTask(n.id)}>
+                  make task
+                </button>
+                <button
+                  type="button"
+                  className="text-[12px] text-faint hover:text-ink"
+                  onClick={() => removeNote(n.id)}
+                  aria-label={`Remove note ${n.text}`}
+                >
+                  remove
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </section>

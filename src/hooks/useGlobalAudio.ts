@@ -6,6 +6,7 @@ import { getCustomTrack } from '../platform/customTrackDb';
 
 export function useGlobalAudio() {
   const sound = useStore((s) => s.sound);
+  const muted = useStore((s) => s.muted);
   const removeCustomTrack = useStore((s) => s.removeCustomTrack);
   const active = useStore(shouldPlayAudio);
 
@@ -14,8 +15,9 @@ export function useGlobalAudio() {
     let createdUrl: string | null = null;
     const engine = getAudioEngine();
     engine.setAmbient(sound.ambient);
-    engine.setAmbientVolume(volumeToGain(sound.ambientVolume));
-    engine.setMusicVolume(volumeToGain(sound.musicVolume));
+    // Mute keeps the chosen levels; it only sends silence.
+    engine.setAmbientVolume(muted ? 0 : volumeToGain(sound.ambientVolume));
+    engine.setMusicVolume(muted ? 0 : volumeToGain(sound.musicVolume));
 
     const customTrackId = sound.customTrackId;
     if (customTrackId) {
@@ -42,7 +44,7 @@ export function useGlobalAudio() {
         URL.revokeObjectURL(createdUrl);
       }
     };
-  }, [sound.ambient, sound.musicStyle, sound.ambientVolume, sound.musicVolume, sound.customTrackId, removeCustomTrack]);
+  }, [sound.ambient, sound.musicStyle, sound.ambientVolume, sound.musicVolume, sound.customTrackId, muted, removeCustomTrack]);
 
   useEffect(() => {
     const engine = getAudioEngine();

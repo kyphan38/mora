@@ -61,3 +61,18 @@ export const SoundIcon = () => (
     <path d="M16.5 9a4 4 0 0 1 0 6" />
   </svg>
 );
+
+export const NoteIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" {...base}>
+    <path d="M5 19h4L19 9a2.1 2.1 0 0 0-3-3L6 16z" />
+  </svg>
+);
+
+export const ZenIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" {...base}>
+    <polyline points="4 9 4 4 9 4" />
+    <polyline points="20 9 20 4 15 4" />
+    <polyline points="4 15 4 20 9 20" />
+    <polyline points="20 15 20 20 15 20" />
+  </svg>
+);

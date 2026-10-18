@@ -65,6 +65,7 @@ export function useSessionRuntime() {
   const sessionActive = useStore((s) => s.sessionActive);
   const phase = useStore((s) => s.phase);
   const lastFocusSec = useStore((s) => s.lastFocusSec);
+  const longBreak = useStore((s) => s.longBreak);
   const durationSec = useStore((s) => s.setup.durationSec);
   const elapsedSec = useStore((s) => s.elapsedSec);
   const taskName = useStore((s) => s.tasks.find((t) => !t.done)?.name ?? '');
@@ -74,7 +75,7 @@ export function useSessionRuntime() {
       pushTick(null, '');
       return;
     }
-    const timer = sessionTimer({ phase, lastFocusSec, setup: { durationSec }, elapsedSec, isRunning });
+    const timer = sessionTimer({ phase, lastFocusSec, longBreak, setup: { durationSec }, elapsedSec, isRunning });
     pushTick(timer, phase === 'break' ? 'break' : taskName);
-  }, [sessionActive, phase, lastFocusSec, durationSec, elapsedSec, isRunning, taskName, pushTick]);
+  }, [sessionActive, phase, lastFocusSec, longBreak, durationSec, elapsedSec, isRunning, taskName, pushTick]);
 }
