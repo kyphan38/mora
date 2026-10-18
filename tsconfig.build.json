@@ -1,0 +1,6 @@
+{
+  "extends": "./tsconfig.json",
+  // The web build checks app code only; tests read files (src-tauri) that
+  // the web deploy does not upload. `npx tsc --noEmit` still checks tests.
+  "exclude": ["src/test"]
+}
