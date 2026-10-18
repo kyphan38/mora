@@ -1,9 +1,9 @@
 import { create } from 'zustand';
-import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack } from '../types';
+import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind } from '../types';
 import { DURATIONS } from '../data/durations';
 import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
-import { breakForSeconds } from '../core/pomodoro';
+import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../core/pomodoro';
 
 export type Phase = 'focus' | 'break' | 'review';
 
@@ -51,6 +51,11 @@ interface AppStore {
     phase?: Phase;
     lastFocusSec?: number;
     focusStartedAt?: number | null;
+    notes?: Note[];
+    cycleCount?: number;
+    longBreak?: boolean;
+    dailyGoalMin?: number;
+    muted?: boolean;
   }) => void;
   clearSessions: () => void;
 
@@ -91,6 +96,30 @@ interface AppStore {
   finishBreak: () => void;
   focusAgain: (durationSec: number) => void;
   stopAllSessions: () => void;
+
+  // Pomodoro cycle: finished blocks since the last long break.
+  cycleCount: number;
+  /** The current or next break is a long one. */
+  longBreak: boolean;
+  /** Session logged by the last review, so the sheet can attach a note to it. Not persisted. */
+  lastSessionId: string | null;
+  setCustomDuration: (minutes: number) => void;
+
+  notes: Note[];
+  addNote: (text: string) => void;
+  removeNote: (id: string) => void;
+  noteToTask: (id: string) => void;
+
+  setTaskKind: (id: string, kind: FocusKind) => void;
+  setSessionNote: (id: string, note: string) => void;
+  updateSession: (id: string, patch: { taskName?: string; minutes?: number }) => void;
+  removeSession: (id: string) => Session | undefined;
+  restoreSession: (s: Session) => void;
+
+  dailyGoalMin: number;
+  setDailyGoal: (minutes: number) => void;
+  muted: boolean;
+  setMuted: (b: boolean) => void;
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -102,14 +131,15 @@ const MIN_LOG_SEC = 60;
 
 function buildSession(
   state: { corner: Corner | null; sound: SoundConfig; focusStartedAt: number | null },
-  taskName: string,
+  task: Task,
   elapsedSec: number,
 ): Session | null {
   if (elapsedSec < MIN_LOG_SEC) return null;
   const endedAt = Date.now();
   return {
     id: uid(),
-    taskName,
+    taskName: task.name,
+    kind: task.kind ?? 'learn',
     minutes: Math.round(elapsedSec / 60),
     startedAt: state.focusStartedAt ?? endedAt - elapsedSec * 1000,
     endedAt,
@@ -146,6 +176,12 @@ export const useStore = create<AppStore>((set, get) => ({
   runSyncAt: null,
   focusStartedAt: null,
   lastEvent: null,
+  cycleCount: 0,
+  longBreak: false,
+  lastSessionId: null,
+  notes: [],
+  dailyGoalMin: 0,
+  muted: false,
   setRoomBackground: (m) => {
     set({ roomBackground: m });
     if (m === 'scene' && get().corner === null) {
@@ -193,10 +229,14 @@ export const useStore = create<AppStore>((set, get) => ({
     }
   },
   addTask: (name) => {
-    const trimmed = name.trim();
+    // "Write report ~3" adds the task with an estimate of 3 focus blocks.
+    const m = name.trim().match(/^(.*?)\s*~\s*(\d{1,2})$/);
+    const trimmed = (m ? m[1] : name).trim();
     if (!trimmed) return;
+    const est = m ? Math.max(1, Number(m[2])) : undefined;
     set((state) => {
-      const newTasks = [...state.tasks, { id: uid(), name: trimmed, done: false, createdAt: Date.now() }];
+      const task: Task = { id: uid(), name: trimmed, done: false, createdAt: Date.now(), kind: 'learn', ...(est ? { est } : {}) };
+      const newTasks = [...state.tasks, task];
       const firstUndone = newTasks.find((t) => !t.done);
       return {
         tasks: newTasks,
@@ -260,7 +300,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const state = get();
     const t = state.tasks.find((task) => !task.done);
     if (!t) return;
-    const session = buildSession(state, t.name, elapsedSec);
+    const session = buildSession(state, t, elapsedSec);
     const updatedTasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
     const firstUndone = updatedTasks.find((task) => !task.done);
     set({
@@ -274,7 +314,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const state = get();
     const t = state.tasks.find((task) => !task.done);
     if (!t) return false;
-    const session = buildSession(state, t.name, elapsedSec);
+    const session = buildSession(state, t, elapsedSec);
     if (!session) return false;
     set({ sessions: [session, ...state.sessions] });
     return true;
@@ -295,6 +335,11 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.phase !== undefined) update.phase = p.phase;
     if (p.lastFocusSec !== undefined) update.lastFocusSec = p.lastFocusSec;
     if (p.focusStartedAt !== undefined) update.focusStartedAt = p.focusStartedAt;
+    if (p.notes !== undefined) update.notes = p.notes;
+    if (p.cycleCount !== undefined) update.cycleCount = p.cycleCount;
+    if (p.longBreak !== undefined) update.longBreak = p.longBreak;
+    if (p.dailyGoalMin !== undefined) update.dailyGoalMin = p.dailyGoalMin;
+    if (p.muted !== undefined) update.muted = p.muted;
     update.runSyncAt = null;
 
     // Auto-heal activeTaskId on load: it must point at an undone task.
@@ -338,7 +383,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
     // Break phase countdown
     if (state.phase === 'break') {
-      const breakDur = breakForSeconds(state.lastFocusSec);
+      const breakDur = state.longBreak ? longBreakForSeconds(state.lastFocusSec) : breakForSeconds(state.lastFocusSec);
       const elapsed = Math.min(breakDur, state.elapsedSec + deltaSec);
       set({ elapsedSec: elapsed });
       if (elapsed >= breakDur) {
@@ -397,6 +442,15 @@ export const useStore = create<AppStore>((set, get) => ({
     const state = get();
     if (state.phase !== 'focus') return;
     const focusDur = state.setup.durationSec > 0 ? state.setup.durationSec : state.elapsedSec;
+    // A block counts toward the cycle and the task when it lasted a minute.
+    const counted = state.elapsedSec >= MIN_LOG_SEC;
+    const cycleCount = counted ? state.cycleCount + 1 : state.cycleCount;
+    const longBreak = cycleCount >= LONG_BREAK_EVERY;
+    const current = state.tasks.find((t) => !t.done);
+    if (counted && current) {
+      set({ tasks: state.tasks.map((t) => (t.id === current.id ? { ...t, blocks: (t.blocks ?? 0) + 1 } : t)) });
+    }
+    set({ cycleCount, longBreak });
 
     if (state.autoContinue) {
       // Auto-continue: log + mark done the active task, then start break
@@ -412,6 +466,7 @@ export const useStore = create<AppStore>((set, get) => ({
         return;
       }
       set({
+        ...(longBreak ? { cycleCount: 0 } : {}),
         activeTaskId: nextUndone.id,
         lastFocusSec: focusDur,
         phase: 'break',
@@ -423,10 +478,11 @@ export const useStore = create<AppStore>((set, get) => ({
 
     // Manual: log the finished block now, so every choice on the review
     // sheet (keep working, break, focus again, stop) keeps that time.
-    const active = state.tasks.find((t) => !t.done);
-    const session = active ? buildSession(state, active.name, state.elapsedSec) : null;
+    const active = get().tasks.find((t) => !t.done);
+    const session = active ? buildSession(state, active, state.elapsedSec) : null;
     set({
       sessions: session ? [session, ...state.sessions] : state.sessions,
+      lastSessionId: session?.id ?? null,
       lastFocusSec: focusDur,
       phase: 'review',
       elapsedSec: 0,
@@ -456,6 +512,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   startBreak: () => {
     set({
+      ...(get().longBreak ? { cycleCount: 0 } : {}),
       phase: 'break',
       elapsedSec: 0,
       ...run(true),
@@ -463,6 +520,7 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   finishBreak: () => {
+    if (get().longBreak && get().cycleCount === 0) set({ longBreak: false });
     const state = get();
     if (state.autoContinue) {
       // Auto-continue: go straight to next focus
@@ -513,6 +571,61 @@ export const useStore = create<AppStore>((set, get) => ({
     get().stopFocus();
     set({ phase: 'focus', screen: 'history' });
   },
+
+  setCustomDuration: (minutes) => {
+    const min = Math.round(minutes);
+    if (!Number.isFinite(min) || min < 1 || min > 600) return;
+    const known = DURATIONS.find((d) => d.seconds === min * 60);
+    if (known) return get().setDuration(known.label);
+    const s = get();
+    set({
+      setup: { durationLabel: `${min} min`, durationSec: min * 60 },
+      ...(s.sessionActive && s.phase === 'focus' ? {} : { elapsedSec: 0 }),
+    });
+  },
+
+  addNote: (text) => {
+    const t = text.trim();
+    if (!t) return;
+    set((s) => ({ notes: [...s.notes, { id: uid(), text: t, createdAt: Date.now() }] }));
+  },
+  removeNote: (id) => set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
+  noteToTask: (id) => {
+    const note = get().notes.find((n) => n.id === id);
+    if (!note) return;
+    get().addTask(note.text);
+    get().removeNote(id);
+  },
+
+  setTaskKind: (id, kind) =>
+    set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, kind } : t)) })),
+  setSessionNote: (id, note) =>
+    set((s) => ({
+      sessions: s.sessions.map((x) => (x.id === id ? { ...x, note: note.trim() || undefined } : x)),
+    })),
+  updateSession: (id, patch) =>
+    set((s) => ({
+      sessions: s.sessions.map((x) => {
+        if (x.id !== id) return x;
+        const taskName = patch.taskName?.trim() || x.taskName;
+        const minutes = patch.minutes !== undefined && patch.minutes >= 1 ? Math.round(patch.minutes) : x.minutes;
+        return { ...x, taskName, minutes };
+      }),
+    })),
+  removeSession: (id) => {
+    const found = get().sessions.find((x) => x.id === id);
+    if (found) set((s) => ({ sessions: s.sessions.filter((x) => x.id !== id) }));
+    return found;
+  },
+  restoreSession: (session) =>
+    set((s) =>
+      s.sessions.some((x) => x.id === session.id)
+        ? {}
+        : { sessions: [...s.sessions, session].sort((a, b) => b.endedAt - a.endedAt) },
+    ),
+
+  setDailyGoal: (minutes) => set({ dailyGoalMin: Math.max(0, Math.round(minutes)) }),
+  setMuted: (b) => set({ muted: b }),
 }));
 
 /**
@@ -530,7 +643,7 @@ function switchPatch(
   const before = state.tasks.find((t) => !t.done);
   const after = newTasks.find((t) => !t.done);
   if (before?.id === after?.id) return {};
-  const session = logOld && before ? buildSession(state, before.name, state.elapsedSec) : null;
+  const session = logOld && before ? buildSession(state, before, state.elapsedSec) : null;
   const now = Date.now();
   return {
     sessions: session ? [session, ...state.sessions] : state.sessions,

@@ -1,4 +1,4 @@
-import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack } from '../types';
+import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack, Note } from '../types';
 
 type Phase = 'focus' | 'break' | 'review';
 
@@ -21,6 +21,11 @@ export interface PersistedState {
   phase?: Phase;
   lastFocusSec?: number;
   focusStartedAt?: number | null;
+  notes?: Note[];
+  cycleCount?: number;
+  longBreak?: boolean;
+  dailyGoalMin?: number;
+  muted?: boolean;
 }
 
 export interface StorageAdapter {
@@ -105,6 +110,11 @@ export function toPersisted(s: {
   phase?: Phase;
   lastFocusSec?: number;
   focusStartedAt?: number | null;
+  notes?: Note[];
+  cycleCount?: number;
+  longBreak?: boolean;
+  dailyGoalMin?: number;
+  muted?: boolean;
 }): PersistedState {
   return {
     version: PERSIST_VERSION,
@@ -123,6 +133,11 @@ export function toPersisted(s: {
     phase: s.phase ?? 'focus',
     lastFocusSec: s.lastFocusSec ?? 0,
     focusStartedAt: s.focusStartedAt ?? null,
+    notes: s.notes ?? [],
+    cycleCount: s.cycleCount ?? 0,
+    longBreak: s.longBreak ?? false,
+    dailyGoalMin: s.dailyGoalMin ?? 0,
+    muted: s.muted ?? false,
   };
 }
 

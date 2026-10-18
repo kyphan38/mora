@@ -25,6 +25,14 @@ export function breakForSeconds(focusSec: number): number {
   return breakMin * 60;
 }
 
+/** Every LONG_BREAK_EVERY finished focus blocks, the break is long. */
+export const LONG_BREAK_EVERY = 4;
+
+/** A long break: three normal breaks, kept between 15 and 30 minutes. */
+export function longBreakForSeconds(focusSec: number): number {
+  return Math.min(1800, Math.max(900, breakForSeconds(focusSec) * 3));
+}
+
 /** Duration options available in the "Focus again" picker (no Count Up). */
 export const NEXT_DURATIONS: { label: string; seconds: number }[] = [
   { label: '25 min', seconds: 1500 },

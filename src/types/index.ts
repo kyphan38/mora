@@ -8,11 +8,23 @@ export interface Corner {
   gradient: string;     // CSS gradient string for the thumbnail
 }
 
+export type FocusKind = 'learn' | 'work';
+
 export interface Task {
   id: string;
   name: string;
   done: boolean;
   createdAt: number;    // epoch ms
+  kind?: FocusKind;     // missing = learn
+  est?: number;         // estimated focus blocks
+  blocks?: number;      // finished focus blocks
+}
+
+/** A thought parked during focus, to deal with later. */
+export interface Note {
+  id: string;
+  text: string;
+  createdAt: number;
 }
 
 export interface Session {
@@ -23,6 +35,8 @@ export interface Session {
   endedAt: number;      // epoch ms
   corner: string;       // corner name
   ambient: string;      // ambient name
+  kind?: FocusKind;
+  note?: string;        // one line written when the block ended
 }
 
 export interface SoundConfig {
