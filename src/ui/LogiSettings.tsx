@@ -26,22 +26,9 @@ export function LogiSettings() {
     if (!logi.token) line = 'add the token to start';
   } else if (status.state === 'error') line = status.message;
   else if (status.at) line = `last sent ${formatClock(status.at)}`;
-  else line = 'new sessions go to logi';
+  else line = 'runs show up in logi as they happen';
 
-  const sendRecent = async () => {
-    if (desktop) {
-      setBackfill(`${queueRecentSessions()} queued`);
-      return;
-    }
-    setBackfill('sending…');
-    try {
-      const [{ httpsCallable }, { getFunctionsClient }] = await Promise.all([import('firebase/functions'), import('../platform/functions')]);
-      const res = await httpsCallable<void, { queued: number; sent: number }>(getFunctionsClient(), 'sendRecentToLogi')();
-      setBackfill(`${res.data.sent} sent`);
-    } catch {
-      setBackfill('could not send, try later');
-    }
-  };
+  const sendRecent = () => setBackfill(`${queueRecentSessions()} queued`);
 
   return (
     <section>
@@ -80,9 +67,12 @@ export function LogiSettings() {
           <p className={`font-mono text-[12px] ${status.state === 'error' ? 'text-ink' : 'text-faint'}`} data-testid="logi-status">
             {line}
           </p>
-          <button type="button" className="text-[12px] text-faint hover:text-ink" onClick={() => void sendRecent()}>
-            {backfill ?? 'also send the last 7 days'}
-          </button>
+          {/* The web link is live (each run appears in logi as it happens); only the desktop build sends afterwards. */}
+          {desktop && (
+            <button type="button" className="text-[12px] text-faint hover:text-ink" onClick={() => void sendRecent()}>
+              {backfill ?? 'also send the last 7 days'}
+            </button>
+          )}
         </div>
       )}
     </section>

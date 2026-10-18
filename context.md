@@ -128,11 +128,14 @@ Firebase project kyphan38-mora-app (env `VITE_FIREBASE_*`, `VITE_ALLOWED_USER_EM
 
 ## Link to logi
 
-Web/PWA: the Cloud Function `sessionToLogi` (functions/src/index.ts) sends
-each new session (ended within 3 days) when `prefs.logiEnabled`; the token
-is the Secret Manager secret `MORA_INGEST_TOKEN`; results go to
-`users/{uid}/meta/logi` (shown in Settings); `sendRecentToLogi` backfills 7
-days. Pure helpers in `functions/src/logi.ts` (tested from src/test).
+Web/PWA, live (PLAN-live-logi.md): every run of the clock has a `runId`.
+Function `liveToLogi` watches `live/current` and calls logi
+`/api/ingest/mora/live` start/stop (one logi record `mora_<runId>` per
+run, token `MORA_INGEST_TOKEN`). Stopping a mora record in logi triggers
+logi's `moraStopped`, which calls mora's `stopFromLogi` (token
+`LOGI_CONTROL_TOKEN`): the timer stops on every device and the block is
+saved. Rules in `functions/src/live.ts` (tested from src/test). Status in
+`users/{uid}/meta/logi`.
 Desktop (Tauri, no account) sends from the device as below.
 
 Off by default (Settings → send to logi). Each logged session becomes a

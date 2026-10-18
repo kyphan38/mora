@@ -143,6 +143,8 @@ interface AppStore {
   toggleHiddenScene: (id: string) => void;
   showAllScenes: () => void;
 
+  /** Id of the current run of the clock (Play to Pause). Not persisted. */
+  runId: string | null;
   /** This device follows a timer another device started; that device logs the block. Not persisted. */
   liveFollower: boolean;
   /** When a following device reached the end and began waiting for the leader. Not persisted. */
@@ -173,7 +175,8 @@ export interface LogiLink {
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
 
-const run = (on: boolean) => ({ isRunning: on, runSyncAt: on ? Date.now() : null });
+// Every start of the clock is a new run (logi keeps one record per run).
+const run = (on: boolean) => (on ? { isRunning: true, runSyncAt: Date.now(), runId: uid() } : { isRunning: false, runSyncAt: null });
 
 // Blocks shorter than a minute are not worth a History row.
 const MIN_LOG_SEC = 60;
@@ -238,6 +241,7 @@ export const useStore = create<AppStore>((set, get) => ({
   hiddenScenes: [],
   liveFollower: false,
   overdueSince: null,
+  runId: null,
   setRoomBackground: (m) => {
     set({ roomBackground: m });
     if (m === 'scene' && get().corner === null) {
@@ -427,6 +431,7 @@ export const useStore = create<AppStore>((set, get) => ({
   },
   setIsRunning: (b) => {
     const s = get();
+    if (b === s.isRunning) return;
     set({
       ...run(b),
       ...(b && s.phase === 'focus' && s.focusStartedAt === null ? { focusStartedAt: Date.now() } : {}),
@@ -734,6 +739,7 @@ export const useStore = create<AppStore>((set, get) => ({
       longBreak: l.longBreak,
       cycleCount: l.cycleCount,
       focusStartedAt: l.focusStartedAt,
+      runId: l.runId ?? null,
       liveFollower: true,
       overdueSince: null,
       ...(freshEvent ? { lastEvent: l.event } : {}),
@@ -797,6 +803,7 @@ function switchPatch(
     elapsedSec: 0,
     focusStartedAt: state.isRunning && after ? now : null,
     runSyncAt: state.isRunning && after ? now : null,
+    ...(state.isRunning && after ? { runId: uid() } : {}),
   };
 }
 

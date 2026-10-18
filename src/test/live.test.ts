@@ -18,6 +18,10 @@ const live = (over: Partial<LiveTimer> = {}): LiveTimer => ({
   cycleCount: 0,
   focusStartedAt: 999_000,
   event: null,
+  runId: 'run-1',
+  taskName: 'A',
+  taskKind: 'learn',
+  at: 1_000_000,
   ...over,
 });
 
@@ -81,5 +85,33 @@ describe('following another device', () => {
     st().applyLive(live(), 1_000_000);
     st().leadLive();
     expect(st().liveFollower).toBe(false);
+  });
+});
+
+describe('runs', () => {
+  it('each Play starts a new run; Pause keeps the id for the record', () => {
+    st().startFocus();
+    st().setIsRunning(true);
+    const first = st().runId;
+    expect(first).toBeTruthy();
+    st().setIsRunning(true);
+    expect(st().runId).toBe(first);
+    st().setIsRunning(false);
+    expect(st().runId).toBe(first);
+    st().setIsRunning(true);
+    expect(st().runId).not.toBe(first);
+  });
+
+  it('the shared timer carries the run, the task and its kind', () => {
+    st().setTaskKind(st().tasks[0].id, 'work');
+    st().startFocus();
+    st().setIsRunning(true);
+    const l = toLive({ ...st() }, 'mac', 5_000);
+    expect(l).toMatchObject({ runId: st().runId, taskName: 'A', taskKind: 'work', at: 5_000, stoppedBy: null });
+  });
+
+  it('a new run changes the action key', () => {
+    const a = actionKey({ ...st(), runId: 'r1' });
+    expect(actionKey({ ...st(), runId: 'r2' })).not.toBe(a);
   });
 });

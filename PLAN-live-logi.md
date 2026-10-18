@@ -74,3 +74,14 @@ Owner cần: tạo token thứ hai và đặt vào cả hai project (mình đưa
    logi chỉ tính thời gian thật sự focus.
 2. **Start chỉ từ mora.** Start trên logi là việc riêng của logi, không đụng
    tới mora. **Stop** thì hai chiều: dừng ở mora hoặc ở logi đều dừng cả hai.
+
+## Tiến độ
+
+- **L1-L4 code xong (2026-10-18):** logi route `/api/ingest/mora/live`,
+  Function logi `moraStopped`; mora Function `liveToLogi` (trigger
+  `live/current`) và `stopFromLogi` (HTTPS); `runId` mới mỗi lần đồng hồ
+  chạy, doc đồng hồ có tên task, loại, thời điểm thao tác. Bỏ 2 Function cũ
+  (`sessionToLogi`, `sendRecentToLogi`); web không còn nút gửi 7 ngày.
+  Test: mora 255, logi 633.
+- **Chờ owner:** đặt secret `LOGI_CONTROL_TOKEN` (cùng một giá trị) ở cả
+  hai project, rồi deploy functions hai bên.

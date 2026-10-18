@@ -39,6 +39,8 @@ function slice(s: ReturnType<typeof useStore.getState>): RuntimeSlice {
     cycleCount: s.cycleCount,
     focusStartedAt: s.focusStartedAt,
     lastEvent: s.lastEvent,
+    runId: s.runId,
+    tasks: s.tasks,
   };
 }
 
