@@ -2,3 +2,4 @@
 src-tauri/
 reference/
 scripts/__pycache__/
+functions/

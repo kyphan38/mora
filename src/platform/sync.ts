@@ -191,6 +191,16 @@ export function startSync(uid: string, onReady?: () => void): () => void {
   };
 
   const unsubs = [
+    // What the Cloud Function last did with logi (Settings shows it).
+    onSnapshot(doc(db, ...base, 'meta', 'logi'), (snap) => {
+      if (!snap.exists()) return;
+      const d = snap.data();
+      useStore.getState().setLogiStatus({
+        state: d.lastError ? 'error' : 'ok',
+        message: typeof d.lastError === 'string' ? d.lastError : '',
+        at: typeof d.lastSentAt === 'number' ? d.lastSentAt : 0,
+      });
+    }),
     // Uploaded scenes: read-only mirror (uploads and deletes write directly).
     onSnapshot(collection(db, ...base, 'scenes'), (snap) => {
       const docs = snap.docs.map((d) => ({ id: d.id, data: d.data() as Doc }));

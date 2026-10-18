@@ -7,6 +7,7 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
 import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
+import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
 import {
   connectFirestoreEmulator,
   getFirestore,
@@ -108,6 +109,16 @@ export function getStorageClient(): FirebaseStorage {
   storage = getStorage(firebaseApp());
   if (USE_EMULATORS) connectStorageEmulator(storage, '127.0.0.1', 9399);
   return storage;
+}
+
+let fns: Functions | null = null;
+
+/** Cloud Functions, same region as functions/src/index.ts. */
+export function getFunctionsClient(): Functions {
+  if (fns) return fns;
+  fns = getFunctions(firebaseApp(), 'asia-southeast1');
+  if (USE_EMULATORS) connectFunctionsEmulator(fns, '127.0.0.1', 5101);
+  return fns;
 }
 
 /** The one account allowed to use mora. Only a readable early check; firestore.rules is the guard. */

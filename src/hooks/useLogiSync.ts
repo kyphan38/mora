@@ -2,17 +2,22 @@ import { useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { blockFromSession, isPermanentReject, LOGI_BATCH } from '../core/logiLink';
 import { sendBlocks } from '../platform/logiClient';
+import { isTauri } from '../platform/persistence';
 
 const RETRY_MS = 5 * 60_000;
 // Only sessions that just ended are queued automatically; loading saved
 // history or undoing a delete must not resend old blocks.
 const FRESH_MS = 10 * 60_000;
 
-/** Queues finished blocks and sends them to logi when the link is on. */
+/**
+ * Desktop (Tauri) only: queues finished blocks and sends them to logi with
+ * the token from Settings. On the web a Cloud Function sends them instead.
+ */
 export function useLogiSync() {
   const sending = useRef(false);
 
   useEffect(() => {
+    if (!isTauri()) return;
     const flush = async () => {
       const { logi, outbox } = useStore.getState();
       if (sending.current || !logi.enabled || !logi.token || outbox.length === 0) return;

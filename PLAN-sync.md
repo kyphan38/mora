@@ -137,3 +137,11 @@ Kiểu "đồng hồ là màn hình" chỉ áp dụng cho bên trong app.
   tự nhiên thì máy kia cũng kêu chuông. Thao tác trước khi snapshot đầu tiên
   về tới vẫn được giữ (đã sửa một lỗi tranh chấp tìm thấy nhờ test
   emulator). Test emulator chạy lần lượt từng file; tổng 14.
+- **S4 code xong (2026-10-18):** `functions/` (Node 24, asia-southeast1):
+  `sessionToLogi` chạy khi có session mới (tự gửi nếu kết thúc trong 3
+  ngày gần nhất và `logiEnabled`), tự thử lại khi lỗi mạng;
+  `sendRecentToLogi` (callable) cho nút "gửi 7 ngày gần nhất". Token ở
+  Secret Manager `MORA_INGEST_TOKEN`. Kết quả ghi vào `users/{uid}/meta/logi`
+  để Settings hiện "last sent 10:42" hoặc lỗi. Web không gửi từ trình
+  duyệt nữa, không còn ô token; Tauri giữ cách cũ. Rules `meta` đã deploy.
+  **Chờ owner:** đặt secret, rồi deploy functions.

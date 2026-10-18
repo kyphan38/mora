@@ -51,7 +51,15 @@ describe('logi link: pure parts', () => {
   });
 });
 
-describe('logi link: sending', () => {
+describe('logi link: sending (desktop)', () => {
+  // Only the Tauri build sends from the device; the web uses a Cloud Function.
+  beforeEach(() => {
+    (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__ = {};
+  });
+  afterEach(() => {
+    delete (window as unknown as Record<string, unknown>).__TAURI_INTERNALS__;
+  });
+
   function enable() {
     st().setLogi({ enabled: true, token: 'secret', url: 'https://logi.test/' });
   }
@@ -103,7 +111,7 @@ describe('logi link: sending', () => {
     expect(st().outbox.length).toBe(1);
   });
 
-  it('settings: turn on, add token, queue the last 7 days', () => {
+  it('settings: turn on, add token, queue the last 7 days', async () => {
     useStore.setState({
       screen: 'settings',
       sessions: [session({ id: 'new', endedAt: Date.now() - 86_400_000 }), session({ id: 'old', endedAt: Date.now() - 9 * 86_400_000 })],
@@ -117,7 +125,29 @@ describe('logi link: sending', () => {
     fireEvent.change(screen.getByLabelText('logi token'), { target: { value: ' tok ' } });
     expect(st().logi.token).toBe('tok');
     fireEvent.click(screen.getByText('also send the last 7 days'));
-    expect(st().outbox.map((b) => b.id)).toEqual(['new']);
+    await waitFor(() => expect(st().outbox.map((b) => b.id)).toEqual(['new']));
     expect(screen.getByText('1 queued')).toBeInTheDocument();
+  });
+});
+
+describe('logi link: web', () => {
+  it('nothing is sent from the browser; no token field; status comes from the server', () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    st().setLogi({ enabled: true });
+    useStore.setState({ screen: 'settings', logiStatus: { state: 'ok', message: '', at: new Date(2026, 9, 18, 10, 42).getTime() } });
+    render(<App />);
+    act(() => useStore.setState({ sessions: [session()] }));
+    expect(st().outbox).toEqual([]);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(screen.queryByLabelText('logi token')).not.toBeInTheDocument();
+    expect(screen.getByTestId('logi-status').textContent).toBe('last sent 10:42');
+  });
+
+  it('a server-side error is shown', () => {
+    st().setLogi({ enabled: true });
+    useStore.setState({ screen: 'settings', logiStatus: { state: 'error', message: 'token rejected', at: 0 } });
+    render(<App />);
+    expect(screen.getByTestId('logi-status').textContent).toBe('token rejected');
   });
 });

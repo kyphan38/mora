@@ -128,6 +128,13 @@ Firebase project kyphan38-mora-app (env `VITE_FIREBASE_*`, `VITE_ALLOWED_USER_EM
 
 ## Link to logi
 
+Web/PWA: the Cloud Function `sessionToLogi` (functions/src/index.ts) sends
+each new session (ended within 3 days) when `prefs.logiEnabled`; the token
+is the Secret Manager secret `MORA_INGEST_TOKEN`; results go to
+`users/{uid}/meta/logi` (shown in Settings); `sendRecentToLogi` backfills 7
+days. Pure helpers in `functions/src/logi.ts` (tested from src/test).
+Desktop (Tauri, no account) sends from the device as below.
+
 Off by default (Settings → send to logi). Each logged session becomes a
 block `{id, kind, label, startAt, endAt}` in a persisted `outbox`
 (`core/logiLink.ts`); the block ends at the session end and lasts its
