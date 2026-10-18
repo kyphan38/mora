@@ -67,3 +67,10 @@ Owner cần: tạo token thứ hai và đặt vào cả hai project (mình đưa
      pause.
 2. **Start trên logi có bật mora không?** (đề xuất: không, chỉ mora → logi
    khi start; stop thì hai chiều như owner yêu cầu.)
+
+## Quyết định của owner (2026-10-18)
+
+1. **Pause** trên mora → dừng activity bên logi; Play lại → mở activity mới.
+   logi chỉ tính thời gian thật sự focus.
+2. **Start chỉ từ mora.** Start trên logi là việc riêng của logi, không đụng
+   tới mora. **Stop** thì hai chiều: dừng ở mora hoặc ở logi đều dừng cả hai.
