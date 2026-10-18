@@ -1,4 +1,5 @@
 import { ambientUrl, musicUrl } from '../data/audioManifest';
+import { cachedObjectUrl, saveForLater } from './mediaCache';
 
 export interface AudioEngine {
   setAmbient(name: string): void;
@@ -107,6 +108,23 @@ export function createAudioEngine(): AudioEngine {
     fade(c, null, FADE_IN_MS);
   };
 
+  // Remote sounds play from the device copy when one is saved; otherwise they
+  // stream and a copy is saved for next time. Without Cache Storage (tests,
+  // old WebViews) the URL is used as is.
+  const resolve = (c: Channel, key: string, src: string, autoplay: boolean) => {
+    if (!/^https?:/.test(src) || typeof caches === 'undefined') return setSource(c, key, src, autoplay);
+    c.key = key;
+    void cachedObjectUrl(src).then((local) => {
+      if (c.key !== key) {
+        if (local) URL.revokeObjectURL(local);
+        return;
+      }
+      c.key = '';
+      setSource(c, key, local ?? src, autoplay);
+      if (!local) void saveForLater(src);
+    });
+  };
+
   // Changes the source. While playing, fade the old track out first.
   const setSource = (c: Channel, key: string, src: string, autoplay: boolean) => {
     if (key === c.key) return;
@@ -138,11 +156,13 @@ export function createAudioEngine(): AudioEngine {
 
   const engine: AudioEngine = {
     setAmbient(name: string) {
-      setSource(ambient, name, ambientUrl(name), true);
+      if (name === ambient.key) return;
+      resolve(ambient, name, ambientUrl(name), true);
     },
 
     setMusic(name: string) {
-      setSource(music, name, musicUrl(name), true);
+      if (name === music.key) return;
+      resolve(music, name, musicUrl(name), true);
     },
 
     setMusicUrl(url: string | null) {

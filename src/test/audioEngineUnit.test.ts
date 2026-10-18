@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createAudioEngine, resetAudioEngineInstanceForTest } from '../platform/audio';
+import { ambientUrl, musicUrl } from '../data/audioManifest';
 
 class MockHTMLAudioElement {
   src = '';
@@ -55,8 +56,8 @@ describe('AudioEngine unit tests', () => {
     const ambientMock = audioCalls[0].value;
     const musicMock = audioCalls[1].value;
 
-    expect(ambientMock.src).toBe('/audio/ambient/wind.mp3');
-    expect(musicMock.src).toBe('/audio/music/nature.mp3');
+    expect(ambientMock.src).toBe(ambientUrl('Wind'));
+    expect(musicMock.src).toBe(musicUrl('Nature'));
   });
 
   it('play triggers play on mock audio elements', () => {
@@ -87,8 +88,8 @@ describe('AudioEngine unit tests', () => {
 
     expect(ambientMock.pause).toHaveBeenCalled();
     expect(musicMock.pause).toHaveBeenCalled();
-    expect(ambientMock.src).toBe('/audio/ambient/wind.mp3');
-    expect(musicMock.src).toBe('/audio/music/nature.mp3');
+    expect(ambientMock.src).toBe(ambientUrl('Wind'));
+    expect(musicMock.src).toBe(musicUrl('Nature'));
   });
 
   it('setMusicUrl plays an arbitrary URL directly, bypassing the preset resolver', () => {
@@ -112,11 +113,11 @@ describe('AudioEngine unit tests', () => {
 
     // Switching back to a preset name is detected as a change even though we just came from a URL.
     engine.setMusic('Piano');
-    expect(musicMock.src).toBe('/audio/music/piano.mp3');
+    expect(musicMock.src).toBe(musicUrl('Piano'));
 
     // Switching back to the same custom URL a second time is a no-op (src untouched) since it's unchanged.
     engine.setMusic('Piano');
-    expect(musicMock.src).toBe('/audio/music/piano.mp3');
+    expect(musicMock.src).toBe(musicUrl('Piano'));
   });
 
   it('setMusicUrl(null) clears the music source', () => {

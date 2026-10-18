@@ -152,6 +152,8 @@ listed in Firestore `users/{uid}/scenes`; defaults can only be hidden
 (`hiddenScenes`, synced in prefs). Portrait screens use `<id>.portrait.mp4|jpg` when the scene has
 `portrait: true` (`scripts/make-portrait.sh` cuts 9:16 from the middle).
 Scene video is saved on the device after the first play
-(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. `public/audio/ambient|music/<slug>.mp3`
-where slug comes from `core/soundFormat.slug`. Missing files degrade to a
+(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. Sounds: Cloud Storage `defaults/audio/ambient|music/<slug>.mp3` (slug from
+`core/soundFormat.slug`), staged in `media/audio/`, uploaded with
+`scripts/upload-defaults.sh audio`; the engine plays the device copy when
+saved (same cache as scenes). Missing files degrade to a
 gradient or silence. Scene tools live in `scripts/`.

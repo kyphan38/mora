@@ -36,7 +36,8 @@ describe('soundFormat pure tests', () => {
   });
 
   it('audioManifest returns correct URLs', () => {
-    expect(ambientUrl('City Walk')).toBe('/audio/ambient/city-walk.mp3');
-    expect(musicUrl('Lo-fi')).toBe('/audio/music/lofi.mp3');
+    // Storage path, slugged; the bucket prefix depends on the env.
+    expect(decodeURIComponent(ambientUrl('City Walk'))).toMatch(/audio\/ambient\/city-walk\.mp3/);
+    expect(decodeURIComponent(musicUrl('Lo-fi'))).toMatch(/audio\/music\/lofi\.mp3/);
   });
 });

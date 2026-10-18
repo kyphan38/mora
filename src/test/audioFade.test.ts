@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createAudioEngine, resetAudioEngineInstanceForTest } from '../platform/audio';
+import { ambientUrl } from '../data/audioManifest';
 
 class FakeAudio {
   src = '';
@@ -79,9 +80,9 @@ describe('audio fades', () => {
     vi.advanceTimersByTime(1000);
     const [amb] = made;
     e.setAmbient('Rain');
-    expect(amb.src).toBe('/audio/ambient/wind.mp3');
+    expect(amb.src).toBe(ambientUrl('Wind'));
     vi.advanceTimersByTime(400);
-    expect(amb.src).toBe('/audio/ambient/rain.mp3');
+    expect(amb.src).toBe(ambientUrl('Rain'));
     vi.advanceTimersByTime(900);
     expect(amb.volume).toBeCloseTo(1, 5);
   });

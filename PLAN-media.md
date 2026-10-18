@@ -109,3 +109,9 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
   `"portrait": true` trong `src/data/scenes.json`. App chọn bản dọc khi
   màn hình dọc (`usePortrait`), đổi khi xoay máy. `find_loop_scene.py` (file
   local) tự tạo bản dọc. Scene tự upload vẫn dùng một bản.
+- **V5 xong (2026-10-18):** 18 file âm thanh (101MB) lên
+  `defaults/audio/`; `public/audio` rời repo (gốc ở `media/audio/`); engine
+  âm thanh dùng bản trên máy khi đã lưu, lần đầu phát từ mạng và lưu nền.
+  Đã thử thật với Storage trên trình duyệt.
+- **Kết quả:** bản deploy web từ ~250MB còn vài MB; mọi scene và âm thanh
+  tải một lần trên mỗi máy rồi chạy offline.
