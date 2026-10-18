@@ -5,6 +5,7 @@ import { getAudioEngine } from '../platform/audio';
 import { createNotifyBridge } from '../platform/notify';
 import { sessionCompleteNotification } from '../core/soundFormat';
 import { sessionTimer } from '../core/sessionTimer';
+import { setScreenAwake, wakeLockLost } from '../platform/pwa';
 
 const SYNC_MS = 250;
 
@@ -28,6 +29,19 @@ export function useSessionRuntime() {
       document.removeEventListener('visibilitychange', onVisible);
     };
   }, [isRunning, syncClock]);
+
+  // Phones: keep the screen on while the timer runs.
+  useEffect(() => {
+    setScreenAwake(isRunning);
+    if (!isRunning) return;
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return;
+      wakeLockLost();
+      setScreenAwake(true);
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [isRunning]);
 
   const notify = useMemo(() => createNotifyBridge(), []);
   useEffect(() => {

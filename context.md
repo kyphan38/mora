@@ -58,6 +58,19 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
   track changes fade the old track out first (350ms). See
   `platform/audio.ts`.
 
+## PWA (web build)
+
+- `public/manifest.webmanifest`, icons in `public/icons/` (made by
+  `npm run icons` from `app-icon.svg`).
+- `public/sw.js`: HTML stale-while-revalidate, `/assets` `/icons`
+  `/scenes/*.jpg` cache-first, audio/video never cached (size, Range
+  requests). Bump `CACHE` when the strategy changes.
+- `platform/pwa.ts`: register the SW (production web only, never in Tauri),
+  ask for persistent storage, ask notification permission on the first
+  Play, hold a screen wake lock while running.
+- Notifications on the web go through the SW registration when there is
+  one (needed for iOS home-screen apps).
+
 ## Timer rules
 
 - Time follows the wall clock: `syncClock(now)` adds whole seconds since

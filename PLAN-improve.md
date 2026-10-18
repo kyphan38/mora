@@ -260,3 +260,24 @@ Mục tiêu: tối giản, sau này chạy được trên điện thoại (PWA) 
   vòng đồng hồ cross-fade khi đổi phase/task, nút Play/Pause "pop". Tắt hết
   khi máy bật reduced motion. 170 test pass.
 - Tiếp theo: **R3** PWA.
+- **R3 xong (2026-10-18):** manifest + icon (script `npm run icons`),
+  service worker (vỏ app chạy offline, ảnh scene cache khi xem, nhạc/video
+  không cache), giữ màn hình sáng khi đang chạy, xin quyền thông báo ở lần
+  Play đầu, xin trình duyệt không xoá dữ liệu. Đã thử offline bằng
+  `vite preview`. Chưa thử trên iPhone thật (cần deploy).
+
+### Ý tưởng lấy từ innook.space (owner gửi ảnh, 2026-10-18)
+
+Nên lấy (đưa vào M3/M4):
+- Nút **toàn màn hình** (desktop/web) - gộp vào Zen mode.
+- **Loại tập trung** cho mỗi task: `learn` / `work`. Hiện trong History và
+  là dữ liệu để gửi sang logi (M4).
+- **Tên scene** hiện mờ ở góc trên khi đang ở chế độ scene.
+- Nút **tắt tiếng** nhanh trong sheet âm thanh (giữ nguyên mức âm lượng).
+- **Duration tự nhập** ("Tùy chỉnh") - đã có trong M3.
+
+Không lấy:
+- Đăng nhập, chọn ngôn ngữ, học nhóm: mora là app cá nhân, local.
+- Lọc scene theo nhóm + yêu thích: chỉ có 12 scene, chưa cần.
+- Thẻ timer ở góc trái + thanh tiến độ ngang: mora dùng vòng tròn ở giữa.
+- Wizard 3 bước, màn landing: đã bỏ có chủ ý.

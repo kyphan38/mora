@@ -4,6 +4,7 @@ import { formatTime, remainingSec } from '../core/timer';
 import { sessionTimer } from '../core/sessionTimer';
 import { DURATIONS } from '../data/durations';
 import { getAudioEngine } from '../platform/audio';
+import { askNotificationPermissionOnce } from '../platform/pwa';
 import { useIdle } from '../hooks/useIdle';
 import { Ring } from './Ring';
 import { Sheet } from './Sheet';
@@ -48,7 +49,10 @@ export function FocusView() {
 
   const playPause = () => {
     // The first Play starts a session; play() runs inside the click for autoplay rules.
-    if (!useStore.getState().sessionActive) startFocus();
+    if (!useStore.getState().sessionActive) {
+      startFocus();
+      askNotificationPermissionOnce();
+    }
     const engine = getAudioEngine();
     if (isRunning) engine.pause();
     else engine.play();
