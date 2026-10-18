@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react';
 
 const R = 47;
 const C = 2 * Math.PI * R;
@@ -31,15 +31,26 @@ type Adjust = { minutes: number; onChange: (minutes: number) => void };
 export function Ring({
   progress,
   adjust,
+  settleKey = 0,
   children,
 }: {
   progress: number;
   adjust?: Adjust;
+  /** Goes up by 1 each time a block ends; the ring settles and a ripple spreads once. */
+  settleKey?: number;
   children: ReactNode;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
   const last = useRef(0);
   const [dragging, setDragging] = useState(false);
+  const [ripple, setRipple] = useState(false);
+
+  useEffect(() => {
+    if (settleKey === 0) return;
+    setRipple(true);
+    const t = setTimeout(() => setRipple(false), 900);
+    return () => clearTimeout(t);
+  }, [settleKey]);
 
   const showDrag = !!adjust && dragging;
   const p = Math.max(0, Math.min(1, showDrag ? adjust.minutes / RING_MAX_MIN : progress));
@@ -71,7 +82,8 @@ export function Ring({
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (!adjust) return;
-    const dir = e.key === 'ArrowUp' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowDown' || e.key === 'ArrowLeft' ? -1 : 0;
+    const dir =
+      e.key === 'ArrowUp' || e.key === 'ArrowRight' ? 1 : e.key === 'ArrowDown' || e.key === 'ArrowLeft' ? -1 : 0;
     if (!dir) return;
     e.preventDefault();
     e.stopPropagation();
@@ -100,31 +112,40 @@ export function Ring({
       className={`relative aspect-square w-[min(78vw,22rem)] ${adjust ? 'touch-none select-none' : ''}`}
       {...sliderProps}
     >
-      <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden="true">
-        <circle cx="50" cy="50" r={R} fill="none" stroke="var(--line)" strokeWidth="0.6" />
-        <circle
-          cx="50"
-          cy="50"
-          r={R}
-          fill="none"
-          stroke="var(--ink)"
-          strokeWidth="0.9"
-          strokeLinecap="round"
-          strokeDasharray={C}
-          strokeDashoffset={C * (1 - p)}
-          className={showDrag ? undefined : 'transition-[stroke-dashoffset] duration-1000 ease-linear'}
-          data-testid="ring-progress"
+      {ripple && (
+        <span
+          className="ring-ripple absolute inset-0 rounded-full border border-ink"
+          data-testid="ring-settle"
+          aria-hidden="true"
         />
-        {adjust && (
+      )}
+      <div key={settleKey} className={`absolute inset-0 ${settleKey > 0 ? 'ring-settle' : ''}`}>
+        <svg viewBox="0 0 100 100" className="absolute inset-0 -rotate-90" aria-hidden="true">
+          <circle cx="50" cy="50" r={R} fill="none" stroke="var(--line)" strokeWidth="0.6" />
           <circle
-            cx={50 + R * Math.cos(angle)}
-            cy={50 + R * Math.sin(angle)}
-            r={dragging ? 2.2 : 1.4}
-            fill="var(--ink)"
-            data-testid="ring-handle"
+            cx="50"
+            cy="50"
+            r={R}
+            fill="none"
+            stroke="var(--ink)"
+            strokeWidth="0.9"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            strokeDashoffset={C * (1 - p)}
+            className={`${showDrag ? '' : 'transition-[stroke-dashoffset] duration-1000 ease-linear'} ${settleKey > 0 ? 'ring-glow' : ''}`}
+            data-testid="ring-progress"
           />
-        )}
-      </svg>
+          {adjust && (
+            <circle
+              cx={50 + R * Math.cos(angle)}
+              cy={50 + R * Math.sin(angle)}
+              r={dragging ? 2.2 : 1.4}
+              fill="var(--ink)"
+              data-testid="ring-handle"
+            />
+          )}
+        </svg>
+      </div>
       <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">{children}</div>
     </div>
   );

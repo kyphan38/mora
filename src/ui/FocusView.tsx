@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { formatTime, remainingSec } from '../core/timer';
 import { sessionTimer } from '../core/sessionTimer';
@@ -48,6 +48,13 @@ export function FocusView() {
 
   const [sheet, setSheet] = useState<SheetName>(null);
   const [zen, setZen] = useState(false);
+  // Counts finished focus blocks (focus -> review) so the ring can settle once.
+  const [settleKey, setSettleKey] = useState(0);
+  const prevPhase = useRef(phase);
+  useEffect(() => {
+    if (prevPhase.current === 'focus' && phase === 'review') setSettleKey((k) => k + 1);
+    prevPhase.current = phase;
+  }, [phase]);
 
   const active = tasks.find((t) => !t.done);
   const left = tasks.filter((t) => !t.done).length;
@@ -119,6 +126,7 @@ export function FocusView() {
       <section className="flex w-full flex-1 flex-col items-center justify-center gap-8" data-testid="room-timer-card">
         <Ring
           progress={isBreak || !idle ? progress : 0}
+          settleKey={settleKey}
           adjust={idle && !zen ? { minutes: setup.durationSec / 60, onChange: setCustomDuration } : undefined}
         >
           {/* Phase or task changes cross-fade the middle of the ring. */}

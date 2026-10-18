@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useFlip } from '../hooks/useFlip';
 import { reducedMotion } from '../hooks/usePresence';
 import { useStore } from '../store/useStore';
@@ -7,6 +7,45 @@ import { UpIcon, DownIcon, CloseIcon } from './Icons';
 // Row tools wait for the pointer; on touch screens they stay visible but faint.
 const ROW_TOOL =
   'p-1 text-faint opacity-0 transition-opacity hover:text-ink group-hover:opacity-100 group-focus-within:opacity-100 [@media(hover:none)]:opacity-100 disabled:invisible';
+
+// True once `done` has changed while mounted, so rows that are done on open show no effect.
+function useChanged(done: boolean) {
+  const first = useRef(done);
+  const changed = useRef(false);
+  if (done !== first.current) changed.current = true;
+  return changed.current;
+}
+
+function TaskCheck({ done, onToggle, name }: { done: boolean; onToggle: () => void; name: string }) {
+  const changed = useChanged(done);
+  return (
+    <span className="relative flex shrink-0">
+      <input
+        type="checkbox"
+        checked={done}
+        onChange={onToggle}
+        aria-label={`Toggle ${name}`}
+        className="h-4 w-4 appearance-none rounded-full border border-line-strong transition-colors checked:border-faint checked:bg-faint"
+      />
+      {done && (
+        <span
+          className={`pointer-events-none absolute inset-0 m-auto h-1.5 w-1.5 rounded-full bg-bg ${changed ? 'pop' : ''}`}
+          aria-hidden="true"
+        />
+      )}
+    </span>
+  );
+}
+
+function TaskName({ done, name }: { done: boolean; name: string }) {
+  const changed = useChanged(done);
+  return (
+    <span className={`relative min-w-0 truncate text-[15px] transition-colors duration-300 ${done ? 'text-faint' : ''}`}>
+      {name}
+      <span className="strike" data-testid="strike" data-on={done} data-instant={!changed} aria-hidden="true" />
+    </span>
+  );
+}
 
 export function TaskList() {
   const tasks = useStore((s) => s.tasks);
@@ -62,16 +101,8 @@ export function TaskList() {
             ref={flip(t.id)}
             className={`task-row group flex items-center gap-3 py-2 ${leaving === t.id ? 'row-out' : 'rise'}`}
           >
-            <input
-              type="checkbox"
-              checked={t.done}
-              onChange={() => toggleTask(t.id)}
-              aria-label={`Toggle ${t.name}`}
-              className="h-4 w-4 shrink-0 appearance-none rounded-full border border-line-strong transition-colors checked:border-faint checked:bg-faint"
-            />
-            <span className={`min-w-0 truncate text-[15px] transition-colors duration-300 ${t.done ? 'text-faint line-through' : ''}`}>
-              {t.name}
-            </span>
+            <TaskCheck done={t.done} onToggle={() => toggleTask(t.id)} name={t.name} />
+            <TaskName done={t.done} name={t.name} />
             {t.id === activeId && <span className="shrink-0 font-mono text-[11px] text-faint">now</span>}
             <span className="flex-1" />
             {(t.est || t.blocks) && (

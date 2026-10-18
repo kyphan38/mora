@@ -260,6 +260,51 @@ input[type="range"]::-moz-range-thumb {
   animation: breathe 3.2s ease-in-out infinite;
 }
 
+/* A line drawn across a finished task. */
+.strike {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 180ms ease-in;
+}
+.strike[data-on='true'] {
+  transform: scaleX(1);
+  transform-origin: left;
+  transition: transform 260ms var(--ease-soft);
+}
+.strike[data-instant='true'] {
+  transition: none;
+}
+
+/* The ring settles when a block ends. */
+@keyframes ring-settle {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.ring-settle {
+  animation: ring-settle 600ms var(--ease-soft) both;
+}
+@keyframes ring-ripple {
+  from { transform: scale(1); opacity: 0.5; }
+  to { transform: scale(1.12); opacity: 0; }
+}
+.ring-glow {
+  animation: ring-glow 600ms ease-out both;
+}
+@keyframes ring-glow {
+  from { opacity: 0.4; }
+}
+.ring-ripple {
+  animation: ring-ripple 900ms ease-out both;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

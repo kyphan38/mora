@@ -53,6 +53,14 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - Task rows: FLIP slide on reorder (`useFlip`), fade out on remove.
 - The ring fills smoothly; the ring middle cross-fades on phase or task
   change; Play/Pause icon pops.
+- Sheet swipe (`ui/Sheet.tsx`): on phones (<768px) a sheet with `onClose`
+  follows a drag down from its handle, or from anywhere when scrolled to the
+  top; closes past 25% of its height or a flick over 0.5 px/ms, else springs
+  back. ReviewSheet has no `onClose`, so it cannot be swiped away.
+- Task done: a hairline strike scales across the name (`.strike`), the
+  checkbox dot pops; rows already done on open show no effect.
+- A finished focus block (focus -> review) makes the ring settle (`.ring-settle`)
+  and send one ripple (`settleKey` from `FocusView` to `Ring`).
 - Ring drag (`ui/Ring.tsx`, `adjust` prop): while the clock waits, drag the
   band (outside 34% of the width) to pick 5-120 min in 5 min steps; the
   middle stays clickable. Also `role="slider"` with arrow keys. Haptic 4ms
