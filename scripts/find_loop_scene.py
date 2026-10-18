@@ -374,6 +374,17 @@ def main():
         # Our own encode: the BPP check below is for re-encoded YouTube streams.
         if process_local_segment(url, filename, start_sec, duration_sec):
             save_metadata(filename, title, source or f"local:{os.path.basename(url)}")
+            # Phone version (9:16 from the middle), then flag it for the app.
+            portrait_script = os.path.join(REPO_ROOT, "scripts", "make-portrait.sh")
+            if subprocess.run([portrait_script, os.path.splitext(filename)[0]]).returncode == 0:
+                with open(METADATA_PATH, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                for entry in data:
+                    if entry["filename"] == filename:
+                        entry["portrait"] = True
+                with open(METADATA_PATH, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+            print("   Next: scripts/upload-defaults.sh")
             print(f"\n[DONE] Saved scene '{title}' -> {filename}. Add a description in src/data/corners.ts.")
         return
 

@@ -9,6 +9,8 @@ export interface Corner {
   /** Owner-uploaded scenes carry their own media URLs; defaults use Storage paths by id. */
   video?: string;
   image?: string;
+  /** Has a 9:16 phone version (<id>.portrait.mp4/.jpg). */
+  portrait?: boolean;
 }
 
 /** A scene the owner uploaded (Firestore users/{uid}/scenes/{id}). */

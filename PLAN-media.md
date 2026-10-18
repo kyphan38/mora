@@ -103,3 +103,9 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
   (danh sách ẩn sync trong prefs). Rules Firestore + Storage đã deploy.
   Thử thật bằng emulator trong trình duyệt: upload, thumbnail, tiến độ,
   xoá. Test emulator: 11 (thêm 4 cho Storage, cổng 9399).
+- **V4 xong (2026-10-18):** `scripts/make-portrait.sh` cắt phần giữa thành
+  9:16 (không phóng to quá nguồn, tối đa 1920 cao), kèm ảnh. 8 scene mặc
+  định đã có bản dọc (1-3MB, nhẹ hơn nhiều bản ngang) trên Storage, cờ
+  `"portrait": true` trong `src/data/scenes.json`. App chọn bản dọc khi
+  màn hình dọc (`usePortrait`), đổi khi xoay máy. `find_loop_scene.py` (file
+  local) tự tạo bản dọc. Scene tự upload vẫn dùng một bản.

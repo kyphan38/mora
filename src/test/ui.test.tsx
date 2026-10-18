@@ -4,7 +4,7 @@ import 'fake-indexeddb/auto';
 import App from '../App';
 import { useStore } from '../store/useStore';
 import { CORNERS } from '../data/corners';
-import { sceneVideoUrl, mediaUrl } from '../data/sceneManifest';
+import { sceneVideoUrl, mediaUrl, sceneVideo, sceneImage } from '../data/sceneManifest';
 import { resetCustomTrackDbForTest } from '../platform/customTrackDb';
 
 const st = () => useStore.getState();
@@ -297,5 +297,19 @@ describe('scene picker', () => {
     fireEvent.click(screen.getByTestId('room-settings-toggle'));
     fireEvent.change(screen.getByTestId('scene-file-input'), { target: { files: [new File(['x'], 'clip.mov', { type: 'video/quicktime' })] } });
     expect(await screen.findByText('Choose an MP4 video.')).toBeInTheDocument();
+  });
+});
+
+describe('portrait scenes', () => {
+  it('phones held upright get the 9:16 cut when a scene has one', () => {
+    const withCut = { ...CORNERS[0], portrait: true };
+    expect(sceneVideo(withCut, true)).toContain('.portrait.mp4');
+    expect(sceneVideo(withCut, false)).not.toContain('portrait');
+    expect(sceneVideo({ ...CORNERS[0], portrait: false }, true)).not.toContain('portrait');
+    expect(sceneImage({ ...CORNERS[0], image: 'https://x/own.jpg', portrait: true }, true)).toBe('https://x/own.jpg');
+  });
+
+  it('every default scene has a phone version', () => {
+    expect(CORNERS.every((c) => c.portrait)).toBe(true);
   });
 });

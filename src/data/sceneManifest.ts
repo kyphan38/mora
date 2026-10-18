@@ -12,9 +12,14 @@ export const sceneVideoUrl = (id: string) => mediaUrl(`defaults/scenes/${id}.mp4
 
 import type { Corner, UserScene } from '../types';
 
-/** Image and video for any scene: uploaded ones carry their own URLs. */
-export const sceneImage = (c: Corner) => c.image ?? sceneUrl(c.id);
-export const sceneVideo = (c: Corner) => c.video ?? sceneVideoUrl(c.id);
+/**
+ * Image and video for any scene. Uploaded ones carry their own URLs; defaults
+ * with a phone version use it on portrait screens.
+ */
+export const sceneImage = (c: Corner, portrait = false) =>
+  c.image ?? (portrait && c.portrait ? mediaUrl(`defaults/scenes/${c.id}.portrait.jpg`) : sceneUrl(c.id));
+export const sceneVideo = (c: Corner, portrait = false) =>
+  c.video ?? (portrait && c.portrait ? mediaUrl(`defaults/scenes/${c.id}.portrait.mp4`) : sceneVideoUrl(c.id));
 
 export const USER_SCENE_PREFIX = 'u_';
 

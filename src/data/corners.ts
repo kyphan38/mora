@@ -23,6 +23,7 @@ export const CORNERS: Corner[] = metadata.map((item) => {
     name: item.title,
     description: props.description || "",
     ambient: props.ambient || "Wind",
-    gradient: props.gradient || "linear-gradient(135deg, #3a3a3a, #1a1a1a)"
+    gradient: props.gradient || "linear-gradient(135deg, #3a3a3a, #1a1a1a)",
+    portrait: (item as { portrait?: boolean }).portrait === true
   };
 });

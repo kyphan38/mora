@@ -149,7 +149,9 @@ files (gsutil, long cache). Bucket CORS: `storage.cors.json`
 Owner uploads (`ui/ScenePicker.tsx`, `platform/sceneUpload.ts`): Storage
 `users/{uid}/scenes/<id>.mp4|jpg` (thumbnail taken in the browser),
 listed in Firestore `users/{uid}/scenes`; defaults can only be hidden
-(`hiddenScenes`, synced in prefs). Scene video is saved on the device after the first play
+(`hiddenScenes`, synced in prefs). Portrait screens use `<id>.portrait.mp4|jpg` when the scene has
+`portrait: true` (`scripts/make-portrait.sh` cuts 9:16 from the middle).
+Scene video is saved on the device after the first play
 (`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. `public/audio/ambient|music/<slug>.mp3`
 where slug comes from `core/soundFormat.slug`. Missing files degrade to a
 gradient or silence. Scene tools live in `scripts/`.

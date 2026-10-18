@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { sceneImage, sceneVideo } from '../data/sceneManifest';
 import { useCachedMedia } from '../hooks/useCachedMedia';
+import { usePortrait } from '../hooks/useOrientation';
 import type { Corner } from '../types';
 
 const CROSSFADE_MS = 900;
@@ -37,17 +38,21 @@ export function SceneLayer({ corner, visible }: { corner: Corner; visible: boole
 function SceneSlide({ corner, top, playVideo }: { corner: Corner; top: boolean; playVideo: boolean }) {
   const [videoOn, setVideoOn] = useState(false);
   const [videoError, setVideoError] = useState(false);
-  // Device copy when saved; first play streams and saves in the background.
-  const videoSrc = useCachedMedia(playVideo ? sceneVideo(corner) : null);
+  // Phones held upright get the 9:16 cut when the scene has one. Device copy
+  // when saved; the first play streams and saves in the background.
+  const portrait = usePortrait();
+  const videoSrc = useCachedMedia(playVideo ? sceneVideo(corner, portrait) : null);
+  useEffect(() => setVideoOn(false), [videoSrc]);
 
   return (
     <div className={`absolute inset-0 ${top ? 'scene-in' : ''}`}>
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url("${sceneImage(corner)}"), ${corner.gradient}` }}
+        style={{ backgroundImage: `url("${sceneImage(corner, portrait)}"), ${corner.gradient}` }}
       />
       {playVideo && !videoError && videoSrc && (
         <video
+          key={videoSrc}
           autoPlay
           loop
           muted
