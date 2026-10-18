@@ -85,3 +85,4 @@ Owner cần: tạo token thứ hai và đặt vào cả hai project (mình đưa
   Test: mora 255, logi 633.
 - **Chờ owner:** đặt secret `LOGI_CONTROL_TOKEN` (cùng một giá trị) ở cả
   hai project, rồi deploy functions hai bên.
+- **mora deploy xong (2026-10-18):** `liveToLogi`, `stopFromLogi` chạy; 2 Function cũ đã xoá. `stopFromLogi` trả 401 khi không có token (đúng). Còn: secret bên logi + deploy `moraStopped`.
