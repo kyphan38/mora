@@ -3,6 +3,7 @@ import { useStore } from './store/useStore';
 import type { Corner } from './types';
 import { useGlobalAudio } from './hooks/useGlobalAudio';
 import { useSessionRuntime } from './hooks/useSessionRuntime';
+import { useLogiSync } from './hooks/useLogiSync';
 import { FocusView } from './ui/FocusView';
 import { HistoryView } from './ui/HistoryView';
 import { SettingsView } from './ui/SettingsView';
@@ -12,6 +13,7 @@ import { Sheet } from './ui/Sheet';
 export default function App() {
   useGlobalAudio();
   useSessionRuntime();
+  useLogiSync();
   const screen = useStore((s) => s.screen);
   const setScreen = useStore((s) => s.setScreen);
   const corner = useStore((s) => s.corner);

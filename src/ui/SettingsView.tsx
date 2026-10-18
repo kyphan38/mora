@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { loadTheme, saveTheme, type Theme } from '../platform/prefs';
 import { Words, Label } from './Words';
+import { LogiSettings } from './LogiSettings';
 
 const KEYS: [string, string][] = [
   ['space', 'play / pause'],
@@ -85,6 +86,8 @@ export function SettingsView() {
           onChange={setDailyGoal}
         />
       </section>
+
+      <LogiSettings />
 
       <section>
         <Label>history</Label>

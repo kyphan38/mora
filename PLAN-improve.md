@@ -289,3 +289,12 @@ Không lấy:
 - **Deploy:** `vercel.json` + `.vercelignore`. Owner import project trên
   Vercel ("Import single project" cho app Vite) và gắn domain
   `mora.kyphan38.com`. Không cần Firebase.
+- **Xoá 4 scene** (owner chọn): Cozy Garden Cafe, Warm Coffee Shop Jazz,
+  Beautiful Courtyard Jazz, Calm Guitar Melodies. Còn 8 scene. Máy nào
+  đang lưu scene đã xoá sẽ tự chuyển sang scene khác.
+- **M4 xong (2026-10-18):** logi có route `/api/ingest/mora` (token
+  `MORA_INGEST_TOKEN`, tắt nếu chưa đặt token, doc id `mora_<id>` nên gửi
+  lại không bị trùng, ngày cắt 04:00 theo giờ VN trên server UTC). mora có
+  hàng đợi gửi, tự thử lại, phần cài đặt "send to logi" (tắt mặc định),
+  nút gửi lại 7 ngày gần nhất. Đã thử CORS từ mora sang logi local.
+  Owner cần: tạo token, đặt vào Vercel của logi, dán vào mora Settings.

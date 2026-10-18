@@ -1,4 +1,11 @@
 import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack, Note } from '../types';
+import type { LogiBlock } from '../core/logiLink';
+
+interface LogiLink {
+  enabled: boolean;
+  url: string;
+  token: string;
+}
 
 type Phase = 'focus' | 'break' | 'review';
 
@@ -26,6 +33,8 @@ export interface PersistedState {
   longBreak?: boolean;
   dailyGoalMin?: number;
   muted?: boolean;
+  logi?: LogiLink;
+  outbox?: LogiBlock[];
 }
 
 export interface StorageAdapter {
@@ -115,6 +124,8 @@ export function toPersisted(s: {
   longBreak?: boolean;
   dailyGoalMin?: number;
   muted?: boolean;
+  logi?: LogiLink;
+  outbox?: LogiBlock[];
 }): PersistedState {
   return {
     version: PERSIST_VERSION,
@@ -138,6 +149,8 @@ export function toPersisted(s: {
     longBreak: s.longBreak ?? false,
     dailyGoalMin: s.dailyGoalMin ?? 0,
     muted: s.muted ?? false,
+    ...(s.logi ? { logi: s.logi } : {}),
+    outbox: s.outbox ?? [],
   };
 }
 

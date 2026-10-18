@@ -4,6 +4,7 @@ import { DURATIONS } from '../data/durations';
 import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
 import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../core/pomodoro';
+import { mergeOutbox, type LogiBlock } from '../core/logiLink';
 
 export type Phase = 'focus' | 'break' | 'review';
 
@@ -56,6 +57,8 @@ interface AppStore {
     longBreak?: boolean;
     dailyGoalMin?: number;
     muted?: boolean;
+    logi?: LogiLink;
+    outbox?: LogiBlock[];
   }) => void;
   clearSessions: () => void;
 
@@ -120,6 +123,22 @@ interface AppStore {
   setDailyGoal: (minutes: number) => void;
   muted: boolean;
   setMuted: (b: boolean) => void;
+
+  /** Link to logi: finished blocks are queued and sent there. Off by default. */
+  logi: LogiLink;
+  setLogi: (patch: Partial<LogiLink>) => void;
+  outbox: LogiBlock[];
+  enqueueBlocks: (blocks: LogiBlock[]) => void;
+  dropFromOutbox: (ids: string[]) => void;
+  /** Last send result for Settings. Not persisted. */
+  logiStatus: { state: 'idle' | 'sending' | 'ok' | 'error'; message: string; at: number };
+  setLogiStatus: (s: AppStore['logiStatus']) => void;
+}
+
+export interface LogiLink {
+  enabled: boolean;
+  url: string;
+  token: string;
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -182,6 +201,9 @@ export const useStore = create<AppStore>((set, get) => ({
   notes: [],
   dailyGoalMin: 0,
   muted: false,
+  logi: { enabled: false, url: 'https://logi.kyphan38.com', token: '' },
+  outbox: [],
+  logiStatus: { state: 'idle', message: '', at: 0 },
   setRoomBackground: (m) => {
     set({ roomBackground: m });
     if (m === 'scene' && get().corner === null) {
@@ -341,6 +363,8 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.longBreak !== undefined) update.longBreak = p.longBreak;
     if (p.dailyGoalMin !== undefined) update.dailyGoalMin = p.dailyGoalMin;
     if (p.muted !== undefined) update.muted = p.muted;
+    if (p.logi !== undefined) update.logi = p.logi;
+    if (p.outbox !== undefined) update.outbox = p.outbox;
     update.runSyncAt = null;
 
     // Auto-heal activeTaskId on load: it must point at an undone task.
@@ -627,6 +651,14 @@ export const useStore = create<AppStore>((set, get) => ({
 
   setDailyGoal: (minutes) => set({ dailyGoalMin: Math.max(0, Math.round(minutes)) }),
   setMuted: (b) => set({ muted: b }),
+
+  setLogi: (patch) => set((s) => ({ logi: { ...s.logi, ...patch } })),
+  enqueueBlocks: (blocks) => set((s) => ({ outbox: mergeOutbox(s.outbox, blocks) })),
+  dropFromOutbox: (ids) => {
+    const drop = new Set(ids);
+    set((s) => ({ outbox: s.outbox.filter((b) => !drop.has(b.id)) }));
+  },
+  setLogiStatus: (logiStatus) => set({ logiStatus }),
 }));
 
 /**

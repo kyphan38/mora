@@ -91,6 +91,20 @@ SPA rewrite to `index.html`, `sw.js` and `index.html` never cached,
 `/assets` immutable. Domain: `mora.kyphan38.com` (CNAME to Vercel). No
 Firebase: data stays on each device.
 
+## Link to logi
+
+Off by default (Settings → send to logi). Each logged session becomes a
+block `{id, kind, label, startAt, endAt}` in a persisted `outbox`
+(`core/logiLink.ts`); the block ends at the session end and lasts its
+focused minutes. `hooks/useLogiSync.ts` queues sessions that just ended
+(not history loaded from storage), sends up to 50 per request to
+`<logi>/api/ingest/mora` with `Bearer <token>`, retries on `online` and
+every 5 minutes, drops accepted and permanently rejected blocks, keeps
+`write-failed` ones. logi stores each block as doc `mora_<id>` (resends
+are safe), source `mora`. Edits or deletes in mora History after sending
+are not synced. logi side: `logi/src/app/api/ingest/mora/route.ts`, env
+`MORA_INGEST_TOKEN`.
+
 ## Commands
 
 - `npm run dev` web dev server (port 1420)
