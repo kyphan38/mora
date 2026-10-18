@@ -68,3 +68,9 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
 | **V3** | Upload/xoá scene của owner, ẩn scene mặc định |
 | **V4** | Bản dọc cho điện thoại (script xuất 2 bản, app chọn theo hướng) |
 | **V5** | Làm tương tự cho âm thanh (nếu owner muốn) |
+
+## Quyết định của owner (2026-10-18)
+
+- Làm media **trước** S3 (timer đồng bộ).
+- Âm thanh cũng chuyển lên Firebase, làm **sau** scene (V5).
+- **Tự cắt bản dọc** cho điện thoại (V4).
