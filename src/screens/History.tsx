@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useStore } from '../store/useStore';
 
 export function formatMinutes(min: number): string {
@@ -48,6 +49,8 @@ export function dayLabel(epochMs: number): string {
 export default function History() {
   const sessions = useStore((s) => s.sessions);
   const clearSessions = useStore((s) => s.clearSessions);
+  // Clearing cannot be undone, so it takes a second click.
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const todaySessions = sessions.filter((s) => isToday(s.endedAt));
   const sessionsToday = todaySessions.length;
@@ -57,7 +60,22 @@ export default function History() {
     <div style={wrapperStyle}>
       <div style={headerStyle}>
         <h2 style={headingStyle}>History</h2>
-        <button onClick={clearSessions} style={clearBtnStyle}>Clear</button>
+        {sessions.length > 0 && (confirmClear ? (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => {
+                clearSessions();
+                setConfirmClear(false);
+              }}
+              style={clearBtnStyle}
+            >
+              Clear all
+            </button>
+            <button onClick={() => setConfirmClear(false)} style={clearBtnStyle}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmClear(true)} style={clearBtnStyle}>Clear</button>
+        ))}
       </div>
 
       <div style={statsRowStyle}>

@@ -103,7 +103,7 @@ describe('reviewMarkDone', () => {
     expect(state.activeTaskId).toBe(state.tasks[1].id); // Task B
   });
 
-  it('false: keeps current task, no session logged', () => {
+  it('false: keeps current task; the block was logged once at review', () => {
     seedRoom();
     useStore.setState({ elapsedSec: 3000, lastFocusSec: 3000 });
     useStore.getState().enterReview();
@@ -112,7 +112,7 @@ describe('reviewMarkDone', () => {
     useStore.getState().reviewMarkDone(false);
 
     const state = useStore.getState();
-    expect(state.sessions.length).toBe(0);
+    expect(state.sessions.length).toBe(1);
     expect(state.tasks[0].done).toBe(false);
     expect(state.activeTaskId).toBe(activeIdBefore);
   });
@@ -198,6 +198,7 @@ describe('autoContinue path', () => {
     seedRoom();
     useStore.getState().setAutoContinue(true);
     useStore.getState().setIsRunning(true);
+    useStore.setState({ elapsedSec: 3000 });
 
     // Trigger enterReview (simulates countdown reaching 0)
     useStore.getState().enterReview();
@@ -222,12 +223,14 @@ describe('autoContinue path', () => {
     useStore.getState().setAutoContinue(true);
 
     // Complete Task A
+    useStore.setState({ elapsedSec: 3000 });
     useStore.getState().enterReview();
     // Now in break with Task B as next
     useStore.getState().finishBreak();
     // Now focusing on Task B
 
     // Complete Task B
+    useStore.setState({ elapsedSec: 3000 });
     useStore.getState().enterReview();
     // No more tasks → should stop
     const state = useStore.getState();

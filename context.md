@@ -480,3 +480,17 @@ Marked as [Completed].
   - `Sound.tsx` & `Session.tsx`: 2-column layout (Summary text on the left, buttons aligned right with `gap: '12px'`).
 - Deleted unused style definitions (`bottomBarStyle`, `btnGroupStyle`) in screen components to prevent TypeScript compilation warnings.
 - Ran production build `npm run build` and tests `npm test -- --run` successfully with zero regressions.
+
+## Improve plan M0: logic fixes (2026-10-18)
+Plan: `PLAN-improve.md`. Marked as [Completed].
+- **Wall-clock timer.** `syncClock(now)` adds whole seconds since `runSyncAt` (not persisted) and keeps the remainder. `tickSession(deltaSec = 1)` still exists. `useSessionRuntime` (App level) calls `syncClock` every 250ms and on `visibilitychange`, so throttled intervals and sleep no longer slow the timer, and the clock runs on every screen.
+- **Chime + notification** fire on natural phase ends via `lastEvent` (`focus-done` / `break-done`, not persisted). Manual "Complete now" and "Skip break" do not chime.
+- **Hotkey + tray** moved from Room to `useSessionRuntime`; `togglePlay()` ignores review / no task. `createOsBridge()` returns one shared bridge, so the hotkey is not re-registered each render. `pushTick` skips identical tray titles.
+- **Logging rules.** `enterReview` (manual) logs the finished block once and sets `elapsedSec = 0`; `reviewMarkDone(true)` only marks the task. Blocks under 60s are never logged. `focusStartedAt` is the session start (pauses no longer shift it). `stopFocus` does not log break time.
+- **Task edits mid-block** (`switchPatch`): if toggle / reorder changes the active task, the old block is logged and the clock restarts at 0; remove discards the time.
+- **Persistence.** `phase`, `lastFocusSec`, `focusStartedAt` persisted. `initPersistence` restores paused. Clock-only changes (`elapsedSec`, `runSyncAt`, `lastEvent`) are saved at most every 15s.
+- `setDuration` keeps progress during an active focus block. `finishBreak` (manual, no tasks left) ends the session. `hydrate` heals an `activeTaskId` that points at a missing or done task.
+- Scene data: `customProps` in `corners.ts` re-keyed to `scene_xxxxxx` ids; every scene has its own description and a valid ambient.
+- Review sheet: after "Mark done" the row hides and the line shows the next task or "All tasks done"; "Focus again" hides when no task is left.
+- History "Clear" needs a second click ("Clear all").
+- Tests: new `m0Fixes.test.tsx` (21), `cornersData.test.ts` (2). Edited intended-behavior assertions in `pomodoro`, `room`, `session`, `history` tests. Total 218 passing.

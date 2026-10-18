@@ -95,11 +95,13 @@ describe('History screen', () => {
     expect(screen.getByText('No sessions yet.')).toBeInTheDocument();
   });
 
-  it('Clear empties sessions', () => {
+  it('Clear asks once, then empties sessions', () => {
     seedSessions();
     render(<App />);
     expect(screen.getByText('Read chapter')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Clear'));
+    expect(useStore.getState().sessions.length).toBe(2);
+    fireEvent.click(screen.getByText('Clear all'));
     expect(useStore.getState().sessions.length).toBe(0);
     expect(screen.getByText('No sessions yet.')).toBeInTheDocument();
   });

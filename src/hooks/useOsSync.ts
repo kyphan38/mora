@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { type TimerState } from '../lib/timer';
 import { type OsBridge, createOsBridge } from '../lib/os';
 import { EV, buildTick, trayTitle } from '../lib/osFormat';
@@ -82,12 +82,14 @@ export function useOsSync(args: {
     };
   }, [bridge]);
 
-  const pushTick = (timer: TimerState | null, taskName: string) => {
+  const lastTitleRef = useRef<string | null>(null);
+  const pushTick = useCallback((timer: TimerState | null, taskName: string) => {
     const p = buildTick(timer, taskName);
     const title = trayTitle(p.running, p.remainingSec);
-
+    if (title === lastTitleRef.current) return;
+    lastTitleRef.current = title;
     bridge.updateTray(title).catch(console.error);
-  };
+  }, [bridge]);
 
   return { pushTick };
 }

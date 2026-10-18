@@ -1,12 +1,8 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useStore } from '../store/useStore';
-import {
-  formatTime,
-  remainingSec,
-  type TimerState,
-} from '../lib/timer';
+import { formatTime, remainingSec } from '../lib/timer';
 import { breakForSeconds, NEXT_DURATIONS } from '../lib/pomodoro';
-import { useOsSync } from '../hooks/useOsSync';
+import { sessionTimer } from '../lib/sessionTimer';
 import { sceneUrl, sceneVideoUrl } from '../data/sceneManifest';
 import { getAudioEngine } from '../lib/audio';
 import { CORNERS } from '../data/corners';
@@ -43,7 +39,6 @@ export default function Room() {
   const activeTaskId = useStore((s) => s.activeTaskId);
 
   const setIsRunning = useStore((s) => s.setIsRunning);
-  const tickSession = useStore((s) => s.tickSession);
   const stopFocus = useStore((s) => s.stopFocus);
 
   // Pomodoro phase
@@ -84,7 +79,6 @@ export default function Room() {
   }, [showSettings]);
 
   const active = tasks.find((t) => t.id === activeTaskId) || activeTask();
-  const activeTaskName = active ? active.name : '';
 
   const [hasStarted, setHasStarted] = useState(() => elapsedSec > 0);
   const activeIdRef = useRef(active?.id);
@@ -113,52 +107,12 @@ export default function Room() {
     setHasStarted(false);
   }, [stopFocus]);
 
-  const { pushTick } = useOsSync({
-    onToggle: handlePlayPause,
-    onStop: handleStop,
-  });
-
-  // Timer state: for break phase, use breakForSeconds as the total
+  // The clock, hotkey and tray run app-wide in useSessionRuntime.
   const breakDur = breakForSeconds(lastFocusSec);
-  const timer = useMemo((): TimerState => {
-    if (phase === 'break') {
-      return {
-        mode: 'countdown',
-        totalSec: breakDur,
-        elapsedSec,
-        running: isRunning,
-      };
-    }
-    return {
-      mode: setup.durationSec > 0 ? 'countdown' : 'countup',
-      totalSec: setup.durationSec,
-      elapsedSec,
-      running: isRunning,
-    };
-  }, [phase, breakDur, setup.durationSec, elapsedSec, isRunning]);
-
-  useEffect(() => {
-    if (!active) {
-      pushTick(null, '');
-    } else {
-      pushTick(timer, activeTaskName);
-    }
-  }, [timer, active, activeTaskName, pushTick]);
-
-  useEffect(() => {
-    return () => {
-      pushTick(null, '');
-    };
-  }, [pushTick]);
-
-  // Interval for ticking
-  useEffect(() => {
-    if (!isRunning) return;
-    const id = setInterval(() => {
-      tickSession();
-    }, 1000);
-    return () => clearInterval(id);
-  }, [isRunning, tickSession]);
+  const timer = useMemo(
+    () => sessionTimer({ phase, lastFocusSec, setup, elapsedSec, isRunning }),
+    [phase, lastFocusSec, setup, elapsedSec, isRunning],
+  );
 
   const handleCompleteNow = useCallback(() => {
     enterReview();
@@ -166,9 +120,14 @@ export default function Room() {
 
   // Review sheet: "Focus again" expanded
   const [showDurationPicker, setShowDurationPicker] = useState(false);
+  // After "Mark done" the sheet stays for the next choice, so remember it.
+  const [markedDone, setMarkedDone] = useState(false);
   // Reset when leaving review
   useEffect(() => {
-    if (phase !== 'review') setShowDurationPicker(false);
+    if (phase !== 'review') {
+      setShowDurationPicker(false);
+      setMarkedDone(false);
+    }
   }, [phase]);
 
   const handleAddTask = () => {
@@ -427,29 +386,36 @@ export default function Room() {
               Session complete
             </h3>
             <p style={reviewTaskLine}>
-              {active ? active.name : 'Task completed'}
+              {markedDone
+                ? (active ? `Next: ${active.name}` : 'All tasks done')
+                : (active ? active.name : 'Task completed')}
             </p>
 
             {/* Row A: mark done */}
-            <div style={reviewRowStyle}>
-              <span style={reviewRowLabel}>Finished this task?</span>
-              <div style={reviewBtnGroup}>
-                <button
-                  onClick={() => reviewMarkDone(true)}
-                  style={reviewBtnPrimary}
-                  data-testid="review-mark-done"
-                >
-                  Mark done
-                </button>
-                <button
-                  onClick={() => reviewMarkDone(false)}
-                  style={reviewBtnGhost}
-                  data-testid="review-keep-working"
-                >
-                  Keep working
-                </button>
+            {!markedDone && active && (
+              <div style={reviewRowStyle}>
+                <span style={reviewRowLabel}>Finished this task?</span>
+                <div style={reviewBtnGroup}>
+                  <button
+                    onClick={() => {
+                      reviewMarkDone(true);
+                      setMarkedDone(true);
+                    }}
+                    style={reviewBtnPrimary}
+                    data-testid="review-mark-done"
+                  >
+                    Mark done
+                  </button>
+                  <button
+                    onClick={() => reviewMarkDone(false)}
+                    style={reviewBtnGhost}
+                    data-testid="review-keep-working"
+                  >
+                    Keep working
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Row B: what's next */}
             <div style={reviewRowStyle}>
@@ -462,13 +428,15 @@ export default function Room() {
                 >
                   Take a break · {Math.round(breakDur / 60)}m
                 </button>
-                <button
-                  onClick={() => setShowDurationPicker(!showDurationPicker)}
-                  style={reviewBtnGhost}
-                  data-testid="review-focus-again"
-                >
-                  Focus again
-                </button>
+                {active && (
+                  <button
+                    onClick={() => setShowDurationPicker(!showDurationPicker)}
+                    style={reviewBtnGhost}
+                    data-testid="review-focus-again"
+                  >
+                    Focus again
+                  </button>
+                )}
                 <button
                   onClick={stopAllSessions}
                   style={reviewBtnGhost}

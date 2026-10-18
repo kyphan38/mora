@@ -47,10 +47,10 @@ describe('store - completeActive', () => {
     expect(s.activeTask()?.name).toBe('Task B');
   });
 
-  it('minutes rounds and min 1', () => {
+  it('minutes round; blocks under a minute are not logged', () => {
     seedRoom();
     useStore.getState().completeActive(30);
-    expect(useStore.getState().sessions[0].minutes).toBe(1);
+    expect(useStore.getState().sessions.length).toBe(0);
 
     // Complete second task
     useStore.getState().completeActive(727);

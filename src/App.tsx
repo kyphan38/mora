@@ -8,10 +8,12 @@ import Room from "./screens/Room";
 import History from "./screens/History";
 
 import { useGlobalAudio } from "./hooks/useGlobalAudio";
+import { useSessionRuntime } from "./hooks/useSessionRuntime";
 import { SceneBackground } from "./components/SceneBackground";
 
 function App() {
   useGlobalAudio();
+  useSessionRuntime();
   const screen = useStore((s) => s.screen);
   const roomBackground = useStore((s) => s.roomBackground);
   const corner = useStore((s) => s.corner);

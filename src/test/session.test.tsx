@@ -72,7 +72,7 @@ describe('session runtime store logic', () => {
     store.addTask('Task A');
     store.addTask('Task B');
     store.startFocus();
-    useStore.setState({ elapsedSec: 10 });
+    useStore.setState({ elapsedSec: 600 });
 
     useStore.getState().completeCurrent();
 
@@ -125,6 +125,7 @@ describe('session runtime store logic', () => {
   it('runtime persists via toPersisted and hydrate', () => {
     const state = {
       ...useStore.getInitialState(),
+      tasks: [{ id: 'task-123', name: 'Saved task', done: false, createdAt: 1 }],
       elapsedSec: 15,
       isRunning: true,
       sessionActive: true,

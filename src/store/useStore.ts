@@ -50,6 +50,9 @@ interface AppStore {
     audioActive?: boolean;
     autoContinue?: boolean;
     customTracks?: CustomTrack[];
+    phase?: Phase;
+    lastFocusSec?: number;
+    focusStartedAt?: number | null;
   }) => void;
   clearSessions: () => void;
 
@@ -65,9 +68,21 @@ interface AppStore {
   lastFocusSec: number;
   autoContinue: boolean;
 
+  /** Wall-clock time the current run started counting from; null while paused. Not persisted. */
+  runSyncAt: number | null;
+  /** When the current focus block first started running; used as the session start. */
+  focusStartedAt: number | null;
+  /** Last natural phase end, so the app can chime and notify. Not persisted. */
+  lastEvent: { kind: 'focus-done' | 'break-done'; taskName: string; at: number } | null;
+
   startFocus: () => void;
   setIsRunning: (b: boolean) => void;
-  tickSession: () => void;
+  /** Hotkey / tray toggle: ignored when there is nothing to run. */
+  togglePlay: () => void;
+  /** Adds deltaSec (default 1) of run time. */
+  tickSession: (deltaSec?: number) => void;
+  /** Catches the timer up with the wall clock, so throttled intervals or sleep do not slow it. */
+  syncClock: (now?: number) => void;
   completeCurrent: () => void;
   stopFocus: () => void;
   setAudioActive: (b: boolean) => void;
@@ -84,6 +99,29 @@ interface AppStore {
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
+
+const run = (on: boolean) => ({ isRunning: on, runSyncAt: on ? Date.now() : null });
+
+// Blocks shorter than a minute are not worth a History row.
+const MIN_LOG_SEC = 60;
+
+function buildSession(
+  state: { corner: Corner | null; sound: SoundConfig; focusStartedAt: number | null },
+  taskName: string,
+  elapsedSec: number,
+): Session | null {
+  if (elapsedSec < MIN_LOG_SEC) return null;
+  const endedAt = Date.now();
+  return {
+    id: uid(),
+    taskName,
+    minutes: Math.round(elapsedSec / 60),
+    startedAt: state.focusStartedAt ?? endedAt - elapsedSec * 1000,
+    endedAt,
+    corner: state.corner?.name ?? '',
+    ambient: state.sound.ambient,
+  };
+}
 
 export const useStore = create<AppStore>((set, get) => ({
   screen: 'landing',
@@ -111,6 +149,9 @@ export const useStore = create<AppStore>((set, get) => ({
   phase: 'focus',
   lastFocusSec: 0,
   autoContinue: false,
+  runSyncAt: null,
+  focusStartedAt: null,
+  lastEvent: null,
   setRoomBackground: (m) => {
     set({ roomBackground: m });
     if (m === 'scene' && get().corner === null) {
@@ -149,9 +190,11 @@ export const useStore = create<AppStore>((set, get) => ({
   setDuration: (label) => {
     const dur = DURATIONS.find((d) => d.label === label);
     if (dur) {
+      const s = get();
+      const keepProgress = s.sessionActive && s.phase === 'focus';
       set({
         setup: { durationLabel: dur.label, durationSec: dur.seconds },
-        elapsedSec: 0,
+        ...(keepProgress ? {} : { elapsedSec: 0 }),
       });
     }
   },
@@ -174,8 +217,10 @@ export const useStore = create<AppStore>((set, get) => ({
       return {
         tasks: newTasks,
         activeTaskId: firstUndone ? firstUndone.id : null,
-        isRunning: firstUndone ? state.isRunning : false,
+        ...(firstUndone ? {} : run(false)),
         sessionActive: firstUndone ? state.sessionActive : false,
+        // A removed task's time is discarded, not moved to the next task.
+        ...switchPatch(state, newTasks, false),
       };
     }),
   reorderTasks: (from, to) =>
@@ -192,6 +237,7 @@ export const useStore = create<AppStore>((set, get) => ({
       return {
         tasks: copy,
         activeTaskId: firstUndone ? firstUndone.id : null,
+        ...switchPatch(state, copy, true),
       };
     }),
   activeTask: () => get().tasks.find((t) => !t.done),
@@ -204,8 +250,9 @@ export const useStore = create<AppStore>((set, get) => ({
       return {
         tasks: newTasks,
         activeTaskId: firstUndone ? firstUndone.id : null,
-        isRunning: firstUndone ? state.isRunning : false,
+        ...(firstUndone ? {} : run(false)),
         sessionActive: firstUndone ? state.sessionActive : false,
+        ...switchPatch(state, newTasks, true),
       };
     }),
   clearCompletedTasks: () =>
@@ -221,43 +268,22 @@ export const useStore = create<AppStore>((set, get) => ({
     const state = get();
     const t = state.tasks.find((task) => !task.done);
     if (!t) return;
-    const minutes = Math.max(1, Math.round(elapsedSec / 60));
-    const endedAt = Date.now();
-    const startedAt = endedAt - elapsedSec * 1000;
-    const session: Session = {
-      id: uid(),
-      taskName: t.name,
-      minutes,
-      startedAt,
-      endedAt,
-      corner: state.corner?.name ?? '',
-      ambient: state.sound.ambient,
-    };
+    const session = buildSession(state, t.name, elapsedSec);
     const updatedTasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
     const firstUndone = updatedTasks.find((task) => !task.done);
     set({
-      sessions: [session, ...state.sessions],
+      sessions: session ? [session, ...state.sessions] : state.sessions,
+      focusStartedAt: null,
       tasks: updatedTasks,
       activeTaskId: firstUndone ? firstUndone.id : null,
     });
   },
   stopActive: (elapsedSec) => {
-    if (elapsedSec < 60) return false;
     const state = get();
     const t = state.tasks.find((task) => !task.done);
     if (!t) return false;
-    const minutes = Math.round(elapsedSec / 60);
-    const endedAt = Date.now();
-    const startedAt = endedAt - elapsedSec * 1000;
-    const session: Session = {
-      id: uid(),
-      taskName: t.name,
-      minutes,
-      startedAt,
-      endedAt,
-      corner: state.corner?.name ?? '',
-      ambient: state.sound.ambient,
-    };
+    const session = buildSession(state, t.name, elapsedSec);
+    if (!session) return false;
     set({ sessions: [session, ...state.sessions] });
     return true;
   },
@@ -275,11 +301,16 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.audioActive !== undefined) update.audioActive = p.audioActive;
     if (p.autoContinue !== undefined) update.autoContinue = p.autoContinue;
     if (p.customTracks !== undefined) update.customTracks = p.customTracks;
+    if (p.phase !== undefined) update.phase = p.phase;
+    if (p.lastFocusSec !== undefined) update.lastFocusSec = p.lastFocusSec;
+    if (p.focusStartedAt !== undefined) update.focusStartedAt = p.focusStartedAt;
+    update.runSyncAt = null;
 
-    // Auto-heal activeTaskId on load
+    // Auto-heal activeTaskId on load: it must point at an undone task.
     const tasksList = p.tasks !== undefined ? p.tasks : get().tasks;
     const firstUndone = tasksList.find((t) => !t.done);
-    update.activeTaskId = p.activeTaskId || (firstUndone ? firstUndone.id : null);
+    const savedOk = p.activeTaskId && tasksList.some((t) => t.id === p.activeTaskId && !t.done);
+    update.activeTaskId = savedOk ? p.activeTaskId! : (firstUndone ? firstUndone.id : null);
 
     set(update);
   },
@@ -293,33 +324,67 @@ export const useStore = create<AppStore>((set, get) => ({
       activeTaskId: firstUndone ? firstUndone.id : null,
       screen: 'room',
       phase: 'focus',
+      runSyncAt: null,
+      focusStartedAt: null,
     });
   },
-  setIsRunning: (b) => set({ isRunning: b }),
-  tickSession: () => {
+  setIsRunning: (b) => {
+    const s = get();
+    set({
+      ...run(b),
+      ...(b && s.phase === 'focus' && s.focusStartedAt === null ? { focusStartedAt: Date.now() } : {}),
+    });
+  },
+  togglePlay: () => {
+    const s = get();
+    if (!s.sessionActive || s.phase === 'review') return;
+    if (s.phase === 'focus' && !s.tasks.some((t) => !t.done)) return;
+    get().setIsRunning(!s.isRunning);
+  },
+  tickSession: (deltaSec = 1) => {
     const state = get();
-    if (!state.isRunning) return;
+    if (!state.isRunning || deltaSec <= 0) return;
 
     // Break phase countdown
     if (state.phase === 'break') {
-      const elapsed = state.elapsedSec + 1;
-      set({ elapsedSec: elapsed });
       const breakDur = breakForSeconds(state.lastFocusSec);
+      const elapsed = Math.min(breakDur, state.elapsedSec + deltaSec);
+      set({ elapsedSec: elapsed });
       if (elapsed >= breakDur) {
+        set({ lastEvent: { kind: 'break-done', taskName: '', at: Date.now() } });
         get().finishBreak();
       }
       return;
     }
+    if (state.phase !== 'focus') return;
 
     // Focus phase
-    const currentTaskId = state.activeTaskId || state.tasks.find((t) => !t.done)?.id;
-    if (!currentTaskId) return;
+    const current = state.tasks.find((t) => t.id === state.activeTaskId && !t.done)
+      ?? state.tasks.find((t) => !t.done);
+    if (!current) return;
 
-    const elapsed = state.elapsedSec + 1;
-    set({ elapsedSec: elapsed, activeTaskId: currentTaskId });
-    if (state.setup.durationSec > 0 && elapsed >= state.setup.durationSec) {
+    const total = state.setup.durationSec;
+    const elapsed = total > 0
+      ? Math.min(total, state.elapsedSec + deltaSec)
+      : state.elapsedSec + deltaSec;
+    set({ elapsedSec: elapsed, activeTaskId: current.id });
+    if (total > 0 && elapsed >= total) {
+      set({ lastEvent: { kind: 'focus-done', taskName: current.name, at: Date.now() } });
       get().enterReview();
     }
+  },
+  syncClock: (now = Date.now()) => {
+    const s = get();
+    if (!s.isRunning) return;
+    if (s.runSyncAt === null) {
+      set({ runSyncAt: now });
+      return;
+    }
+    const delta = Math.floor((now - s.runSyncAt) / 1000);
+    if (delta <= 0) return;
+    // Keep the sub-second remainder so no time is lost between syncs.
+    set({ runSyncAt: s.runSyncAt + delta * 1000 });
+    get().tickSession(delta);
   },
   completeCurrent: () => {
     const elapsed = get().elapsedSec;
@@ -329,19 +394,22 @@ export const useStore = create<AppStore>((set, get) => ({
     set({
       activeTaskId,
       elapsedSec: 0,
-      isRunning: false,
+      ...run(false),
       sessionActive: activeTaskId !== null,
       phase: 'focus',
+      focusStartedAt: null,
     });
   },
   stopFocus: () => {
-    get().stopActive(get().elapsedSec);
+    // Break time is not focus time.
+    if (get().phase === 'focus') get().stopActive(get().elapsedSec);
     set({
       sessionActive: false,
-      isRunning: false,
+      ...run(false),
       elapsedSec: 0,
       activeTaskId: null,
       phase: 'focus',
+      focusStartedAt: null,
     });
   },
   setAudioActive: (b) => set({ audioActive: b }),
@@ -351,6 +419,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
   enterReview: () => {
     const state = get();
+    if (state.phase !== 'focus') return;
     const focusDur = state.setup.durationSec > 0 ? state.setup.durationSec : state.elapsedSec;
 
     if (state.autoContinue) {
@@ -361,7 +430,7 @@ export const useStore = create<AppStore>((set, get) => ({
       if (!nextUndone) {
         // No more tasks - stop
         set({
-          sessionActive: false, isRunning: false, elapsedSec: 0,
+          sessionActive: false, ...run(false), elapsedSec: 0,
           activeTaskId: null, phase: 'focus', lastFocusSec: focusDur,
         });
         return;
@@ -371,31 +440,40 @@ export const useStore = create<AppStore>((set, get) => ({
         lastFocusSec: focusDur,
         phase: 'break',
         elapsedSec: 0,
-        isRunning: true,
+        ...run(true),
       });
       return;
     }
 
-    // Manual: show review sheet
+    // Manual: log the finished block now, so every choice on the review
+    // sheet (keep working, break, focus again, stop) keeps that time.
+    const active = state.tasks.find((t) => !t.done);
+    const session = active ? buildSession(state, active.name, state.elapsedSec) : null;
     set({
+      sessions: session ? [session, ...state.sessions] : state.sessions,
       lastFocusSec: focusDur,
       phase: 'review',
-      isRunning: false,
+      elapsedSec: 0,
+      focusStartedAt: null,
+      ...run(false),
     });
   },
 
   reviewMarkDone: (done) => {
     if (done) {
+      // The block was already logged by enterReview; only mark the task.
       const state = get();
-      const elapsed = state.elapsedSec > 0 ? state.elapsedSec : state.lastFocusSec;
-      get().completeActive(elapsed);
-      const nextUndone = get().tasks.find((t) => !t.done);
-      set({ activeTaskId: nextUndone ? nextUndone.id : null });
+      const t = state.tasks.find((task) => !task.done);
+      if (!t) return;
+      const tasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
+      const nextUndone = tasks.find((task) => !task.done);
+      set({ tasks, activeTaskId: nextUndone ? nextUndone.id : null });
     } else {
       set({
         phase: 'focus',
         elapsedSec: 0,
-        isRunning: true,
+        ...run(true),
+        focusStartedAt: Date.now(),
       });
     }
   },
@@ -404,7 +482,7 @@ export const useStore = create<AppStore>((set, get) => ({
     set({
       phase: 'break',
       elapsedSec: 0,
-      isRunning: true,
+      ...run(true),
     });
   },
 
@@ -415,7 +493,7 @@ export const useStore = create<AppStore>((set, get) => ({
       const nextUndone = get().tasks.find((t) => !t.done);
       if (!nextUndone) {
         set({
-          sessionActive: false, isRunning: false, elapsedSec: 0,
+          sessionActive: false, ...run(false), elapsedSec: 0,
           activeTaskId: null, phase: 'focus',
         });
         return;
@@ -423,7 +501,8 @@ export const useStore = create<AppStore>((set, get) => ({
       set({
         phase: 'focus',
         elapsedSec: 0,
-        isRunning: true,
+        ...run(true),
+        focusStartedAt: Date.now(),
         activeTaskId: nextUndone.id,
       });
       return;
@@ -433,8 +512,10 @@ export const useStore = create<AppStore>((set, get) => ({
     set({
       phase: 'focus',
       elapsedSec: 0,
-      isRunning: false,
+      ...run(false),
+      focusStartedAt: null,
       activeTaskId: firstUndone ? firstUndone.id : null,
+      sessionActive: firstUndone ? state.sessionActive : false,
     });
   },
 
@@ -447,7 +528,8 @@ export const useStore = create<AppStore>((set, get) => ({
       },
       phase: 'focus',
       elapsedSec: 0,
-      isRunning: false,
+      ...run(false),
+      focusStartedAt: null,
     });
   },
 
@@ -456,6 +538,31 @@ export const useStore = create<AppStore>((set, get) => ({
     set({ phase: 'focus', screen: 'history' });
   },
 }));
+
+/**
+ * When an edit changes which task is active in the middle of a focus block,
+ * close that block: log it for the old task (if asked) and restart the
+ * clock at 0 for the new one. Without this, the old task's seconds would
+ * silently move to the next task.
+ */
+function switchPatch(
+  state: AppStore,
+  newTasks: Task[],
+  logOld: boolean,
+): Partial<AppStore> {
+  if (state.phase !== 'focus' || state.elapsedSec <= 0) return {};
+  const before = state.tasks.find((t) => !t.done);
+  const after = newTasks.find((t) => !t.done);
+  if (before?.id === after?.id) return {};
+  const session = logOld && before ? buildSession(state, before.name, state.elapsedSec) : null;
+  const now = Date.now();
+  return {
+    sessions: session ? [session, ...state.sessions] : state.sessions,
+    elapsedSec: 0,
+    focusStartedAt: state.isRunning && after ? now : null,
+    runSyncAt: state.isRunning && after ? now : null,
+  };
+}
 
 export const canStart = () => useStore.getState().tasks.length > 0;
 

@@ -22,12 +22,19 @@ export const noopOsBridge: OsBridge = {
 };
 
 let trayPromise: Promise<any> | null = null;
+let tauriBridge: OsBridge | null = null;
 
+// One shared bridge: callers keep it in effect deps, so a new object per call
+// would re-register the global hotkey on every render.
 export function createOsBridge(): OsBridge {
   if (!isTauri()) {
     return noopOsBridge;
   }
+  if (!tauriBridge) tauriBridge = buildTauriBridge();
+  return tauriBridge;
+}
 
+function buildTauriBridge(): OsBridge {
   return {
     async updateTray(title: string) {
       if (!trayPromise) {

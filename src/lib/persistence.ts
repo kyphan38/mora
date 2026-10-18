@@ -1,5 +1,7 @@
 import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack } from '../types';
 
+type Phase = 'focus' | 'break' | 'review';
+
 export const PERSIST_VERSION = 2;
 
 export interface PersistedState {
@@ -17,6 +19,9 @@ export interface PersistedState {
   audioActive?: boolean;
   autoContinue?: boolean;
   customTracks?: CustomTrack[];
+  phase?: Phase;
+  lastFocusSec?: number;
+  focusStartedAt?: number | null;
 }
 
 export interface StorageAdapter {
@@ -99,6 +104,9 @@ export function toPersisted(s: {
   audioActive?: boolean;
   autoContinue?: boolean;
   customTracks?: CustomTrack[];
+  phase?: Phase;
+  lastFocusSec?: number;
+  focusStartedAt?: number | null;
 }): PersistedState {
   return {
     version: PERSIST_VERSION,
@@ -115,6 +123,9 @@ export function toPersisted(s: {
     audioActive: s.audioActive ?? false,
     autoContinue: s.autoContinue ?? false,
     customTracks: s.customTracks ?? [],
+    phase: s.phase ?? 'focus',
+    lastFocusSec: s.lastFocusSec ?? 0,
+    focusStartedAt: s.focusStartedAt ?? null,
   };
 }
 
