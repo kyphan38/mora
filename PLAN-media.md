@@ -74,3 +74,14 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
 - Làm media **trước** S3 (timer đồng bộ).
 - Âm thanh cũng chuyển lên Firebase, làm **sau** scene (V5).
 - **Tự cắt bản dọc** cho điện thoại (V4).
+
+## Tiến độ (dừng 2026-10-18, owner sắp hết quota)
+
+- Đã có: `storage.rules.template` (defaults chỉ đọc công khai, users/{uid}
+  chỉ owner, giới hạn kiểu và kích thước), `npm run rules` sinh cả
+  `storage.rules`. **Chưa deploy** vì Storage chưa bật.
+- Owner cần: Firebase Console → Storage → Get started → Production mode →
+  asia-southeast1.
+- Lần sau bắt đầu từ V1: deploy storage rules, upload defaults bằng gsutil
+  (gcloud trên máy đã có quyền với project), đặt CORS cho bucket, đổi app
+  sang đọc URL từ Storage, bỏ `public/scenes` khỏi repo.

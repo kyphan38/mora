@@ -28,9 +28,11 @@ if (!/^[^\s'"\\@]+@[^\s'"\\@]+$/.test(email)) {
   process.exit(1);
 }
 
-const out = readFileSync('firestore.rules.template', 'utf8').replaceAll('__ALLOWED_EMAIL__', email);
-// The emulator gets its own file, so a test run can never leave the fake
+// The emulator gets its own files, so a test run can never leave the fake
 // email in the rules that `firebase deploy` uploads.
-const file = EMU ? 'firestore.emu.rules' : 'firestore.rules';
-writeFileSync(file, out);
-console.log(`${file} written`);
+for (const kind of ['firestore', 'storage']) {
+  const out = readFileSync(`${kind}.rules.template`, 'utf8').replaceAll('__ALLOWED_EMAIL__', email);
+  const file = EMU ? `${kind}.emu.rules` : `${kind}.rules`;
+  writeFileSync(file, out);
+  console.log(`${file} written`);
+}

@@ -32,3 +32,5 @@ firestore-debug.log
 .vercel
 .env
 firestore.emu.rules
+storage.rules
+storage.emu.rules

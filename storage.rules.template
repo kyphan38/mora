@@ -1,0 +1,42 @@
+rules_version = '2';
+
+// ============================================================
+// mora - Cloud Storage rules
+//
+// defaults/**   scenes and sounds that ship with mora: anyone can read
+//               (the Tauri build has no sign-in), nobody writes from the
+//               app; they are uploaded with gsutil (scripts/upload-defaults.sh).
+// users/{uid}/** the owner's own uploads: owner only, size and type checked.
+//
+// __ALLOWED_EMAIL__ is filled in by scripts/rules.mjs into storage.rules.
+// ============================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function allowed() {
+      return request.auth != null
+        && request.auth.token.email == '__ALLOWED_EMAIL__'
+        && request.auth.token.email_verified == true;
+    }
+
+    match /defaults/{path=**} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /users/{uid}/{path=**} {
+      allow read, delete: if allowed() && request.auth.uid == uid;
+      allow create, update: if allowed() && request.auth.uid == uid
+        && (
+          (request.resource.contentType == 'video/mp4' && request.resource.size < 60 * 1024 * 1024)
+          || (request.resource.contentType == 'image/jpeg' && request.resource.size < 3 * 1024 * 1024)
+          || (request.resource.contentType.matches('audio/.*') && request.resource.size < 50 * 1024 * 1024)
+        );
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}
