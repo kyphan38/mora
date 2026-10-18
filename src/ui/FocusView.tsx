@@ -8,6 +8,7 @@ import { setFullscreen, onFullscreenExit } from '../platform/fullscreen';
 import { useIdle } from '../hooks/useIdle';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { Ring } from './Ring';
+import { HoldButton } from './HoldButton';
 import { Sheet } from './Sheet';
 import { TaskList } from './TaskList';
 import { ReviewSheet } from './ReviewSheet';
@@ -43,6 +44,7 @@ export function FocusView() {
   const enterReview = useStore((s) => s.enterReview);
   const finishBreak = useStore((s) => s.finishBreak);
   const setMuted = useStore((s) => s.setMuted);
+  const setCustomDuration = useStore((s) => s.setCustomDuration);
 
   const [sheet, setSheet] = useState<SheetName>(null);
   const [zen, setZen] = useState(false);
@@ -115,7 +117,10 @@ export function FocusView() {
       </div>
 
       <section className="flex w-full flex-1 flex-col items-center justify-center gap-8" data-testid="room-timer-card">
-        <Ring progress={isBreak || !idle ? progress : 0}>
+        <Ring
+          progress={isBreak || !idle ? progress : 0}
+          adjust={idle && !zen ? { minutes: setup.durationSec / 60, onChange: setCustomDuration } : undefined}
+        >
           {/* Phase or task changes cross-fade the middle of the ring. */}
           <div key={`${phase}-${active?.id ?? 'none'}`} className="rise flex max-w-full flex-col items-center">
             {active || isBreak ? (
@@ -179,14 +184,9 @@ export function FocusView() {
                     {isRunning ? <PauseIcon /> : <PlayIcon />}
                   </span>
                 </button>
-                <button
-                  type="button"
-                  className={`${WORD} w-10 ${started && !zen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}
-                  onClick={stop}
-                  aria-label="Stop"
-                >
-                  stop
-                </button>
+                <div className={`transition-opacity duration-300 ${started && !zen ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+                  <HoldButton label="stop" ariaLabel="Stop" className={WORD} onHold={stop} />
+                </div>
               </>
             )
           )}

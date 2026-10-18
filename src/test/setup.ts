@@ -19,3 +19,15 @@ vi.mock('../platform/auth', async () => {
     isAllowed: (e: string) => e === 'dev@mora.test',
   };
 });
+
+// jsdom has no PointerEvent, so button/clientX/pointerId would be dropped.
+if (typeof window !== 'undefined' && !('PointerEvent' in window)) {
+  class PointerEventPolyfill extends MouseEvent {
+    pointerId: number;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+    }
+  }
+  Object.defineProperty(window, 'PointerEvent', { value: PointerEventPolyfill, configurable: true });
+}

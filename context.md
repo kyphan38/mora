@@ -53,6 +53,13 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - Task rows: FLIP slide on reorder (`useFlip`), fade out on remove.
 - The ring fills smoothly; the ring middle cross-fades on phase or task
   change; Play/Pause icon pops.
+- Ring drag (`ui/Ring.tsx`, `adjust` prop): while the clock waits, drag the
+  band (outside 34% of the width) to pick 5-120 min in 5 min steps; the
+  middle stays clickable. Also `role="slider"` with arrow keys. Haptic 4ms
+  per step (`navigator.vibrate?.`, Android only).
+- `stop` is a hold button (`ui/HoldButton.tsx`, 800ms with a growing hairline;
+  a quick tap shows `hold`; keyboard click acts at once; reduced motion shows
+  `holding…`).
 - Audio: play fades in (800ms), pause fades out (450ms) before pausing,
   track changes fade the old track out first (350ms). See
   `platform/audio.ts`.
