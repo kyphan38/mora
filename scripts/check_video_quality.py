@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Quét toàn bộ public/scenes/*.mp4, chấm điểm chất lượng encode bằng video_quality.py
+"""Quét toàn bộ media/scenes/*.mp4, chấm điểm chất lượng encode bằng video_quality.py
 và in bảng xếp hạng xấu-trước để biết file nào cần tải lại từ nguồn tốt hơn."""
 import glob
 import os
@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import video_quality as vq
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SCENES_DIR = os.path.join(REPO_ROOT, "public", "scenes")
+SCENES_DIR = os.path.join(REPO_ROOT, "media", "scenes")
 
 SEVERITY = {"danger": 0, "borderline": 1, "ok": 2, "safe": 3}
 
@@ -30,7 +30,7 @@ def main():
         return
 
     print("=" * 100)
-    print(f"   Đang chấm điểm chất lượng {len(mp4_files)} file trong public/scenes/")
+    print(f"   Đang chấm điểm chất lượng {len(mp4_files)} file trong media/scenes/")
     print("=" * 100)
 
     results = []

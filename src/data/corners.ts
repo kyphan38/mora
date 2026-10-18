@@ -1,7 +1,7 @@
 import type { Corner } from '../types';
-import metadata from '../../public/scenes/metadata.json';
+import metadata from './scenes.json';
 
-// Keyed by the scene file id in public/scenes/metadata.json.
+// Keyed by the scene file id in src/data/scenes.json (files live in Cloud Storage).
 // Gradients are gray: they only show when the image is missing.
 const customProps: Record<string, Partial<Corner>> = {
   "scene_887eec": { description: "Jazz and a quiet reading nook", ambient: "Room Tone" },

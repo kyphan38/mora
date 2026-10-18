@@ -15,8 +15,9 @@ except ImportError:
     import yt_dlp
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-METADATA_PATH = os.path.join(REPO_ROOT, "public", "scenes", "metadata.json")
-OUTPUT_DIR = os.path.join(REPO_ROOT, "public", "scenes")
+METADATA_PATH = os.path.join(REPO_ROOT, "src", "data", "scenes.json")
+# Local staging (git-ignored); scripts/upload-defaults.sh sends it to Cloud Storage.
+OUTPUT_DIR = os.path.join(REPO_ROOT, "media", "scenes")
 
 def check_ffmpeg():
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):

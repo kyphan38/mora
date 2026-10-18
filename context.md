@@ -138,7 +138,11 @@ are not synced. logi side: `logi/src/app/api/ingest/mora/route.ts`, env
 
 ## Assets
 
-`public/scenes/<id>.jpg|mp4` listed in `public/scenes/metadata.json`
-(descriptions in `data/corners.ts`). `public/audio/ambient|music/<slug>.mp3`
+Scenes: list in `src/data/scenes.json` (descriptions in
+`data/corners.ts`); files in Cloud Storage `defaults/scenes/<id>.mp4|jpg`
+(public read, URLs from `data/sceneManifest.ts`). Local staging in
+`media/scenes/` (git-ignored); `scripts/upload-defaults.sh` uploads new
+files (gsutil, long cache). Bucket CORS: `storage.cors.json`
+(`gsutil cors set storage.cors.json gs://kyphan38-mora-app.firebasestorage.app`). `public/audio/ambient|music/<slug>.mp3`
 where slug comes from `core/soundFormat.slug`. Missing files degrade to a
 gradient or silence. Scene tools live in `scripts/`.

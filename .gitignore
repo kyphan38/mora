@@ -34,3 +34,4 @@ firestore-debug.log
 firestore.emu.rules
 storage.rules
 storage.emu.rules
+media/

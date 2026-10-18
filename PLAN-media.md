@@ -85,3 +85,9 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
 - Lần sau bắt đầu từ V1: deploy storage rules, upload defaults bằng gsutil
   (gcloud trên máy đã có quyền với project), đặt CORS cho bucket, đổi app
   sang đọc URL từ Storage, bỏ `public/scenes` khỏi repo.
+
+- **V1 xong (2026-10-18):** Storage rules đã deploy; 8 scene (16 file,
+  91MB) lên `defaults/scenes/` bằng `scripts/upload-defaults.sh`; CORS
+  cho bucket; app đọc URL từ Storage; `public/scenes` rời khỏi repo,
+  file gốc giữ ở `media/scenes/` (ngoài git); danh sách chuyển sang
+  `src/data/scenes.json`. Script cắt scene giờ xuất vào `media/scenes/`.

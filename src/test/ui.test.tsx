@@ -4,6 +4,7 @@ import 'fake-indexeddb/auto';
 import App from '../App';
 import { useStore } from '../store/useStore';
 import { CORNERS } from '../data/corners';
+import { sceneVideoUrl, mediaUrl } from '../data/sceneManifest';
 import { resetCustomTrackDbForTest } from '../platform/customTrackDb';
 
 const st = () => useStore.getState();
@@ -161,7 +162,7 @@ describe('Focus screen', () => {
     expect(root.getAttribute('data-scene')).toBe('true');
     expect(screen.getByTestId('room-scene-bg')).toBeInTheDocument();
     const src = screen.getByTestId('scene-video').querySelector('source')!;
-    expect(src.getAttribute('src')).toBe(`/scenes/${CORNERS[0].id}.mp4`);
+    expect(src.getAttribute('src')).toBe(sceneVideoUrl(CORNERS[0].id));
   });
 });
 
@@ -253,5 +254,16 @@ describe('Settings screen', () => {
     expect(st().sessions.length).toBe(1);
     fireEvent.click(screen.getByText('Clear all'));
     expect(st().sessions).toEqual([]);
+  });
+});
+
+describe('scene media urls', () => {
+  it('point at Cloud Storage defaults/ with the path encoded', () => {
+    const u = mediaUrl('defaults/scenes/x.mp4');
+    if (import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) {
+      expect(u).toContain('/o/defaults%2Fscenes%2Fx.mp4?alt=media');
+    } else {
+      expect(u).toBe('/scenes/x.mp4');
+    }
   });
 });

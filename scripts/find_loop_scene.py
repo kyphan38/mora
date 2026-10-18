@@ -28,8 +28,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import video_quality as vq
 
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-METADATA_PATH = os.path.join(REPO_ROOT, "public", "scenes", "metadata.json")
-OUTPUT_DIR = os.path.join(REPO_ROOT, "public", "scenes")
+METADATA_PATH = os.path.join(REPO_ROOT, "src", "data", "scenes.json")
+# Local staging (git-ignored); scripts/upload-defaults.sh sends it to Cloud Storage.
+OUTPUT_DIR = os.path.join(REPO_ROOT, "media", "scenes")
 
 # --- Tham số tìm điểm loop ---
 PROXY_FPS = 2.0            # số frame/giây lấy mẫu để so sánh (proxy nhỏ, không cần cao)

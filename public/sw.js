@@ -3,11 +3,11 @@
 // The app shell works offline; heavy media does not go through the cache.
 //   HTML                 stale-while-revalidate: opens at once, new build next time.
 //   /assets/*, /icons/*  cache-first forever (Vite hashes file names).
-//   /scenes/*.jpg        cache on first view (small, makes offline scenes look right).
+//   Scenes come from Cloud Storage (another origin) and are not handled here.
 //   *.mp4, *.mp3         not touched: big files and Range requests (iOS Safari)
 //                        are safer straight from the network.
 
-const CACHE = 'mora-v3';
+const CACHE = 'mora-v4';
 const SHELL = ['/', '/manifest.webmanifest', '/favicon.svg', '/icons/icon-192.png', '/icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (event) => {
@@ -85,7 +85,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/') || url.pathname.startsWith('/scenes/')) {
+  if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icons/')) {
     event.respondWith(cacheFirst(req));
   }
 });

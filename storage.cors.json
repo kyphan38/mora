@@ -1,0 +1,14 @@
+[
+  {
+    "origin": [
+      "https://mora.kyphan38.com",
+      "http://localhost:1420",
+      "http://localhost:4173",
+      "tauri://localhost",
+      "http://tauri.localhost"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Content-Range", "Accept-Ranges"],
+    "maxAgeSeconds": 86400
+  }
+]
