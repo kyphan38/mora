@@ -28,6 +28,8 @@ interface AppStore {
   setDuration: (label: string) => void;
   addTask: (name: string) => void;
   removeTask: (id: string) => void;
+  /** Puts a removed task back at `index` (undo). Its time is not restored. */
+  restoreTask: (task: Task, index: number) => void;
   reorderTasks: (from: number, to: number) => void;
   activeTask: () => Task | undefined;
   toggleTask: (id: string) => void;
@@ -311,6 +313,18 @@ export const useStore = create<AppStore>((set, get) => ({
         sessionActive: firstUndone ? state.sessionActive : false,
         // A removed task's time is discarded, not moved to the next task.
         ...switchPatch(state, newTasks, false),
+      };
+    }),
+  restoreTask: (task, index) =>
+    set((state) => {
+      if (state.tasks.some((t) => t.id === task.id)) return {};
+      const copy = [...state.tasks];
+      copy.splice(Math.max(0, Math.min(index, copy.length)), 0, task);
+      const firstUndone = copy.find((t) => !t.done);
+      return {
+        tasks: copy,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+        ...switchPatch(state, copy, true),
       };
     }),
   reorderTasks: (from, to) =>

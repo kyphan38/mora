@@ -7,6 +7,9 @@ import { askNotificationPermissionOnce } from '../platform/pwa';
 import { setFullscreen, onFullscreenExit } from '../platform/fullscreen';
 import { useIdle } from '../hooks/useIdle';
 import { useShortcuts } from '../hooks/useShortcuts';
+import { useSceneList } from '../hooks/useSceneList';
+import { useSceneSwipe } from '../hooks/useSceneSwipe';
+import { withTransition } from './viewTransition';
 import { Ring } from './Ring';
 import { HoldButton } from './HoldButton';
 import { RollingDigits } from './RollingDigits';
@@ -38,7 +41,8 @@ export function FocusView() {
   const corner = useStore((s) => s.corner);
   const scene = useStore((s) => s.roomBackground === 'scene');
   const muted = useStore((s) => s.muted);
-  const setScreen = useStore((s) => s.setScreen);
+  const setScreenRaw = useStore((s) => s.setScreen);
+  const setCorner = useStore((s) => s.setCorner);
   const setIsRunning = useStore((s) => s.setIsRunning);
   const startFocus = useStore((s) => s.startFocus);
   const stopFocus = useStore((s) => s.stopFocus);
@@ -49,6 +53,9 @@ export function FocusView() {
 
   const [sheet, setSheet] = useState<SheetName>(null);
   const [zen, setZen] = useState(false);
+  const [nameFlash, setNameFlash] = useState(false);
+  const scenes = useSceneList();
+  const setScreen = (next: 'focus' | 'history' | 'settings') => withTransition('screen', () => setScreenRaw(next));
   // Counts finished focus blocks (focus -> review) so the ring can settle once.
   const [settleKey, setSettleKey] = useState(0);
   const prevPhase = useRef(phase);
@@ -63,6 +70,8 @@ export function FocusView() {
   const isBreak = phase === 'break';
   const idle = phase === 'focus' && !isRunning && elapsedSec === 0;
   const started = sessionActive && phase === 'focus' && (isRunning || elapsedSec > 0);
+  const lastMinute =
+    timer.mode === 'countdown' && !isBreak && phase === 'focus' && isRunning && remainingSec(timer) <= 60 && remainingSec(timer) > 0;
   const canPlay = !!active && phase === 'focus';
   // Count up has no end, so the ring shows the current hour.
   const progress = timer.mode === 'countdown' ? timer.elapsedSec / timer.totalSec : (timer.elapsedSec % 3600) / 3600;
@@ -94,6 +103,20 @@ export function FocusView() {
     stopFocus();
   };
 
+  // Step through the visible scenes; the name shows clearly for 2 seconds.
+  const stepScene = (dir: 1 | -1) => {
+    if (!scene || scenes.length === 0) return;
+    const at = scenes.findIndex((c) => c.id === corner?.id);
+    setCorner(scenes[(at + dir + scenes.length) % scenes.length]);
+    setNameFlash(true);
+  };
+  useEffect(() => {
+    if (!nameFlash) return;
+    const t = setTimeout(() => setNameFlash(false), 2000);
+    return () => clearTimeout(t);
+  }, [nameFlash, corner?.id]);
+  const swipe = useSceneSwipe(scene && sheet === null && phase !== 'review', stepScene);
+
   const closeSheet = () => {
     if (sheet === 'sound' && !useStore.getState().isRunning) getAudioEngine().pause();
     setSheet(null);
@@ -111,6 +134,8 @@ export function FocusView() {
       m: () => setMuted(!muted),
       h: () => setScreen('history'),
       '?': () => setScreen('settings'),
+      '[': () => stepScene(-1),
+      ']': () => stepScene(1),
     },
     sheet === null && screen === 'focus' && phase !== 'review',
   );
@@ -121,14 +146,22 @@ export function FocusView() {
   return (
     <div className="flex min-h-dvh flex-col items-center px-5 pt-[calc(env(safe-area-inset-top)+16px)] pb-[calc(env(safe-area-inset-bottom)+12px)]">
       <div className={`flex min-h-6 w-full max-w-xl items-baseline font-mono text-[11px] text-faint ${chrome}`}>
-        {scene && corner && !zen && <span className="truncate" data-testid="scene-name">{corner.name}</span>}
+        {scene && corner && !zen && <span
+            className={`truncate transition-colors duration-500 ${nameFlash ? 'text-ink' : ''}`}
+            data-testid="scene-name"
+          >{corner.name}</span>}
       </div>
 
-      <section className="flex w-full flex-1 flex-col items-center justify-center gap-8" data-testid="room-timer-card">
+      <section
+        className="flex w-full flex-1 touch-pan-y flex-col items-center justify-center gap-8"
+        data-testid="room-timer-card"
+        {...swipe}
+      >
         <Ring
           progress={isBreak || !idle ? progress : 0}
           settleKey={settleKey}
           breath={isBreak}
+          lastMinute={lastMinute}
           adjust={idle && !zen ? { minutes: setup.durationSec / 60, onChange: setCustomDuration } : undefined}
         >
           {/* Phase or task changes cross-fade the middle of the ring. */}
@@ -136,14 +169,21 @@ export function FocusView() {
             {active || isBreak ? (
               <p className="flex max-w-full items-center gap-2 text-[14px] text-muted">
                 {isRunning && <span className="breathe h-1.5 w-1.5 shrink-0 rounded-full bg-ink" aria-hidden="true" />}
-                <span className="truncate">{isBreak ? breakLabel : active!.name}</span>
+                <span
+                  className="truncate"
+                  style={{ viewTransitionName: !isBreak && sheet !== 'tasks' ? 'active-task' : undefined }}
+                >
+                  {isBreak ? breakLabel : active!.name}
+                </span>
               </p>
             ) : (
               <button type="button" className="text-[14px] text-faint hover:text-ink" onClick={() => setSheet('tasks')}>
                 Add a task to begin
               </button>
             )}
-            <div className="digits mt-2 text-[clamp(52px,15vw,84px)] leading-none font-extralight">
+            <div
+              className={`digits mt-2 text-[clamp(52px,15vw,84px)] leading-none ${lastMinute ? 'font-light' : 'font-extralight'}`}
+            >
               <RollingDigits text={formatTime(remainingSec(timer))} roll={!idle} />
             </div>
             <p className="mt-3 text-[12px] text-faint">

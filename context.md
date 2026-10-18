@@ -70,6 +70,21 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
   only; the slide layer moves up to 12px against the mouse, eased in rAF,
   style written by ref. It settles back after 4s without input while the
   clock runs or in fullscreen.
+- Scene swipe (`hooks/useSceneSwipe.ts`, scene mode, no sheet open): swipe
+  the clock area left/right past 60px to step through `useSceneList()`
+  (picker order, hidden ones skipped); also `[` and `]`. The scene follows by
+  up to 24px through CSS vars `--scene-dx` / `--scene-ms` read by
+  `SceneLayer`. The scene name shows in ink for 2s after a step.
+- Last minute: a running countdown with 60s or less left thickens the arc
+  (0.9 to 1.4) and the big number goes `font-light`. Once, no blinking.
+- Task rows (`SwipeRow` in `TaskList.tsx`): drag right past 72px = done, left
+  = delete with a 5s `deleted · undo` (`store.restoreTask`). Buttons stay.
+  Direction locks after 8px; horizontal moves do not reach the sheet drag.
+- View Transitions (`ui/viewTransition.ts`, `withTransition(kind, fn)`):
+  `screen` (history/settings) slides and fades the page 220ms; `task`
+  (tick) only flies `view-transition-name: active-task` between the clock name
+  (when the task sheet is closed) and the active row. Skipped when the
+  browser has none or under reduced motion.
 - Ring drag (`ui/Ring.tsx`, `adjust` prop): while the clock waits, drag the
   band (outside 34% of the width) to pick 5-120 min in 5 min steps; the
   middle stays clickable. Also `role="slider"` with arrow keys. Haptic 4ms

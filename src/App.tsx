@@ -11,6 +11,7 @@ import { SceneLayer } from './ui/SceneLayer';
 import { Sheet } from './ui/Sheet';
 import { SignInView } from './ui/SignInView';
 import { useAuth, startAuth } from './platform/auth';
+import { withTransition } from './ui/viewTransition';
 
 /** mora needs a signed-in account: everything syncs across devices. */
 export default function App() {
@@ -37,7 +38,7 @@ function MoraApp() {
   useEffect(() => {
     if (scene) setShown(scene);
   }, [scene]);
-  const back = () => setScreen('focus');
+  const back = () => withTransition('screen', () => setScreen('focus'));
 
   return (
     <div className="relative min-h-dvh" data-scene={scene ? 'true' : undefined}>

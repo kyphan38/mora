@@ -33,6 +33,7 @@ export function Ring({
   adjust,
   settleKey = 0,
   breath = false,
+  lastMinute = false,
   children,
 }: {
   progress: number;
@@ -41,6 +42,8 @@ export function Ring({
   settleKey?: number;
   /** A slow breathing circle behind the text (break time). */
   breath?: boolean;
+  /** The last minute of a countdown: the arc gets a little thicker, once. */
+  lastMinute?: boolean;
   children: ReactNode;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -131,11 +134,11 @@ export function Ring({
             r={R}
             fill="none"
             stroke="var(--ink)"
-            strokeWidth="0.9"
+            strokeWidth={lastMinute ? 1.4 : 0.9}
             strokeLinecap="round"
             strokeDasharray={C}
             strokeDashoffset={C * (1 - p)}
-            className={`${showDrag ? '' : 'transition-[stroke-dashoffset] duration-1000 ease-linear'} ${settleKey > 0 ? 'ring-glow' : ''}`}
+            className={`${showDrag ? '' : 'transition-[stroke-dashoffset,stroke-width] duration-1000 ease-linear'} ${settleKey > 0 ? 'ring-glow' : ''}`}
             data-testid="ring-progress"
           />
           {adjust && (

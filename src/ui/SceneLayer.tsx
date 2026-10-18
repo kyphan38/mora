@@ -36,7 +36,12 @@ export function SceneLayer({ corner, visible }: { corner: Corner; visible: boole
       aria-hidden="true"
     >
       {/* The outer layer moves with the mouse; the slides keep their own animations. */}
-      <div ref={shift} className="absolute inset-0 will-change-transform" data-testid="scene-shift">
+      <div
+        ref={shift}
+        className="absolute -inset-6 will-change-transform"
+        style={{ translate: 'var(--scene-dx, 0px) 0', transition: 'translate var(--scene-ms, 0ms) var(--ease-soft)' }}
+        data-testid="scene-shift"
+      >
         {layers.map((c, i) => (
           <SceneSlide key={c.id} corner={c} top={i === layers.length - 1 && layers.length > 1} playVideo={visible} />
         ))}

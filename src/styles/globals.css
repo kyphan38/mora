@@ -329,6 +329,28 @@ input[type="range"]::-moz-range-thumb {
   animation: digit-in 280ms var(--ease-soft) both;
 }
 
+/* View Transitions (ui/viewTransition.ts). */
+@keyframes vt-out {
+  to { opacity: 0; }
+}
+@keyframes vt-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+:root[data-vt='screen']::view-transition-old(root) {
+  animation: vt-out 220ms ease-in both;
+}
+:root[data-vt='screen']::view-transition-new(root) {
+  animation: vt-in 220ms var(--ease-soft) both;
+}
+:root[data-vt='task']::view-transition-old(root),
+:root[data-vt='task']::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(active-task) {
+  animation-duration: 260ms;
+  animation-timing-function: var(--ease-soft);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

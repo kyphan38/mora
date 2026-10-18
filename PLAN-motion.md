@@ -513,3 +513,4 @@ File: `FocusView.tsx`, `TaskList.tsx`, `App.tsx` hoặc nơi đổi `screen`.
 - P1 (2026-10-18): ring drag + hold to stop. `Ring.tsx`, `HoldButton.tsx`, tests `ringDrag`, `holdStop`; jsdom `PointerEvent` polyfill in `src/test/setup.ts`.
 - P2 (2026-10-18): swipe sheet down, task strike, ring settle. `Sheet.tsx`, `TaskList.tsx`, `Ring.tsx`, tests in `motion`, `taskStrike`.
 - P3 (2026-10-18): breath guide, rolling digits, scene parallax. `RollingDigits.tsx`, `useParallax.ts`, test `motionP3`.
+- P4 (2026-10-18): scene swipe + `[` `]`, last-minute cue, task row swipe + `restoreTask`, View Transitions. `useSceneSwipe.ts`, `useSceneList.ts`, `viewTransition.ts`, test `motionP4`.
