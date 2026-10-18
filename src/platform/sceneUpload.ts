@@ -3,7 +3,8 @@
 
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { getDb, getStorageClient } from './firebase';
+import { getDb } from './firestore';
+import { getStorageClient } from './storage';
 import { uid as newId } from '../core/uid';
 import type { UserScene } from '../types';
 

@@ -35,7 +35,7 @@ export function LogiSettings() {
     }
     setBackfill('sending…');
     try {
-      const [{ httpsCallable }, { getFunctionsClient }] = await Promise.all([import('firebase/functions'), import('../platform/firebase')]);
+      const [{ httpsCallable }, { getFunctionsClient }] = await Promise.all([import('firebase/functions'), import('../platform/functions')]);
       const res = await httpsCallable<void, { queued: number; sent: number }>(getFunctionsClient(), 'sendRecentToLogi')();
       setBackfill(`${res.data.sent} sent`);
     } catch {

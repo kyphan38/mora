@@ -3,7 +3,7 @@
 // clock ticks; every device computes the clock from the stored anchor.
 
 import { doc, onSnapshot, serverTimestamp, setDoc } from 'firebase/firestore';
-import { getDb } from './firebase';
+import { getDb } from './firestore';
 import { useStore } from '../store/useStore';
 import { actionKey, toLive, type LiveTimer, type RuntimeSlice } from '../core/liveModel';
 import { uid as newId } from '../core/uid';

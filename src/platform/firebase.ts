@@ -6,17 +6,6 @@
 
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
-import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
-import { connectFunctionsEmulator, getFunctions, type Functions } from 'firebase/functions';
-import {
-  connectFirestoreEmulator,
-  getFirestore,
-  initializeFirestore,
-  memoryLocalCache,
-  persistentLocalCache,
-  persistentMultipleTabManager,
-  type Firestore,
-} from 'firebase/firestore';
 
 const env = import.meta.env;
 export const USE_EMULATORS = env.VITE_USE_EMULATORS === '1';
@@ -64,9 +53,8 @@ export function missingConfig(): string[] {
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
-let db: Firestore | null = null;
 
-function firebaseApp(): FirebaseApp {
+export function firebaseApp(): FirebaseApp {
   if (app) return app;
   const missing = missingConfig();
   if (missing.length) throw new Error(`[firebase] missing config: ${missing.join(', ')}`);
@@ -79,46 +67,6 @@ export function getAuthClient(): Auth {
   auth = getAuth(firebaseApp());
   if (USE_EMULATORS) connectAuthEmulator(auth, 'http://127.0.0.1:9199', { disableWarnings: true });
   return auth;
-}
-
-export function getDb(): Firestore {
-  if (db) return db;
-  const fb = firebaseApp();
-  try {
-    // Offline-first: writes land on the device at once and sync later.
-    db = initializeFirestore(fb, {
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-      ignoreUndefinedProperties: true,
-    });
-  } catch {
-    // Private mode blocks IndexedDB: keep a memory cache.
-    try {
-      db = initializeFirestore(fb, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true });
-    } catch {
-      db = getFirestore(fb);
-    }
-  }
-  if (USE_EMULATORS) connectFirestoreEmulator(db, '127.0.0.1', 8180);
-  return db;
-}
-
-let storage: FirebaseStorage | null = null;
-
-export function getStorageClient(): FirebaseStorage {
-  if (storage) return storage;
-  storage = getStorage(firebaseApp());
-  if (USE_EMULATORS) connectStorageEmulator(storage, '127.0.0.1', 9399);
-  return storage;
-}
-
-let fns: Functions | null = null;
-
-/** Cloud Functions, same region as functions/src/index.ts. */
-export function getFunctionsClient(): Functions {
-  if (fns) return fns;
-  fns = getFunctions(firebaseApp(), 'asia-southeast1');
-  if (USE_EMULATORS) connectFunctionsEmulator(fns, '127.0.0.1', 5101);
-  return fns;
 }
 
 /** The one account allowed to use mora. Only a readable early check; firestore.rules is the guard. */

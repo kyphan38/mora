@@ -324,3 +324,21 @@ describe('still scenes', () => {
     expect(container.querySelector('.drift')).not.toBeNull();
   });
 });
+
+describe('error boundary', () => {
+  it('a render error shows a reload line instead of a blank page', async () => {
+    const { ErrorBoundary } = await import('../ui/ErrorBoundary');
+    const Boom = () => {
+      throw new Error('boom');
+    };
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>,
+    );
+    expect(screen.getByText('Something went wrong.')).toBeInTheDocument();
+    expect(screen.getByText('Reload')).toBeInTheDocument();
+    spy.mockRestore();
+  });
+});
