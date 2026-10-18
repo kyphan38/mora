@@ -1,45 +1,45 @@
-import { useEffect, useState } from 'react';
 import { useAuth, signIn } from '../platform/auth';
-import { Ring } from './Ring';
+import { missingConfig } from '../platform/firebase';
 
-const pad = (n: number) => String(n).padStart(2, '0');
-
-/** The same clock, showing the time of day; one button to sign in. */
+/** The shared ws/app sign-in screen (same layout as hodi, legi, fina, logi). */
 export function SignInView() {
   const { status, error, busy } = useAuth();
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 10_000);
-    return () => clearInterval(id);
-  }, []);
-
-  const dayProgress = (now.getHours() * 60 + now.getMinutes()) / 1440;
-  const loading = status === 'loading';
+  const missing = missingConfig();
 
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-10 px-5" data-testid="sign-in">
-      <Ring progress={dayProgress}>
-        <p className="font-mono text-[11px] tracking-[0.1em] text-faint uppercase">mora</p>
-        <div className="digits mt-2 text-[clamp(52px,15vw,84px)] leading-none font-extralight">
-          {pad(now.getHours())}:{pad(now.getMinutes())}
+    <main
+      className="mx-auto flex min-h-dvh w-full max-w-xl flex-col items-center justify-center gap-8 px-5 pb-[12dvh] text-center"
+      data-testid="sign-in"
+    >
+      <div className="flex flex-col items-center gap-4">
+        <img src="/branding/mora-icon.svg" alt="" width={40} height={40} />
+        <div>
+          <h1 className="text-xl font-medium tracking-tight">mora</h1>
+          <p className="mt-1 text-sm text-faint">A quiet focus timer.</p>
         </div>
-        <p className="mt-3 text-[12px] text-faint">{loading ? <span className="breathe">loading</span> : 'A quiet focus timer'}</p>
-      </Ring>
-
-      <div className="flex min-h-20 flex-col items-center gap-3">
-        {!loading && (
-          <button
-            type="button"
-            onClick={() => void signIn()}
-            disabled={busy}
-            className="fade-in rounded-full bg-ink px-6 py-2.5 text-[14px] text-bg transition-opacity hover:opacity-85 disabled:opacity-50"
-          >
-            {busy ? 'Signing in…' : 'Sign in with Google'}
-          </button>
-        )}
-        {error && <p className="max-w-xs text-center text-[13px] text-ink">{error}</p>}
       </div>
+
+      {missing.length > 0 ? (
+        <p className="max-w-xs text-sm text-muted">
+          Firebase is not configured yet. Fill <code className="font-mono text-xs">.env.local</code> using{' '}
+          <code className="font-mono text-xs">.env.example</code>.
+        </p>
+      ) : (
+        <button
+          type="button"
+          onClick={() => void signIn()}
+          disabled={status === 'loading' || busy}
+          className="w-full max-w-xs rounded-full border border-line px-4 py-3 text-sm text-ink transition-colors hover:bg-surface-2 disabled:opacity-40"
+        >
+          {busy ? 'Signing in…' : 'Continue with Google'}
+        </button>
+      )}
+
+      {error && (
+        <p role="alert" className="max-w-xs text-sm text-muted">
+          {error}
+        </p>
+      )}
     </main>
   );
 }

@@ -63,7 +63,7 @@ describe('sign-in gate (web)', () => {
   it('the button signs in with a popup on desktop browsers', async () => {
     act(() => useAuth.setState({ status: 'signed-out', user: null }));
     render(<App />);
-    await act(async () => fireEvent.click(screen.getByText('Sign in with Google')));
+    await act(async () => fireEvent.click(screen.getByText('Continue with Google')));
     expect(fa.signInWithPopup).toHaveBeenCalledTimes(1);
   });
 });
