@@ -146,3 +146,4 @@ Kiểu "đồng hồ là màn hình" chỉ áp dụng cho bên trong app.
   duyệt nữa, không còn ô token; Tauri giữ cách cũ. Rules `meta` đã deploy.
   Owner đã đặt secret; 2 functions đã deploy (lần đầu trigger lỗi quyền
   Eventarc, thử lại sau 2 phút thì được). logi production đã bật nhận.
+- **S5 bỏ** (owner, 2026-10-18): bản Tauri vẫn chạy local, không sync.
