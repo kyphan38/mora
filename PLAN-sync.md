@@ -144,4 +144,5 @@ Kiểu "đồng hồ là màn hình" chỉ áp dụng cho bên trong app.
   Secret Manager `MORA_INGEST_TOKEN`. Kết quả ghi vào `users/{uid}/meta/logi`
   để Settings hiện "last sent 10:42" hoặc lỗi. Web không gửi từ trình
   duyệt nữa, không còn ô token; Tauri giữ cách cũ. Rules `meta` đã deploy.
-  **Chờ owner:** đặt secret, rồi deploy functions.
+  Owner đã đặt secret; 2 functions đã deploy (lần đầu trigger lỗi quyền
+  Eventarc, thử lại sau 2 phút thì được). logi production đã bật nhận.
