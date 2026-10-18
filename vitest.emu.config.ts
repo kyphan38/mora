@@ -5,6 +5,8 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['src/test/emu/*.emu.ts'],
+    // One emulator, shared state: sync.emu.ts wipes it, so files run in turn.
+    fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },

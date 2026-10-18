@@ -128,3 +128,12 @@ Kiểu "đồng hồ là màn hình" chỉ áp dụng cho bên trong app.
   Test emulator (`npm run test:emu`, cần Java 21) bắt được lỗi rules
   `prefs` (đọc bị từ chối); đã sửa và deploy lại. Emulator dùng cổng
   9199/8180 và file rules riêng `firestore.emu.rules`.
+- **S3 xong (2026-10-18):** `platform/liveSync.ts` + `core/liveModel.ts`.
+  Doc `live/current` lưu phase, chạy/dừng, số giây tại một mốc thời gian,
+  máy ghi gần nhất. Chỉ ghi khi có thao tác (gom trong 300ms), không ghi
+  theo từng giây. Máy nhận tự tính đồng hồ từ mốc, khớp cả phần lẻ của
+  giây. Máy bấm gần nhất là "máy chính" và ghi session khi hết giờ; máy đi
+  theo chờ, quá 10 giây thì tự hoàn tất (máy chính đã tắt/ngủ). Hết giờ
+  tự nhiên thì máy kia cũng kêu chuông. Thao tác trước khi snapshot đầu tiên
+  về tới vẫn được giữ (đã sửa một lỗi tranh chấp tìm thấy nhờ test
+  emulator). Test emulator chạy lần lượt từng file; tổng 14.

@@ -5,6 +5,7 @@ import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
 import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../core/pomodoro';
 import { mergeOutbox, type LogiBlock } from '../core/logiLink';
+import { liveElapsed, TAKEOVER_SEC, type LiveTimer } from '../core/liveModel';
 
 export type Phase = 'focus' | 'break' | 'review';
 
@@ -142,6 +143,15 @@ interface AppStore {
   toggleHiddenScene: (id: string) => void;
   showAllScenes: () => void;
 
+  /** This device follows a timer another device started; that device logs the block. Not persisted. */
+  liveFollower: boolean;
+  /** When a following device reached the end and began waiting for the leader. Not persisted. */
+  overdueSince: number | null;
+  /** Takes over the shared timer from another device. */
+  applyLive: (l: LiveTimer, now?: number) => void;
+  /** A local action makes this device the leader again. */
+  leadLive: () => void;
+
   /** Applies data that came from another device (cloud sync). */
   applyRemote: (p: {
     tasks?: Task[];
@@ -226,6 +236,8 @@ export const useStore = create<AppStore>((set, get) => ({
   logiStatus: { state: 'idle', message: '', at: 0 },
   userScenes: [],
   hiddenScenes: [],
+  liveFollower: false,
+  overdueSince: null,
   setRoomBackground: (m) => {
     set({ roomBackground: m });
     if (m === 'scene' && get().corner === null) {
@@ -427,6 +439,20 @@ export const useStore = create<AppStore>((set, get) => ({
     get().setIsRunning(!s.isRunning);
   },
   tickSession: (deltaSec = 1) => {
+    // A following device lets the leader log the block; if the leader is gone
+    // (closed, asleep) for TAKEOVER_SEC past the end, this device finishes it.
+    const waitForLeader = () => {
+      const s = get();
+      if (!s.liveFollower) return false;
+      const now = Date.now();
+      if (s.overdueSince === null) {
+        set({ overdueSince: now });
+        return true;
+      }
+      if (now - s.overdueSince < TAKEOVER_SEC * 1000) return true;
+      set({ liveFollower: false, overdueSince: null });
+      return false;
+    };
     const state = get();
     if (!state.isRunning || deltaSec <= 0) return;
 
@@ -436,6 +462,7 @@ export const useStore = create<AppStore>((set, get) => ({
       const elapsed = Math.min(breakDur, state.elapsedSec + deltaSec);
       set({ elapsedSec: elapsed });
       if (elapsed >= breakDur) {
+        if (waitForLeader()) return;
         set({ lastEvent: { kind: 'break-done', taskName: '', at: Date.now() } });
         get().finishBreak();
       }
@@ -454,6 +481,7 @@ export const useStore = create<AppStore>((set, get) => ({
       : state.elapsedSec + deltaSec;
     set({ elapsedSec: elapsed, activeTaskId: current.id });
     if (total > 0 && elapsed >= total) {
+      if (waitForLeader()) return;
       set({ lastEvent: { kind: 'focus-done', taskName: current.name, at: Date.now() } });
       get().enterReview();
     }
@@ -683,6 +711,35 @@ export const useStore = create<AppStore>((set, get) => ({
     set((s) => ({ outbox: s.outbox.filter((b) => !drop.has(b.id)) }));
   },
   setLogiStatus: (logiStatus) => set({ logiStatus }),
+
+  applyLive: (l, now = Date.now()) => {
+    const s = get();
+    const total =
+      l.phase === 'break'
+        ? l.longBreak ? longBreakForSeconds(l.lastFocusSec) : breakForSeconds(l.lastFocusSec)
+        : l.durationSec;
+    let elapsed = liveElapsed(l, now);
+    if (total > 0 && l.phase !== 'review') elapsed = Math.min(elapsed, total);
+    const whole = Math.floor(elapsed);
+    const freshEvent = l.event && l.event.at > (s.lastEvent?.at ?? 0) && now - l.event.at < 60_000;
+    set({
+      sessionActive: l.sessionActive,
+      phase: l.phase,
+      isRunning: l.isRunning,
+      elapsedSec: whole,
+      // Keep the sub-second part so both devices tick on the same second.
+      runSyncAt: l.isRunning ? now - (elapsed - whole) * 1000 : null,
+      setup: { durationSec: l.durationSec, durationLabel: l.durationLabel },
+      lastFocusSec: l.lastFocusSec,
+      longBreak: l.longBreak,
+      cycleCount: l.cycleCount,
+      focusStartedAt: l.focusStartedAt,
+      liveFollower: true,
+      overdueSince: null,
+      ...(freshEvent ? { lastEvent: l.event } : {}),
+    });
+  },
+  leadLive: () => set({ liveFollower: false, overdueSince: null }),
 
   toggleHiddenScene: (id) =>
     set((s) => ({ hiddenScenes: s.hiddenScenes.includes(id) ? s.hiddenScenes.filter((x) => x !== id) : [...s.hiddenScenes, id] })),

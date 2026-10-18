@@ -109,6 +109,15 @@ test:emu` (emulators: auth 9199, firestore 8180, storage 9399; rules from the
 `*.emu.rules` files). `npm run emu` + launch config `mora-emu` (port 1430)
 for trying the app against the emulators.
 
+## Live timer across devices
+
+`platform/liveSync.ts` shares the timer in `users/{uid}/live/current`
+(`core/liveModel.ts`): elapsed at an anchor time, written on actions only
+(`actionKey`), never on ticks. A device applying another's timer becomes a
+follower (`liveFollower`): at the end it waits up to `TAKEOVER_SEC` for the
+leader to log the block, then finishes it itself. Each device has a random
+`mora.deviceId`. Natural ends carry `event`, so followers chime too.
+
 ## Deploy (web)
 
 Vercel project `mora` from GitHub `kyphan38/mora`, single Vite app (not
