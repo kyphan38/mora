@@ -29,5 +29,8 @@ if (!/^[^\s'"\\@]+@[^\s'"\\@]+$/.test(email)) {
 }
 
 const out = readFileSync('firestore.rules.template', 'utf8').replaceAll('__ALLOWED_EMAIL__', email);
-writeFileSync('firestore.rules', out);
-console.log(`firestore.rules written for ${EMU ? 'the emulator' : 'the allowed account'}`);
+// The emulator gets its own file, so a test run can never leave the fake
+// email in the rules that `firebase deploy` uploads.
+const file = EMU ? 'firestore.emu.rules' : 'firestore.rules';
+writeFileSync(file, out);
+console.log(`${file} written`);

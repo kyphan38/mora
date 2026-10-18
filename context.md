@@ -95,6 +95,18 @@ iPhone Safari sign-in works. Rules: edit `firestore.rules.template`, run
 Emulators: `npm run emu`, then `npm run dev:emu`. Tests mock
 `platform/auth` in `src/test/setup.ts`. Plan: `PLAN-sync.md`.
 
+## Cloud sync (web/PWA, signed in)
+
+`hooks/useCloudSync.ts` lazy-loads `platform/sync.ts` once signed in.
+Firestore `users/{uid}/tasks|sessions|notes/{id}` and `prefs/main`;
+doc shapes in `core/syncModel.ts` (clamped to what the rules accept).
+Snapshots apply through `store.applyRemote`; local changes are diffed by
+fingerprint against the last remote copy and written in batches (deletes
+included). First sync per device merges by id (`mora.synced.<uid>` in
+localStorage). Device-only: custom track, mute, theme, logi token.
+Integration tests: `PATH=/opt/homebrew/opt/openjdk@21/bin:$PATH npm run
+test:emu` (emulators on 9199/8180, rules from `firestore.emu.rules`).
+
 ## Deploy (web)
 
 Vercel project `mora` from GitHub `kyphan38/mora`, single Vite app (not

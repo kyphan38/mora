@@ -1,7 +1,7 @@
 // Firebase client (web and PWA only; the Tauri build stays local and never loads it).
 // Lazy: nothing runs on import, so tests and the desktop build need no config.
 //
-// VITE_USE_EMULATORS=1 talks to the local Auth/Firestore emulators with the
+// VITE_USE_EMULATORS=1 talks to the local Auth (9199) / Firestore (8180) emulators with the
 // fake project 'demo-mora', so development never touches real data.
 
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
@@ -69,7 +69,7 @@ function firebaseApp(): FirebaseApp {
 export function getAuthClient(): Auth {
   if (auth) return auth;
   auth = getAuth(firebaseApp());
-  if (USE_EMULATORS) connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+  if (USE_EMULATORS) connectAuthEmulator(auth, 'http://127.0.0.1:9199', { disableWarnings: true });
   return auth;
 }
 
@@ -78,20 +78,24 @@ export function getDb(): Firestore {
   const fb = firebaseApp();
   try {
     // Offline-first: writes land on the device at once and sync later.
-    db = initializeFirestore(fb, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+    db = initializeFirestore(fb, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+      ignoreUndefinedProperties: true,
+    });
   } catch {
     // Private mode blocks IndexedDB: keep a memory cache.
     try {
-      db = initializeFirestore(fb, { localCache: memoryLocalCache() });
+      db = initializeFirestore(fb, { localCache: memoryLocalCache(), ignoreUndefinedProperties: true });
     } catch {
       db = getFirestore(fb);
     }
   }
-  if (USE_EMULATORS) connectFirestoreEmulator(db, '127.0.0.1', 8080);
+  if (USE_EMULATORS) connectFirestoreEmulator(db, '127.0.0.1', 8180);
   return db;
 }
 
 /** The one account allowed to use mora. Only a readable early check; firestore.rules is the guard. */
-export const allowedEmail = ((env.VITE_ALLOWED_USER_EMAIL as string | undefined) || (USE_EMULATORS ? 'dev@mora.test' : ''))
+// The emulator rules (npm run rules -- --emu) allow only dev@mora.test.
+export const allowedEmail = (USE_EMULATORS ? 'dev@mora.test' : ((env.VITE_ALLOWED_USER_EMAIL as string | undefined) ?? ''))
   .trim()
   .toLowerCase();

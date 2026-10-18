@@ -65,7 +65,8 @@ service cloud.firestore {
       }
       // prefs/main (settings) and live/current (running timer): small maps.
       match /prefs/{id} {
-        allow read, write: if isOwner(uid) && request.resource.data.size() <= 30;
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && request.resource.data.size() <= 30;
       }
       match /live/{id} {
         allow read, write: if isOwner(uid);

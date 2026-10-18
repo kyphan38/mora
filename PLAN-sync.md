@@ -104,8 +104,9 @@ liệu thật khi chạy test.
 4. Đăng nhập **bắt buộc** trên web/PWA (giống hodi/legi): mở app là thấy
    màn đăng nhập trước. Riêng bản Tauri bỏ qua màn này (chạy local).
 
-Màn đăng nhập phải theo kiểu "đồng hồ là màn hình" của mora, không chép
-nguyên màn login của hodi.
+Màn đăng nhập dùng **mẫu chung của hệ sinh thái** (giống hodi/legi/fina/
+logi: icon, tên viết thường, một dòng, nút viền "Continue with Google").
+Kiểu "đồng hồ là màn hình" chỉ áp dụng cho bên trong app.
 
 ## Tiến độ
 
@@ -117,3 +118,13 @@ nguyên màn login của hodi.
   `/__/firebase` trong `vercel.json`; service worker bỏ qua `/__/`.
   Rules (template + `npm run rules`) đã deploy lên `kyphan38-mora-app`.
   7 biến `VITE_*` đã đặt trên Vercel (production + preview).
+- **Sửa (2026-10-18):** màn đăng nhập đổi về mẫu chung; thêm `favicon.ico`.
+- **S2 xong (2026-10-18):** `platform/sync.ts` lắng nghe `tasks`,
+  `sessions`, `notes`, `prefs/main` và chỉ ghi doc thay đổi (so bằng
+  fingerprint), chia batch 400, gửi sửa đổi local trước khi nhận snapshot.
+  Lần đầu trên mỗi máy gộp theo id (cờ `mora.synced.<uid>`), sau đó cloud
+  là nguồn chính. Không sync: nhạc tự upload, tắt tiếng, theme, token logi.
+  Firebase tách thành file JS riêng, sync chỉ tải trên web.
+  Test emulator (`npm run test:emu`, cần Java 21) bắt được lỗi rules
+  `prefs` (đọc bị từ chối); đã sửa và deploy lại. Emulator dùng cổng
+  9199/8180 và file rules riêng `firestore.emu.rules`.

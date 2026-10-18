@@ -133,6 +133,17 @@ interface AppStore {
   /** Last send result for Settings. Not persisted. */
   logiStatus: { state: 'idle' | 'sending' | 'ok' | 'error'; message: string; at: number };
   setLogiStatus: (s: AppStore['logiStatus']) => void;
+
+  /** Applies data that came from another device (cloud sync). */
+  applyRemote: (p: {
+    tasks?: Task[];
+    sessions?: Session[];
+    notes?: Note[];
+    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin'>> & {
+      sound?: Omit<SoundConfig, 'customTrackId'>;
+      logi?: { enabled: boolean; url: string };
+    };
+  }) => void;
 }
 
 export interface LogiLink {
@@ -253,7 +264,7 @@ export const useStore = create<AppStore>((set, get) => ({
   addTask: (name) => {
     // "Write report ~3" adds the task with an estimate of 3 focus blocks.
     const m = name.trim().match(/^(.*?)\s*~\s*(\d{1,2})$/);
-    const trimmed = (m ? m[1] : name).trim();
+    const trimmed = (m ? m[1] : name).trim().slice(0, 200);
     if (!trimmed) return;
     const est = m ? Math.max(1, Number(m[2])) : undefined;
     set((state) => {
@@ -610,7 +621,7 @@ export const useStore = create<AppStore>((set, get) => ({
   },
 
   addNote: (text) => {
-    const t = text.trim();
+    const t = text.trim().slice(0, 500);
     if (!t) return;
     set((s) => ({ notes: [...s.notes, { id: uid(), text: t, createdAt: Date.now() }] }));
   },
@@ -626,7 +637,7 @@ export const useStore = create<AppStore>((set, get) => ({
     set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, kind } : t)) })),
   setSessionNote: (id, note) =>
     set((s) => ({
-      sessions: s.sessions.map((x) => (x.id === id ? { ...x, note: note.trim() || undefined } : x)),
+      sessions: s.sessions.map((x) => (x.id === id ? { ...x, note: note.trim().slice(0, 500) || undefined } : x)),
     })),
   updateSession: (id, patch) =>
     set((s) => ({
@@ -659,6 +670,30 @@ export const useStore = create<AppStore>((set, get) => ({
     set((s) => ({ outbox: s.outbox.filter((b) => !drop.has(b.id)) }));
   },
   setLogiStatus: (logiStatus) => set({ logiStatus }),
+
+  applyRemote: ({ tasks, sessions, notes, prefs }) => {
+    const s = get();
+    const patch: Partial<AppStore> = {};
+    if (tasks) {
+      patch.tasks = tasks;
+      const first = tasks.find((t) => !t.done);
+      patch.activeTaskId = first ? first.id : null;
+      // The task being focused on was finished or removed elsewhere.
+      if (!first && s.sessionActive && s.phase === 'focus') {
+        Object.assign(patch, { sessionActive: false, ...run(false), elapsedSec: 0, focusStartedAt: null });
+      }
+    }
+    if (sessions) patch.sessions = sessions;
+    if (notes) patch.notes = notes;
+    if (prefs) {
+      const { sound, logi, ...rest } = prefs;
+      Object.assign(patch, rest);
+      // Custom track, mute and the logi token are per device.
+      if (sound) patch.sound = { ...sound, customTrackId: s.sound.customTrackId };
+      if (logi) patch.logi = { ...s.logi, ...logi };
+    }
+    set(patch);
+  },
 }));
 
 /**

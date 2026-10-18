@@ -31,3 +31,4 @@ firestore-debug.log
 .emulator-data/
 .vercel
 .env
+firestore.emu.rules

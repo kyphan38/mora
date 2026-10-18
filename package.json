@@ -13,8 +13,9 @@
     "build:desktop:debug": "tauri build --debug",
     "icons": "node scripts/make-icons.mjs",
     "rules": "node scripts/rules.mjs",
-    "emu": "npm run rules -- --emu && firebase emulators:start --only auth,firestore --project demo-mora",
-    "dev:emu": "VITE_USE_EMULATORS=1 vite"
+    "emu": "npm run rules -- --emu && firebase emulators:start --config firebase.emu.json --only auth,firestore --project demo-mora",
+    "dev:emu": "VITE_USE_EMULATORS=1 vite",
+    "test:emu": "npm run rules -- --emu && VITE_USE_EMULATORS=1 firebase emulators:exec --config firebase.emu.json --only auth,firestore --project demo-mora 'vitest run --config vitest.emu.config.ts'"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",

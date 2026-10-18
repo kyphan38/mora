@@ -9,6 +9,15 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [react(), tailwindcss()],
 
+  // Firebase in its own file: cached across app updates, and only fetched by the web build.
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id: string) => (id.includes('node_modules/firebase') || id.includes('node_modules/@firebase') ? 'firebase' : undefined),
+      },
+    },
+  },
+
   // Vitest config
   test: {
     environment: "jsdom",
