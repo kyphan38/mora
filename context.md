@@ -103,7 +103,7 @@ doc shapes in `core/syncModel.ts` (clamped to what the rules accept).
 Snapshots apply through `store.applyRemote`; local changes are diffed by
 fingerprint against the last remote copy and written in batches (deletes
 included). First sync per device merges by id (`mora.synced.<uid>` in
-localStorage). Device-only: custom track, mute, theme, logi token.
+localStorage). Device-only: mute, theme, logi token (the chosen track syncs).
 Integration tests: `PATH=/opt/homebrew/opt/openjdk@21/bin:$PATH npm run
 test:emu` (emulators: auth 9199, firestore 8180, storage 9399; rules from the
 `*.emu.rules` files). `npm run emu` + launch config `mora-emu` (port 1430)
@@ -173,7 +173,11 @@ listed in Firestore `users/{uid}/scenes`; defaults can only be hidden
 a slow CSS drift, `still: true`). Portrait screens use `<id>.portrait.mp4|jpg` when the scene has
 `portrait: true` (`scripts/make-portrait.sh` cuts 9:16 from the middle).
 Scene video is saved on the device after the first play
-(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. Sounds: Cloud Storage `defaults/audio/ambient|music/<slug>.mp3` (slug from
+(`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. Own music (web): `ui/MusicPicker.tsx` + `platform/trackUpload.ts`, Storage
+`users/{uid}/audio/`, Firestore `users/{uid}/tracks`; the chosen track id
+syncs in prefs; a device-saved track (IndexedDB) moves up once
+(`migrateLocalTrack`). Desktop keeps one track in IndexedDB.
+Sounds: Cloud Storage `defaults/audio/ambient|music/<slug>.mp3` (slug from
 `core/soundFormat.slug`), staged in `media/audio/`, uploaded with
 `scripts/upload-defaults.sh audio`; the engine plays the device copy when
 saved (same cache as scenes). Missing files degrade to a

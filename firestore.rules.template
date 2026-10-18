@@ -54,6 +54,15 @@ service cloud.firestore {
         && d.createdAt is int;
     }
 
+    function validTrack(d) {
+      return shortText(d.name, 120) && d.name.size() > 0
+        && shortText(d.url, 2000)
+        && shortText(d.path, 300) && d.path.matches('users/' + request.auth.uid + '/audio/.*')
+        && shortText(d.mimeType, 60)
+        && d.size is int && d.size > 0 && d.size < 50 * 1024 * 1024
+        && d.createdAt is int;
+    }
+
     function validNote(d) {
       return shortText(d.text, 500) && d.text.size() > 0 && d.createdAt is int;
     }
@@ -70,6 +79,10 @@ service cloud.firestore {
       match /notes/{id} {
         allow read, delete: if isOwner(uid);
         allow create, update: if isOwner(uid) && validNote(request.resource.data);
+      }
+      match /tracks/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validTrack(request.resource.data);
       }
       match /scenes/{id} {
         allow read, delete: if isOwner(uid);

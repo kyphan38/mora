@@ -120,3 +120,8 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
   đoạn ≤20s hoà mờ cuối vào đầu để lặp liền, 1080p 2-13MB, bản dọc; ảnh:
   2560px + bản dọc, trong app trôi chậm). Owner yêu cầu chỉ lọc theo chất
   lượng; cả 26 đều đạt nên giữ hết. Tổng 34 scene.
+- **Nhạc tự upload lên cloud (2026-10-18):** web đã đăng nhập: file ở
+  Storage `users/{uid}/audio/`, danh sách ở Firestore `users/{uid}/tracks`
+  (mọi máy cùng tài khoản đều có, nhiều bài, tiến độ upload, xoá). Bài đang
+  chọn sync trong prefs. Bài cũ lưu trong máy tự chuyển lên cloud một lần.
+  Engine phát bản lưu trên máy khi có. Bản Tauri vẫn giữ một bài trong máy.

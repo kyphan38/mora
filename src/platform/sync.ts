@@ -33,6 +33,7 @@ import {
   taskToDoc,
   tasksFromDocs,
   userScenesFromDocs,
+  userTracksFromDocs,
   type Doc,
   type SyncedPrefs,
 } from '../core/syncModel';
@@ -66,9 +67,9 @@ function localDocs(s: State, kind: Kind): Map<string, Doc> {
 }
 
 function localPrefs(s: State): SyncedPrefs {
-  const { customTrackId: _device, ...sound } = s.sound;
   return {
-    sound,
+    // customTrackId is a cloud track id on the web, so it syncs too.
+    sound: { ...s.sound, customTrackId: s.sound.customTrackId ?? null },
     setup: s.setup,
     roomBackground: s.roomBackground,
     cornerId: s.corner?.id ?? null,
@@ -200,6 +201,11 @@ export function startSync(uid: string, onReady?: () => void): () => void {
         message: typeof d.lastError === 'string' ? d.lastError : '',
         at: typeof d.lastSentAt === 'number' ? d.lastSentAt : 0,
       });
+    }),
+    // Uploaded music: read-only mirror (uploads and deletes write directly).
+    onSnapshot(collection(db, ...base, 'tracks'), (snap) => {
+      const docs = snap.docs.map((d) => ({ id: d.id, data: d.data() as Doc }));
+      apply(() => useStore.getState().applyRemote({ userTracks: userTracksFromDocs(docs) }));
     }),
     // Uploaded scenes: read-only mirror (uploads and deletes write directly).
     onSnapshot(collection(db, ...base, 'scenes'), (snap) => {

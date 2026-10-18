@@ -56,4 +56,12 @@ describe('storage rules (emulator)', () => {
     await setDoc(doc(owner.db, 'users', owner.uid, 'scenes', 't1'), good);
     await expect(setDoc(doc(owner.db, 'users', owner.uid, 'scenes', 't2'), { ...good, videoPath: 'users/other/scenes/t2.mp4' })).rejects.toThrow();
   });
+
+  it('music: the owner uploads audio and lists it; the listing must point into their audio folder', async () => {
+    await uploadBytes(ref(owner.storage, `users/${owner.uid}/audio/a1.mp3`), mp4, { contentType: 'audio/mpeg' });
+    const good = { name: 'Rain Piano', url: 'https://x/a', path: `users/${owner.uid}/audio/a1.mp3`, mimeType: 'audio/mpeg', size: 8, createdAt: 1 };
+    await setDoc(doc(owner.db, 'users', owner.uid, 'tracks', 'a1'), good);
+    await expect(setDoc(doc(owner.db, 'users', owner.uid, 'tracks', 'a2'), { ...good, path: 'users/other/audio/a2.mp3' })).rejects.toThrow();
+    await expect(setDoc(doc(owner.db, 'users', owner.uid, 'tracks', 'a3'), { ...good, size: 60 * 1024 * 1024 })).rejects.toThrow();
+  });
 });

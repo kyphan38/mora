@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAuth } from '../platform/auth';
 import { isTauri } from '../platform/persistence';
+import { useStore } from '../store/useStore';
 
 /** Syncs tasks, history, notes, settings and the running timer while signed in (web/PWA only). */
 export function useCloudSync() {
@@ -15,6 +16,10 @@ export function useCloudSync() {
       if (cancelled) return;
       const stopData = startSync(uid);
       const stopLive = startLiveSync(uid);
+      // A track saved on this device before cloud tracks existed moves up once.
+      if (useStore.getState().customTracks.length) {
+        void import('../platform/trackUpload').then(({ migrateLocalTrack }) => migrateLocalTrack(uid)).catch((e) => console.warn('[tracks] move failed', e));
+      }
       stop = () => {
         stopData();
         stopLive();

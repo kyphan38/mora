@@ -15,6 +15,17 @@ export interface Corner {
   still?: boolean;
 }
 
+/** Music the owner uploaded (Storage users/{uid}/audio, Firestore users/{uid}/tracks/{id}). */
+export interface UserTrack {
+  id: string;
+  name: string;
+  url: string;
+  path: string;
+  mimeType: string;
+  size: number;
+  createdAt: number;
+}
+
 /** A scene the owner uploaded (Firestore users/{uid}/scenes/{id}). */
 export interface UserScene {
   id: string;

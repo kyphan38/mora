@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind, UserScene } from '../types';
+import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind, UserScene, UserTrack } from '../types';
 import { DURATIONS } from '../data/durations';
 import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
@@ -136,6 +136,8 @@ interface AppStore {
   logiStatus: { state: 'idle' | 'sending' | 'ok' | 'error'; message: string; at: number };
   setLogiStatus: (s: AppStore['logiStatus']) => void;
 
+  /** Music the owner uploaded (cloud only, mirrored from Firestore). Not persisted locally. */
+  userTracks: UserTrack[];
   /** Scenes the owner uploaded (cloud only, mirrored from Firestore). Not persisted locally. */
   userScenes: UserScene[];
   /** Default scene ids the owner hid from the picker (synced in prefs). */
@@ -160,8 +162,9 @@ interface AppStore {
     sessions?: Session[];
     notes?: Note[];
     userScenes?: UserScene[];
+    userTracks?: UserTrack[];
     prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes'>> & {
-      sound?: Omit<SoundConfig, 'customTrackId'>;
+      sound?: Omit<SoundConfig, 'customTrackId'> & { customTrackId?: string | null };
       logi?: { enabled: boolean; url: string };
     };
   }) => void;
@@ -238,6 +241,7 @@ export const useStore = create<AppStore>((set, get) => ({
   outbox: [],
   logiStatus: { state: 'idle', message: '', at: 0 },
   userScenes: [],
+  userTracks: [],
   hiddenScenes: [],
   liveFollower: false,
   overdueSince: null,
@@ -751,7 +755,7 @@ export const useStore = create<AppStore>((set, get) => ({
     set((s) => ({ hiddenScenes: s.hiddenScenes.includes(id) ? s.hiddenScenes.filter((x) => x !== id) : [...s.hiddenScenes, id] })),
   showAllScenes: () => set({ hiddenScenes: [] }),
 
-  applyRemote: ({ tasks, sessions, notes, prefs, userScenes }) => {
+  applyRemote: ({ tasks, sessions, notes, prefs, userScenes, userTracks }) => {
     const s = get();
     const patch: Partial<AppStore> = {};
     if (tasks) {
@@ -765,6 +769,14 @@ export const useStore = create<AppStore>((set, get) => ({
     }
     if (sessions) patch.sessions = sessions;
     if (notes) patch.notes = notes;
+    if (userTracks) {
+      patch.userTracks = userTracks;
+      // The chosen cloud track was deleted on another device.
+      const id = (prefs?.sound?.customTrackId !== undefined ? prefs.sound.customTrackId : s.sound.customTrackId) ?? null;
+      if (id && !userTracks.some((t) => t.id === id) && !s.customTracks.some((t) => t.id === id)) {
+        patch.sound = { ...(patch.sound ?? s.sound), customTrackId: null };
+      }
+    }
     if (userScenes) {
       patch.userScenes = userScenes;
       // The scene in use was deleted on another device.
@@ -773,8 +785,8 @@ export const useStore = create<AppStore>((set, get) => ({
     if (prefs) {
       const { sound, logi, ...rest } = prefs;
       Object.assign(patch, rest);
-      // Custom track, mute and the logi token are per device.
-      if (sound) patch.sound = { ...sound, customTrackId: s.sound.customTrackId };
+      // The chosen track syncs when it is a cloud track; mute and the logi token are per device.
+      if (sound) patch.sound = { ...sound, customTrackId: sound.customTrackId ?? null };
       if (logi) patch.logi = { ...s.logi, ...logi };
     }
     set(patch);

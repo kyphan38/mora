@@ -166,7 +166,10 @@ export function createAudioEngine(): AudioEngine {
     },
 
     setMusicUrl(url: string | null) {
-      setSource(music, url ?? '', url ?? '', !!url);
+      if ((url ?? '') === music.key) return;
+      // Cloud tracks play from the device copy once saved; blob: URLs as is.
+      if (url) resolve(music, url, url, true);
+      else setSource(music, '', '', false);
     },
 
     setAmbientVolume(gain: number) {

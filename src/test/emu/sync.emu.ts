@@ -105,12 +105,12 @@ describe('cloud sync (emulator)', () => {
     await waitFor(() => !st().tasks.some((t) => t.id === 'from-phone'));
   });
 
-  it('settings sync both ways; device-only fields stay', async () => {
+  it('settings sync both ways, including the chosen cloud track', async () => {
     useStore.setState({ sound: { ...st().sound, customTrackId: 'device-track' } });
     st().setDailyGoal(120);
     await waitFor(async () => (await getDoc(doc(other.db, 'users', uid, 'prefs', 'main'))).data()?.dailyGoalMin === 120);
     const remote = (await getDoc(doc(other.db, 'users', uid, 'prefs', 'main'))).data()!;
-    expect(remote.sound.customTrackId).toBeUndefined();
+    expect(remote.sound.customTrackId).toBe('device-track');
     await setDoc(doc(other.db, 'users', uid, 'prefs', 'main'), { ...remote, autoContinue: true, updatedAt: Date.now() });
     await waitFor(() => st().autoContinue === true);
     expect(st().sound.customTrackId).toBe('device-track');
