@@ -29,7 +29,6 @@ interface AppStore {
   removeTask: (id: string) => void;
   reorderTasks: (from: number, to: number) => void;
   activeTask: () => Task | undefined;
-  addSession: (s: Session) => void;
   toggleTask: (id: string) => void;
   clearCompletedTasks: () => void;
   roomBackground: 'color' | 'scene';
@@ -83,7 +82,6 @@ interface AppStore {
   tickSession: (deltaSec?: number) => void;
   /** Catches the timer up with the wall clock, so throttled intervals or sleep do not slow it. */
   syncClock: (now?: number) => void;
-  completeCurrent: () => void;
   stopFocus: () => void;
   setAudioActive: (b: boolean) => void;
   randomScene: () => void;
@@ -241,8 +239,6 @@ export const useStore = create<AppStore>((set, get) => ({
       };
     }),
   activeTask: () => get().tasks.find((t) => !t.done),
-  addSession: (s) =>
-    set((state) => ({ sessions: [s, ...state.sessions] })),
   toggleTask: (id) =>
     set((state) => {
       const newTasks = state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
@@ -385,20 +381,6 @@ export const useStore = create<AppStore>((set, get) => ({
     // Keep the sub-second remainder so no time is lost between syncs.
     set({ runSyncAt: s.runSyncAt + delta * 1000 });
     get().tickSession(delta);
-  },
-  completeCurrent: () => {
-    const elapsed = get().elapsedSec;
-    get().completeActive(elapsed);
-    const nextUndone = get().tasks.find((t) => !t.done);
-    const activeTaskId = nextUndone ? nextUndone.id : null;
-    set({
-      activeTaskId,
-      elapsedSec: 0,
-      ...run(false),
-      sessionActive: activeTaskId !== null,
-      phase: 'focus',
-      focusStartedAt: null,
-    });
   },
   stopFocus: () => {
     // Break time is not focus time.
@@ -563,8 +545,6 @@ function switchPatch(
     runSyncAt: state.isRunning && after ? now : null,
   };
 }
-
-export const canStart = () => useStore.getState().tasks.length > 0;
 
 export const shouldPlayAudio = (state: { screen: Screen; audioActive: boolean; isRunning: boolean }) => {
   if (state.screen === 'sound' || state.screen === 'session') {

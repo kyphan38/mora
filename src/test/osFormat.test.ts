@@ -5,7 +5,6 @@ import { type TimerState } from '../lib/timer';
 describe('osFormat pure functions', () => {
   it('EV constants have the exact string values', () => {
     expect(EV.TOGGLE).toBe('mora://toggle');
-    expect(EV.STOP).toBe('mora://stop');
   });
 
   it('trayTitle formats correctly', () => {

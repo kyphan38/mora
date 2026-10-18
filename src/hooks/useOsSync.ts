@@ -6,21 +6,17 @@ import { EV, buildTick, trayTitle } from '../lib/osFormat';
 export function useOsSync(args: {
   bridge?: OsBridge;
   onToggle: () => void;
-  onStop: () => void;
 }): { pushTick: (timer: TimerState | null, taskName: string) => void } {
   const bridge = args.bridge ?? createOsBridge();
 
   const onToggleRef = useRef(args.onToggle);
-  const onStopRef = useRef(args.onStop);
 
   // Keep refs up-to-date to avoid stale closures
   onToggleRef.current = args.onToggle;
-  onStopRef.current = args.onStop;
 
   useEffect(() => {
     let active = true;
     let unlistenToggle: (() => void) | null = null;
-    let unlistenStop: (() => void) | null = null;
     let hotkeyRegistered = false;
 
     const setup = async () => {
@@ -51,19 +47,6 @@ export function useOsSync(args: {
       } catch (err) {
         console.error('useOsSync listen TOGGLE failed:', err);
       }
-
-      try {
-        const unlistenS = await bridge.onEvent(EV.STOP, () => {
-          if (active) onStopRef.current();
-        });
-        if (!active) {
-          unlistenS();
-        } else {
-          unlistenStop = unlistenS;
-        }
-      } catch (err) {
-        console.error('useOsSync listen STOP failed:', err);
-      }
     };
 
     setup();
@@ -75,9 +58,6 @@ export function useOsSync(args: {
       }
       if (unlistenToggle) {
         unlistenToggle();
-      }
-      if (unlistenStop) {
-        unlistenStop();
       }
     };
   }, [bridge]);

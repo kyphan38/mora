@@ -67,25 +67,6 @@ describe('session runtime store logic', () => {
     expect(state.sessions.length).toBe(0); // not logged until reviewMarkDone
   });
 
-  it('completeCurrent logs + advances + resets', () => {
-    const store = useStore.getState();
-    store.addTask('Task A');
-    store.addTask('Task B');
-    store.startFocus();
-    useStore.setState({ elapsedSec: 600 });
-
-    useStore.getState().completeCurrent();
-
-    const state = useStore.getState();
-    expect(state.sessions.length).toBe(1);
-    expect(state.tasks[0].done).toBe(true);
-    expect(state.tasks[1].done).toBe(false);
-    expect(state.activeTaskId).toBe(state.tasks[1].id);
-    expect(state.elapsedSec).toBe(0);
-    expect(state.isRunning).toBe(false);
-    expect(state.sessionActive).toBe(true);
-  });
-
   it('stopFocus clears sessionActive/elapsed and applies partial-log rule', () => {
     const store = useStore.getState();
     store.addTask('Task A');

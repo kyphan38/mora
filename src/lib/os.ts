@@ -3,9 +3,6 @@ import { EV } from './osFormat';
 
 export interface OsBridge {
   updateTray(title: string): Promise<void>;
-  showWidget(): Promise<void>;
-  hideWidget(): Promise<void>;
-  emit(event: string, payload?: unknown): Promise<void>;
   onEvent(event: string, cb: (payload: any) => void): Promise<() => void>; // returns unlisten
   registerHotkey(accelerator: string, cb: () => void): Promise<void>;
   unregisterHotkey(accelerator: string): Promise<void>;
@@ -13,9 +10,6 @@ export interface OsBridge {
 
 export const noopOsBridge: OsBridge = {
   updateTray: async () => {},
-  showWidget: async () => {},
-  hideWidget: async () => {},
-  emit: async () => {},
   onEvent: async () => () => {},
   registerHotkey: async () => {},
   unregisterHotkey: async () => {},
@@ -94,18 +88,6 @@ function buildTauriBridge(): OsBridge {
       const tray = await trayPromise;
       if (tray) {
         await tray.setTitle(title);
-      }
-    },
-
-    async showWidget() {},
-    async hideWidget() {},
-
-    async emit(event: string, payload?: unknown) {
-      try {
-        const { emit } = await import('@tauri-apps/api/event');
-        await emit(event, payload);
-      } catch (err) {
-        console.error('Failed to emit event:', err);
       }
     },
 

@@ -21,10 +21,11 @@ except ImportError:
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import app.mora.scripts.video_quality as vq
+import video_quality as vq
 
-METADATA_PATH = "/Users/kyphan/ws/mora/public/scenes/metadata.json"
-OUTPUT_DIR = "/Users/kyphan/ws/mora/public/scenes"
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+METADATA_PATH = os.path.join(REPO_ROOT, "public", "scenes", "metadata.json")
+OUTPUT_DIR = os.path.join(REPO_ROOT, "public", "scenes")
 
 # --- Tham số tìm điểm loop ---
 PROXY_FPS = 2.0            # số frame/giây lấy mẫu để so sánh (proxy nhỏ, không cần cao)

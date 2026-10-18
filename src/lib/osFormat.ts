@@ -1,8 +1,7 @@
 import { formatTime, remainingSec, type TimerState } from './timer';
 
 export const EV = {
-  TOGGLE: 'mora://toggle', // widget/hotkey -> main
-  STOP: 'mora://stop',     // widget -> main
+  TOGGLE: 'mora://toggle', // tray menu -> main
 } as const;
 
 export interface TickPayload {

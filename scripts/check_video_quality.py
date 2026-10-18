@@ -6,9 +6,10 @@ import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import app.mora.scripts.video_quality as vq
+import video_quality as vq
 
-SCENES_DIR = "/Users/kyphan/ws/mora/public/scenes"
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SCENES_DIR = os.path.join(REPO_ROOT, "public", "scenes")
 
 SEVERITY = {"danger": 0, "borderline": 1, "ok": 2, "safe": 3}
 

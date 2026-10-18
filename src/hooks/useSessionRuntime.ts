@@ -46,10 +46,6 @@ export function useSessionRuntime() {
 
   const { pushTick } = useOsSync({
     onToggle: () => useStore.getState().togglePlay(),
-    onStop: () => {
-      getAudioEngine().pause();
-      useStore.getState().stopFocus();
-    },
   });
 
   const sessionActive = useStore((s) => s.sessionActive);

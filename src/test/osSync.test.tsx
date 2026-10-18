@@ -7,9 +7,6 @@ import { type TimerState } from '../lib/timer';
 
 class MockOsBridge implements OsBridge {
   updateTray = vi.fn().mockResolvedValue(undefined);
-  showWidget = vi.fn().mockResolvedValue(undefined);
-  hideWidget = vi.fn().mockResolvedValue(undefined);
-  emit = vi.fn().mockResolvedValue(undefined);
 
   onEventHandlers: Record<string, (payload: any) => void> = {};
   onEvent = vi.fn().mockImplementation(async (event: string, cb: (payload: any) => void) => {
@@ -29,17 +26,15 @@ class MockOsBridge implements OsBridge {
 function SyncTestComponent({
   bridge,
   onToggle,
-  onStop,
   timer,
   taskName,
 }: {
   bridge: OsBridge;
   onToggle: () => void;
-  onStop: () => void;
   timer: TimerState | null;
   taskName: string;
 }) {
-  const { pushTick } = useOsSync({ bridge, onToggle, onStop });
+  const { pushTick } = useOsSync({ bridge, onToggle });
   return (
     <button onClick={() => pushTick(timer, taskName)}>
       Push Tick
@@ -48,7 +43,7 @@ function SyncTestComponent({
 }
 
 describe('useOsSync integration (widget-free)', () => {
-  it('pushTick running -> updateTray with dot, emit TICK', async () => {
+  it('pushTick running -> updateTray with dot', async () => {
     const bridge = new MockOsBridge();
     const timer: TimerState = {
       mode: 'countdown',
@@ -61,7 +56,6 @@ describe('useOsSync integration (widget-free)', () => {
       <SyncTestComponent
         bridge={bridge}
         onToggle={vi.fn()}
-        onStop={vi.fn()}
         timer={timer}
         taskName="Coding"
       />
@@ -70,8 +64,6 @@ describe('useOsSync integration (widget-free)', () => {
     fireEvent.click(getByText('Push Tick'));
 
     expect(bridge.updateTray).toHaveBeenCalledWith('● 41:40');
-    expect(bridge.showWidget).not.toHaveBeenCalled();
-    expect(bridge.hideWidget).not.toHaveBeenCalled();
   });
 
   it('pushTick paused -> updateTray without dot', async () => {
@@ -87,7 +79,6 @@ describe('useOsSync integration (widget-free)', () => {
       <SyncTestComponent
         bridge={bridge}
         onToggle={vi.fn()}
-        onStop={vi.fn()}
         timer={timer}
         taskName="Coding"
       />
@@ -96,8 +87,6 @@ describe('useOsSync integration (widget-free)', () => {
     fireEvent.click(getByText('Push Tick'));
 
     expect(bridge.updateTray).toHaveBeenCalledWith('41:40');
-    expect(bridge.showWidget).not.toHaveBeenCalled();
-    expect(bridge.hideWidget).not.toHaveBeenCalled();
   });
 
   it('pushTick(null, "") -> updateTray "mora"', async () => {
@@ -107,7 +96,6 @@ describe('useOsSync integration (widget-free)', () => {
       <SyncTestComponent
         bridge={bridge}
         onToggle={vi.fn()}
-        onStop={vi.fn()}
         timer={null}
         taskName=""
       />
@@ -116,8 +104,6 @@ describe('useOsSync integration (widget-free)', () => {
     fireEvent.click(getByText('Push Tick'));
 
     expect(bridge.updateTray).toHaveBeenCalledWith('mora');
-    expect(bridge.showWidget).not.toHaveBeenCalled();
-    expect(bridge.hideWidget).not.toHaveBeenCalled();
   });
 
   it('hotkey registered', () => {
@@ -126,7 +112,6 @@ describe('useOsSync integration (widget-free)', () => {
       <SyncTestComponent
         bridge={bridge}
         onToggle={vi.fn()}
-        onStop={vi.fn()}
         timer={null}
         taskName=""
       />
@@ -142,7 +127,6 @@ describe('useOsSync integration (widget-free)', () => {
       <SyncTestComponent
         bridge={bridge}
         onToggle={onToggle}
-        onStop={vi.fn()}
         timer={null}
         taskName=""
       />
@@ -156,34 +140,12 @@ describe('useOsSync integration (widget-free)', () => {
     expect(onToggle).toHaveBeenCalled();
   });
 
-  it('remote STOP triggers onStop', async () => {
-    const bridge = new MockOsBridge();
-    const onStop = vi.fn();
-    render(
-      <SyncTestComponent
-        bridge={bridge}
-        onToggle={vi.fn()}
-        onStop={onStop}
-        timer={null}
-        taskName=""
-      />
-    );
-
-    await waitFor(() => {
-      expect(bridge.onEventHandlers[EV.STOP]).toBeDefined();
-    });
-
-    bridge.onEventHandlers[EV.STOP](null);
-    expect(onStop).toHaveBeenCalled();
-  });
-
   it('cleanup unlistens and unregisters hotkey', async () => {
     const bridge = new MockOsBridge();
     const { unmount } = render(
       <SyncTestComponent
         bridge={bridge}
         onToggle={vi.fn()}
-        onStop={vi.fn()}
         timer={null}
         taskName=""
       />

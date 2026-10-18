@@ -14,8 +14,9 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "yt-dlp"])
     import yt_dlp
 
-METADATA_PATH = "/Users/kyphan/ws/mora/public/scenes/metadata.json"
-OUTPUT_DIR = "/Users/kyphan/ws/mora/public/scenes"
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+METADATA_PATH = os.path.join(REPO_ROOT, "public", "scenes", "metadata.json")
+OUTPUT_DIR = os.path.join(REPO_ROOT, "public", "scenes")
 
 def check_ffmpeg():
     if not shutil.which("ffmpeg") or not shutil.which("ffprobe"):

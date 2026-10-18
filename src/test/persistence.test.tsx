@@ -135,10 +135,10 @@ describe('initPersistence', () => {
   it('saves on change', async () => {
     const adapter = createMemoryAdapter();
     const h = await initPersistence(adapter, { debounceMs: 0 });
-    useStore.getState().addSession({
+    useStore.setState({ sessions: [{
       id: 'new-s', taskName: 'T', minutes: 10,
       startedAt: 0, endedAt: 1000, corner: '', ambient: 'Wind',
-    });
+    }] });
     await h.saveNow();
     const loaded = await adapter.load();
     expect(loaded).not.toBeNull();
