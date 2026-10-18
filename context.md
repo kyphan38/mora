@@ -83,6 +83,14 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - A restored session is always paused. Clock-only changes are saved at
   most every 15s.
 
+## Deploy (web)
+
+Vercel project `mora` from GitHub `kyphan38/mora`, single Vite app (not
+"Services"; `src-tauri` is ignored via `.vercelignore`). `vercel.json`:
+SPA rewrite to `index.html`, `sw.js` and `index.html` never cached,
+`/assets` immutable. Domain: `mora.kyphan38.com` (CNAME to Vercel). No
+Firebase: data stays on each device.
+
 ## Commands
 
 - `npm run dev` web dev server (port 1420)

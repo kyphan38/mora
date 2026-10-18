@@ -1,0 +1,4 @@
+# Desktop shell and local-only folders: the web build needs none of them.
+src-tauri/
+reference/
+scripts/__pycache__/

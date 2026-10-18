@@ -281,3 +281,11 @@ Không lấy:
 - Lọc scene theo nhóm + yêu thích: chỉ có 12 scene, chưa cần.
 - Thẻ timer ở góc trái + thanh tiến độ ngang: mora dùng vòng tròn ở giữa.
 - Wizard 3 bước, màn landing: đã bỏ có chủ ý.
+- **M3 xong (2026-10-18):** phím tắt, Zen + toàn màn hình, ghi chú nhanh
+  (parked), duration tự nhập, nghỉ dài sau 4 block, ước lượng `~3`,
+  learn/work, tắt tiếng, tên scene, ghi chú khi hết block, History (mục
+  tiêu ngày, streak, 7 ngày, tổng learn/work, sửa/xoá + undo, xuất
+  CSV/JSON). 206 test pass.
+- **Deploy:** `vercel.json` + `.vercelignore`. Owner import project trên
+  Vercel ("Import single project" cho app Vite) và gắn domain
+  `mora.kyphan38.com`. Không cần Firebase.
