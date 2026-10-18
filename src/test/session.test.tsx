@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useStore, shouldPlayAudio } from '../store/useStore';
 import { toPersisted } from '../lib/persistence';
-import { render, screen, fireEvent } from '@testing-library/react';
-import Landing from '../screens/Landing';
 
 describe('session runtime store logic', () => {
   beforeEach(() => {
@@ -89,18 +87,9 @@ describe('session runtime store logic', () => {
     expect(useStore.getState().sessions[0].minutes).toBe(1); // 75s rounds to 1 min
   });
 
-  it('shouldPlayAudio selector maps correctly', () => {
-    // sound/session -> audioActive
-    expect(shouldPlayAudio({ screen: 'sound', audioActive: true, isRunning: false })).toBe(true);
-    expect(shouldPlayAudio({ screen: 'sound', audioActive: false, isRunning: true })).toBe(false);
-    expect(shouldPlayAudio({ screen: 'session', audioActive: true, isRunning: false })).toBe(true);
-
-    // room -> isRunning
-    expect(shouldPlayAudio({ screen: 'room', audioActive: false, isRunning: true })).toBe(true);
-    expect(shouldPlayAudio({ screen: 'room', audioActive: true, isRunning: false })).toBe(false);
-
-    // landing -> false
-    expect(shouldPlayAudio({ screen: 'landing', audioActive: true, isRunning: true })).toBe(false);
+  it('shouldPlayAudio follows the timer on every screen', () => {
+    expect(shouldPlayAudio({ isRunning: true })).toBe(true);
+    expect(shouldPlayAudio({ isRunning: false })).toBe(false);
   });
 
   it('runtime persists via toPersisted and hydrate', () => {
@@ -111,7 +100,6 @@ describe('session runtime store logic', () => {
       isRunning: true,
       sessionActive: true,
       activeTaskId: 'task-123',
-      audioActive: true,
     };
 
     const persisted = toPersisted(state);
@@ -119,7 +107,6 @@ describe('session runtime store logic', () => {
     expect(persisted.isRunning).toBe(true);
     expect(persisted.sessionActive).toBe(true);
     expect(persisted.activeTaskId).toBe('task-123');
-    expect(persisted.audioActive).toBe(true);
 
     // hydrate
     useStore.getState().hydrate(persisted);
@@ -128,32 +115,9 @@ describe('session runtime store logic', () => {
     expect(updated.isRunning).toBe(true);
     expect(updated.sessionActive).toBe(true);
     expect(updated.activeTaskId).toBe('task-123');
-    expect(updated.audioActive).toBe(true);
   });
 
-  it('Landing shows Resume when sessionActive and hides it otherwise', () => {
-    useStore.setState({
-      sessionActive: true,
-      tasks: [{ id: 't1', name: 'Resume Task', done: false, createdAt: 1000 }],
-      activeTaskId: 't1',
-    });
-
-    const { rerender } = render(<Landing />);
-    expect(screen.getByText('Continue a previous session')).toBeInTheDocument();
-    expect(screen.getByText('Resume')).toBeInTheDocument();
-
-    // Click Resume -> changes screen to room
-    fireEvent.click(screen.getByText('Resume'));
-    expect(useStore.getState().screen).toBe('room');
-
-    // Reset and click dismiss -> stopFocus
-    useStore.setState({ sessionActive: true, screen: 'landing' });
-    rerender(<Landing />);
-    fireEvent.click(screen.getByLabelText('Dismiss'));
-    expect(useStore.getState().sessionActive).toBe(false);
-  });
-
-  it('navigate room->landing->room preserves elapsed', () => {
+  it('navigate room->history->room preserves elapsed', () => {
     useStore.setState({
       tasks: [{ id: 't1', name: 'Preserve Task', done: false, createdAt: 1000 }],
       activeTaskId: 't1',
@@ -162,7 +126,7 @@ describe('session runtime store logic', () => {
       sessionActive: true,
     });
 
-    useStore.getState().setScreen('landing');
+    useStore.getState().setScreen('history');
     expect(useStore.getState().elapsedSec).toBe(120);
 
     useStore.getState().setScreen('room');

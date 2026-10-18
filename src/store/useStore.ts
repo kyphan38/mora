@@ -46,7 +46,6 @@ interface AppStore {
     isRunning?: boolean;
     sessionActive?: boolean;
     activeTaskId?: string | null;
-    audioActive?: boolean;
     autoContinue?: boolean;
     customTracks?: CustomTrack[];
     phase?: Phase;
@@ -60,7 +59,6 @@ interface AppStore {
   isRunning: boolean;
   sessionActive: boolean;
   activeTaskId: string | null;
-  audioActive: boolean;
 
   // Pomodoro phase machine
   phase: Phase;
@@ -83,7 +81,6 @@ interface AppStore {
   /** Catches the timer up with the wall clock, so throttled intervals or sleep do not slow it. */
   syncClock: (now?: number) => void;
   stopFocus: () => void;
-  setAudioActive: (b: boolean) => void;
   randomScene: () => void;
 
   // Pomodoro actions
@@ -122,7 +119,7 @@ function buildSession(
 }
 
 export const useStore = create<AppStore>((set, get) => ({
-  screen: 'landing',
+  screen: 'room',
   corner: null,
   sound: {
     ambient: 'Wind',
@@ -143,7 +140,6 @@ export const useStore = create<AppStore>((set, get) => ({
   isRunning: false,
   sessionActive: false,
   activeTaskId: null,
-  audioActive: false,
   phase: 'focus',
   lastFocusSec: 0,
   autoContinue: false,
@@ -294,7 +290,6 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.elapsedSec !== undefined) update.elapsedSec = p.elapsedSec;
     if (p.isRunning !== undefined) update.isRunning = p.isRunning;
     if (p.sessionActive !== undefined) update.sessionActive = p.sessionActive;
-    if (p.audioActive !== undefined) update.audioActive = p.audioActive;
     if (p.autoContinue !== undefined) update.autoContinue = p.autoContinue;
     if (p.customTracks !== undefined) update.customTracks = p.customTracks;
     if (p.phase !== undefined) update.phase = p.phase;
@@ -394,7 +389,6 @@ export const useStore = create<AppStore>((set, get) => ({
       focusStartedAt: null,
     });
   },
-  setAudioActive: (b) => set({ audioActive: b }),
 
   // --- Pomodoro actions ---
   setAutoContinue: (b) => set({ autoContinue: b }),
@@ -546,12 +540,5 @@ function switchPatch(
   };
 }
 
-export const shouldPlayAudio = (state: { screen: Screen; audioActive: boolean; isRunning: boolean }) => {
-  if (state.screen === 'sound' || state.screen === 'session') {
-    return state.audioActive;
-  }
-  if (state.screen === 'room') {
-    return state.isRunning;
-  }
-  return false;
-};
+// Sound follows the timer on every screen; previews in Room settings call the engine directly.
+export const shouldPlayAudio = (state: { isRunning: boolean }) => state.isRunning;

@@ -26,7 +26,7 @@ describe('reorderTasks store action', () => {
   });
 
   it('clicking the Up/Down buttons reorders tasks in UI', () => {
-    useStore.getState().setScreen('session');
+    useStore.getState().setScreen('room');
     useStore.getState().addTask('Task A');
     useStore.getState().addTask('Task B');
 
@@ -36,14 +36,14 @@ describe('reorderTasks store action', () => {
     expect(rows.length).toBe(2);
 
     // Move Task B (index 1) up above Task A (index 0)
-    const moveUpBtn = document.querySelector('[data-testid="task-move-up-1"]');
+    const moveUpBtn = document.querySelector('[data-testid="room-task-move-up-1"]');
     expect(moveUpBtn).not.toBeNull();
     fireEvent.click(moveUpBtn as Element);
 
     expect(useStore.getState().tasks.map(t => t.name)).toEqual(['Task B', 'Task A']);
 
     // Move Task B (now index 0) back down below Task A
-    const moveDownBtn = document.querySelector('[data-testid="task-move-down-0"]');
+    const moveDownBtn = document.querySelector('[data-testid="room-task-move-down-0"]');
     expect(moveDownBtn).not.toBeNull();
     fireEvent.click(moveDownBtn as Element);
 

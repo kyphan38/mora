@@ -43,9 +43,8 @@ describe('Room immersive scene tests', () => {
     const source = video.querySelector('source') as HTMLSourceElement;
     expect(source.src).toContain('/scenes/autumn-forest-cabin.mp4');
 
-    // Verify button container has high zIndex (20) so it layers above transparent nav bar
-    const bgToggle = getByTestId('room-bg-toggle');
-    const togglesContainer = bgToggle.parentElement as HTMLElement;
+    // The top-right controls layer above the transparent nav bar
+    const togglesContainer = getByTestId('room-settings-toggle').parentElement as HTMLElement;
     expect(togglesContainer.style.zIndex).toBe('20');
   });
 
@@ -63,11 +62,12 @@ describe('Room immersive scene tests', () => {
       }
     });
 
-    const { container, getByText } = render(<App />);
+    const { container, getByText, getByTestId } = render(<App />);
 
     const appRoot = container.firstChild as HTMLElement;
     expect(appRoot.getAttribute('data-scene')).toBe('true');
 
+    fireEvent.click(getByTestId('room-settings-toggle'));
     const colorBtn = getByText('Color');
     fireEvent.click(colorBtn);
 

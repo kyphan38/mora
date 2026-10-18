@@ -1,48 +1,30 @@
 import { useStore } from "./store/useStore";
 import { AppShell } from "./components/AppShell";
-import Landing from "./screens/Landing";
-import Corner from "./screens/Corner";
-import Sound from "./screens/Sound";
-import Session from "./screens/Session";
 import Room from "./screens/Room";
 import History from "./screens/History";
 
 import { useGlobalAudio } from "./hooks/useGlobalAudio";
 import { useSessionRuntime } from "./hooks/useSessionRuntime";
-import { SceneBackground } from "./components/SceneBackground";
 
 function App() {
   useGlobalAudio();
   useSessionRuntime();
   const screen = useStore((s) => s.screen);
   const roomBackground = useStore((s) => s.roomBackground);
-  const corner = useStore((s) => s.corner);
 
-  const screens = {
-    landing: <Landing />,
-    corner: <Corner />,
-    sound: <Sound />,
-    session: <Session />,
-    room: <Room />,
-    history: <History />,
-  } as const;
-
-  const content = screens[screen];
   const isRoom = screen === 'room';
-  const isGlobalScene = roomBackground === 'scene';
+  // The scene background only lives in the Room; other screens stay plain.
+  const isScene = isRoom && roomBackground === 'scene';
 
   return (
-    <div className="app" data-scene={isGlobalScene ? "true" : undefined} style={{ position: 'relative' }}>
-      {isGlobalScene && !isRoom && (
-        <SceneBackground testid="app-scene-bg" corner={corner} />
-      )}
+    <div className="app" data-scene={isScene ? "true" : undefined} style={{ position: 'relative' }}>
       <AppShell>
         {isRoom ? (
-          content
+          <Room />
         ) : (
           <div style={nonRoomWrapperStyle}>
             <div style={nonRoomInnerStyle} className="screen-content">
-              {content}
+              <History />
             </div>
           </div>
         )}

@@ -16,7 +16,6 @@ export interface PersistedState {
   isRunning?: boolean;
   sessionActive?: boolean;
   activeTaskId?: string | null;
-  audioActive?: boolean;
   autoContinue?: boolean;
   customTracks?: CustomTrack[];
   phase?: Phase;
@@ -101,7 +100,6 @@ export function toPersisted(s: {
   isRunning?: boolean;
   sessionActive?: boolean;
   activeTaskId?: string | null;
-  audioActive?: boolean;
   autoContinue?: boolean;
   customTracks?: CustomTrack[];
   phase?: Phase;
@@ -120,7 +118,6 @@ export function toPersisted(s: {
     isRunning: s.isRunning ?? false,
     sessionActive: s.sessionActive ?? false,
     activeTaskId: s.activeTaskId ?? null,
-    audioActive: s.audioActive ?? false,
     autoContinue: s.autoContinue ?? false,
     customTracks: s.customTracks ?? [],
     phase: s.phase ?? 'focus',

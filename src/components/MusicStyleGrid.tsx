@@ -17,7 +17,6 @@ export function MusicStyleGrid({ variant, isSceneMode = false }: MusicStyleGridP
   const sound = useStore((s) => s.sound);
   const customTracks = useStore((s) => s.customTracks);
   const setMusicStyle = useStore((s) => s.setMusicStyle);
-  const setAudioActive = useStore((s) => s.setAudioActive);
   const addCustomTrack = useStore((s) => s.addCustomTrack);
   const selectCustomTrack = useStore((s) => s.selectCustomTrack);
   const removeCustomTrack = useStore((s) => s.removeCustomTrack);
@@ -34,7 +33,6 @@ export function MusicStyleGrid({ variant, isSceneMode = false }: MusicStyleGridP
     variant === 'panel' ? panelCardStyle(isActive, isSceneMode) : defaultCardStyle(isActive);
 
   const activatePlayback = () => {
-    setAudioActive(true);
     getAudioEngine().play();
   };
 

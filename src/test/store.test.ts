@@ -6,13 +6,13 @@ beforeEach(() => {
 });
 
 describe('useStore', () => {
-  it('initial screen is landing', () => {
-    expect(useStore.getState().screen).toBe('landing');
+  it('initial screen is the Room', () => {
+    expect(useStore.getState().screen).toBe('room');
   });
 
   it('setScreen updates screen', () => {
-    useStore.getState().setScreen('corner');
-    expect(useStore.getState().screen).toBe('corner');
+    useStore.getState().setScreen('history');
+    expect(useStore.getState().screen).toBe('history');
   });
 
   it('initial sound defaults', () => {

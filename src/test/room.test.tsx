@@ -111,14 +111,21 @@ describe('Room screen', () => {
     expect(screen.getByLabelText('Play')).toBeInTheDocument();
   });
 
-  it('clicking Play sets pill to Focusing, Pause to Paused', () => {
+  it('Play runs the timer, Pause stops it', () => {
     seedRoom();
     render(<App />);
-    expect(screen.getByText('Ready')).toBeInTheDocument();
     fireEvent.click(screen.getByLabelText('Play'));
-    expect(screen.getByText('Focusing')).toBeInTheDocument();
+    expect(useStore.getState().isRunning).toBe(true);
     fireEvent.click(screen.getByLabelText('Pause'));
-    expect(screen.getByText('Paused')).toBeInTheDocument();
+    expect(useStore.getState().isRunning).toBe(false);
+  });
+
+  it('Play with no active session starts one', () => {
+    useStore.getState().addTask('Fresh');
+    render(<App />);
+    fireEvent.click(screen.getByLabelText('Play'));
+    expect(useStore.getState().sessionActive).toBe(true);
+    expect(useStore.getState().isRunning).toBe(true);
   });
 
   it('Complete now opens review sheet', () => {

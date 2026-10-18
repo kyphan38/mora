@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useStore } from '../store/useStore';
 import { formatTime, remainingSec } from '../lib/timer';
 import { breakForSeconds, NEXT_DURATIONS } from '../lib/pomodoro';
@@ -55,7 +55,6 @@ export default function Room() {
   const setAmbientVolume = useStore((s) => s.setAmbientVolume);
   const setMusicVolume = useStore((s) => s.setMusicVolume);
   const setCorner = useStore((s) => s.setCorner);
-  const setAudioActive = useStore((s) => s.setAudioActive);
   const setDuration = useStore((s) => s.setDuration);
 
   const [taskInput, setTaskInput] = useState('');
@@ -66,6 +65,11 @@ export default function Room() {
   useEffect(() => {
     setVideoError(false);
   }, [corner?.id]);
+
+  // Sound previews from the settings panel stop when it closes, unless the timer runs.
+  useEffect(() => {
+    if (!showSettings && !useStore.getState().isRunning) getAudioEngine().pause();
+  }, [showSettings]);
 
   useEffect(() => {
     if (!showSettings) return;
@@ -80,21 +84,14 @@ export default function Room() {
 
   const active = tasks.find((t) => t.id === activeTaskId) || activeTask();
 
-  const [hasStarted, setHasStarted] = useState(() => elapsedSec > 0);
-  const activeIdRef = useRef(active?.id);
-  useEffect(() => {
-    if (active?.id !== activeIdRef.current) {
-      activeIdRef.current = active?.id;
-      setHasStarted(false);
-    }
-  }, [active?.id]);
 
   const handlePlayPause = useCallback(() => {
+    // The Room is home: the first Play starts a session.
+    if (!useStore.getState().sessionActive) useStore.getState().startFocus();
     const nextRunning = !isRunning;
     const engine = getAudioEngine();
     if (nextRunning) {
       engine.play();
-      setHasStarted(true);
     } else {
       engine.pause();
     }
@@ -104,7 +101,6 @@ export default function Room() {
   const handleStop = useCallback(() => {
     getAudioEngine().pause();
     stopFocus();
-    setHasStarted(false);
   }, [stopFocus]);
 
   // The clock, hotkey and tray run app-wide in useSessionRuntime.
@@ -142,26 +138,11 @@ export default function Room() {
     }
   };
 
-  // State pill
-  let pillText = 'Ready';
-  if (phase === 'break') pillText = 'Break';
-  else if (phase === 'review') pillText = 'Review';
-  else if (!active) pillText = 'Done';
-  else if (isRunning) pillText = 'Focusing';
-  else if (hasStarted || elapsedSec > 0) pillText = 'Paused';
-
   const tintColor = extractTintColor(corner?.gradient);
   const doneCount = tasks.filter((t) => t.done).length;
   const leftCount = tasks.length - doneCount;
 
   const isSceneMode = roomBackground === 'scene' && !!corner;
-
-  const immersiveToggleStyle: React.CSSProperties = {
-    ...toggleStyle,
-    position: 'static',
-    top: undefined,
-    right: undefined,
-  };
 
   const mainStyleOverride: React.CSSProperties = {
     ...mainStyle,
@@ -214,20 +195,6 @@ export default function Room() {
               {showTasks ? 'Hide Tasks' : 'Tasks'}
             </button>
           )}
-          <div style={immersiveToggleStyle} data-testid="room-bg-toggle">
-            <button
-              onClick={() => setRoomBackground('color')}
-              style={toggleBtnStyle(roomBackground === 'color')}
-            >
-              Color
-            </button>
-            <button
-              onClick={() => setRoomBackground('scene')}
-              style={toggleBtnStyle(roomBackground === 'scene')}
-            >
-              Scene
-            </button>
-          </div>
           <button
             onClick={() => setShowSettings(!showSettings)}
             style={settingsBtnStyle(isSceneMode)}
@@ -244,13 +211,6 @@ export default function Room() {
         {isSceneMode ? (
           /* Scene Mode Timer Block (anchored bottom-left) */
           <div style={timerAnchorStyle} data-testid="room-timer-card" className="glass">
-            <div style={labelRowStyle}>
-              <span style={{...dotStyle, background: phase === 'break' ? '#f59e0b' : undefined}} />
-              <span style={immersiveLabelTextStyle}>
-                {phase === 'break' ? 'break' : 'current task'}
-              </span>
-            </div>
-
             <h2 style={immersiveTaskNameStyle}>
               {phase === 'break' ? 'Rest a little' : (active ? active.name : 'All done')}
             </h2>
@@ -296,33 +256,10 @@ export default function Room() {
               </div>
             )}
 
-            <div style={immersiveSceneLineStyle}>
-              Scene · {corner.name} · {sound.ambient}
-            </div>
           </div>
         ) : (
           /* Color Mode Timer Card */
           <div style={cardStyle} data-testid="room-timer-card">
-            <div style={topRowStyle}>
-              <div style={labelRowStyle}>
-                <span style={{...dotStyle, background: phase === 'break' ? '#f59e0b' : undefined}} />
-                <span style={labelTextStyle}>
-                  {phase === 'break' ? 'break' : 'current task'}
-                </span>
-              </div>
-              <span style={{
-                ...pillStyle,
-                background: pillText === 'Focusing' ? 'var(--accent-soft)'
-                  : pillText === 'Break' ? 'rgba(245,158,11,0.15)'
-                  : 'var(--surface-2)',
-                color: pillText === 'Focusing' ? 'var(--accent-txt)'
-                  : pillText === 'Break' ? '#b45309'
-                  : 'var(--ink-3)',
-              }}>
-                {pillText}
-              </span>
-            </div>
-
             <h2 style={taskNameStyle}>
               {phase === 'break' ? 'Rest a little' : (active ? active.name : 'All done')}
             </h2>
@@ -368,9 +305,6 @@ export default function Room() {
               </div>
             )}
 
-            <div style={sceneLineStyle}>
-              Scene · {corner?.name ?? '-'} · {sound.ambient}
-            </div>
           </div>
         )}
       </div>
@@ -600,6 +534,26 @@ export default function Room() {
               </button>
             </div>
 
+            <div style={panelSectionStyle}>
+              <label style={panelLabelStyle(isSceneMode)}>background</label>
+              <div style={panelChipsStyle} data-testid="room-bg-toggle">
+                {(['color', 'scene'] as const).map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setRoomBackground(m)}
+                    style={{
+                      ...panelChipStyle(isSceneMode),
+                      background: roomBackground === m ? 'var(--accent-soft)' : 'transparent',
+                      color: roomBackground === m ? 'var(--accent-txt)' : (isSceneMode ? 'rgba(255,255,255,0.7)' : 'var(--ink-2)'),
+                      borderColor: roomBackground === m ? 'var(--accent-line)' : (isSceneMode ? 'rgba(255,255,255,0.15)' : 'var(--line-2)'),
+                    }}
+                  >
+                    {m === 'color' ? 'Color' : 'Scene'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Duration Selection */}
             <div style={panelSectionStyle}>
               <label style={panelLabelStyle(isSceneMode)}>duration</label>
@@ -630,7 +584,6 @@ export default function Room() {
                     key={a}
                     onClick={() => {
                       setAmbient(a);
-                      setAudioActive(true);
                       getAudioEngine().play();
                     }}
                     style={{
@@ -663,7 +616,6 @@ export default function Room() {
                   value={sound.ambientVolume}
                   onChange={(e) => {
                     setAmbientVolume(Number(e.target.value));
-                    setAudioActive(true);
                     getAudioEngine().play();
                   }}
                   aria-label="Ambient volume"
@@ -681,7 +633,6 @@ export default function Room() {
                   value={sound.musicVolume}
                   onChange={(e) => {
                     setMusicVolume(Number(e.target.value));
-                    setAudioActive(true);
                     getAudioEngine().play();
                   }}
                   aria-label="Music volume"
@@ -703,8 +654,7 @@ export default function Room() {
                       key={c.id}
                       onClick={() => {
                         setCorner(c);
-                        setAudioActive(true);
-                        getAudioEngine().play();
+                          getAudioEngine().play();
                       }}
                       style={{
                         ...panelSceneItemStyle(isSceneMode),
@@ -791,41 +741,10 @@ const cardStyle: React.CSSProperties = {
   width: '100%',
 };
 
-const topRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  width: '100%',
-};
 
-const labelRowStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-};
 
-const dotStyle: React.CSSProperties = {
-  width: 8,
-  height: 8,
-  borderRadius: '50%',
-  background: 'var(--accent)',
-  animation: 'breathe 4s ease-in-out infinite',
-};
 
-const labelTextStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: 'var(--ink-3)',
-};
 
-const pillStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 500,
-  padding: '3px 12px',
-  borderRadius: 'var(--r-pill)',
-};
 
 const taskNameStyle: React.CSSProperties = {
   fontSize: 24,
@@ -882,11 +801,6 @@ const ctrlBtnStyle: React.CSSProperties = {
   justifyContent: 'center',
 };
 
-const sceneLineStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: 'var(--ink-3)',
-  marginTop: 12,
-};
 
 const sideStyle: React.CSSProperties = {
   width: 340,
@@ -1065,13 +979,6 @@ const timerAnchorStyle: React.CSSProperties = {
   color: '#f3f1ea',
 };
 
-const immersiveLabelTextStyle: React.CSSProperties = {
-  fontSize: 12,
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.05em',
-  color: 'rgba(243,241,234,0.7)',
-};
 
 const immersiveTaskNameStyle: React.CSSProperties = {
   fontSize: 24,
@@ -1095,11 +1002,6 @@ const immersiveSubLineStyle: React.CSSProperties = {
   marginBottom: 8,
 };
 
-const immersiveSceneLineStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: 'rgba(255,255,255,0.4)',
-  marginTop: 12,
-};
 
 const immersiveCtrlBtnStyle: React.CSSProperties = {
   width: 36,
@@ -1192,30 +1094,7 @@ const immersiveFooterStyle: React.CSSProperties = {
   marginTop: 12,
 };
 
-const toggleStyle: React.CSSProperties = {
-  position: 'absolute',
-  top: 24,
-  right: 24,
-  display: 'flex',
-  background: 'var(--surface-2)',
-  borderRadius: 'var(--r-pill)',
-  padding: 3,
-  border: '1px solid var(--line)',
-  zIndex: 10,
-};
 
-const toggleBtnStyle = (active: boolean): React.CSSProperties => ({
-  border: 'none',
-  borderRadius: 'var(--r-pill)',
-  padding: '4px 12px',
-  fontSize: 12,
-  fontWeight: 500,
-  cursor: 'pointer',
-  background: active ? 'var(--accent-soft)' : 'transparent',
-  color: active ? 'var(--accent-txt)' : 'var(--ink-2)',
-  fontFamily: 'var(--font)',
-  transition: 'background var(--dur) var(--ease), color var(--dur) var(--ease)',
-});
 
 const settingsBtnStyle = (isScene: boolean): React.CSSProperties => ({
   border: isScene ? '1px solid rgba(255,255,255,0.25)' : '1px solid var(--line)',

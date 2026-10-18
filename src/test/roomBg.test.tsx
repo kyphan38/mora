@@ -44,7 +44,8 @@ describe('Room background option tests', () => {
     expect(mainPanel.style.backgroundImage).toBe('');
     expect(timerCard.className).not.toBe('glass');
 
-    // Click "Scene" button
+    // Background chips live in the settings panel
+    fireEvent.click(getByTestId('room-settings-toggle'));
     const sceneBtn = getByText('Scene');
     fireEvent.click(sceneBtn);
 

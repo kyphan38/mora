@@ -8,64 +8,29 @@ beforeEach(() => {
 });
 
 describe('AppShell', () => {
-  it('renders Landing by default', () => {
+  it('opens on the Room', () => {
     render(<App />);
-    expect(screen.getByText('Open your focus corner')).toBeInTheDocument();
-    expect(screen.getByText('Start a focus session')).toBeInTheDocument();
+    expect(useStore.getState().screen).toBe('room');
+    expect(screen.getByTestId('room-main')).toBeInTheDocument();
   });
 
-  it('tabs hidden on landing', () => {
-    render(<App />);
-    expect(screen.queryByText('Start')).not.toBeInTheDocument();
-    expect(screen.queryByText('Focus')).not.toBeInTheDocument();
-    expect(screen.queryByText('History')).not.toBeInTheDocument();
+  it('tabs are exactly Focus, History', () => {
+    const { container } = render(<App />);
+    const tabs = [...container.querySelectorAll('.nav-tab-btn')].map((b) => b.textContent);
+    expect(tabs).toEqual(['Focus', 'History']);
   });
 
-  it('CTA navigates to corner', () => {
+  it('tabs switch screens; logo returns to the Room', () => {
     render(<App />);
-    fireEvent.click(screen.getByText('Start a focus session'));
-    expect(screen.getByText('Choose a focus corner')).toBeInTheDocument();
-    // tabs should now be visible
-    expect(screen.getByText('Start')).toBeInTheDocument();
-    expect(screen.getByText('Focus')).toBeInTheDocument();
-    expect(screen.getByText('History')).toBeInTheDocument();
-  });
-
-  it('tabs are exactly Start, Focus, History', () => {
-    // Navigate away from landing first
-    useStore.getState().setScreen('corner');
-    render(<App />);
-    const tabButtons = screen.getAllByRole('button').filter((btn) => {
-      const text = btn.textContent?.trim();
-      return text === 'Start' || text === 'Focus' || text === 'History';
-    });
-    expect(tabButtons).toHaveLength(3);
-    expect(tabButtons[0].textContent?.trim()).toBe('Start');
-    expect(tabButtons[1].textContent?.trim()).toBe('Focus');
-    expect(tabButtons[2].textContent?.trim()).toBe('History');
+    fireEvent.click(screen.getByText('History'));
+    expect(useStore.getState().screen).toBe('history');
+    fireEvent.click(screen.getByLabelText('mora home'));
+    expect(useStore.getState().screen).toBe('room');
   });
 
   it('NO Sign in / EN', () => {
     render(<App />);
     expect(screen.queryByText('Sign in')).not.toBeInTheDocument();
     expect(screen.queryByText('EN')).not.toBeInTheDocument();
-    // Also check after navigating
-    fireEvent.click(screen.getByText('Start a focus session'));
-    expect(screen.queryByText('Sign in')).not.toBeInTheDocument();
-    expect(screen.queryByText('EN')).not.toBeInTheDocument();
-  });
-
-  it('logo returns to landing', () => {
-    render(<App />);
-    // Navigate to corner
-    fireEvent.click(screen.getByText('Start a focus session'));
-    expect(screen.getByText('Choose a focus corner')).toBeInTheDocument();
-    // Click logo
-    fireEvent.click(screen.getByLabelText('mora home'));
-    expect(screen.getByText('Open your focus corner')).toBeInTheDocument();
-    // Tabs should be hidden again
-    expect(screen.queryByText('Start')).not.toBeInTheDocument();
-    expect(screen.queryByText('Focus')).not.toBeInTheDocument();
-    expect(screen.queryByText('History')).not.toBeInTheDocument();
   });
 });
