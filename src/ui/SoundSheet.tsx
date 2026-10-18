@@ -1,13 +1,12 @@
 import { useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { AMBIENTS, MUSIC_STYLES } from '../data/sound';
-import { CORNERS } from '../data/corners';
-import { sceneUrl } from '../data/sceneManifest';
 import { getAudioEngine } from '../platform/audio';
 import { putCustomTrack, deleteCustomTrack } from '../platform/customTrackDb';
 import { uid } from '../core/uid';
 import { Sheet } from './Sheet';
 import { Words, Label } from './Words';
+import { ScenePicker } from './ScenePicker';
 
 const MAX_CUSTOM_TRACK_BYTES = 50 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = /\.(mp3|wav|m4a|ogg)$/i;
@@ -16,7 +15,6 @@ const CUSTOM = '__custom__';
 /** Sound and scene, picked while focusing. Picks preview right away. */
 export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
   const sound = useStore((s) => s.sound);
-  const corner = useStore((s) => s.corner);
   const customTrack = useStore((s) => s.customTracks[0] ?? null);
   const isRunning = useStore((s) => s.isRunning);
   const setAmbient = useStore((s) => s.setAmbient);
@@ -26,9 +24,6 @@ export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => vo
   const addCustomTrack = useStore((s) => s.addCustomTrack);
   const selectCustomTrack = useStore((s) => s.selectCustomTrack);
   const removeCustomTrack = useStore((s) => s.removeCustomTrack);
-  const setCorner = useStore((s) => s.setCorner);
-  const setRoomBackground = useStore((s) => s.setRoomBackground);
-  const roomBackground = useStore((s) => s.roomBackground);
   const muted = useStore((s) => s.muted);
   const setMuted = useStore((s) => s.setMuted);
 
@@ -156,32 +151,7 @@ export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => vo
           />
         </section>
 
-        <section>
-          <Label>scene</Label>
-          <div className="grid grid-cols-3 gap-2">
-            {CORNERS.map((c) => {
-              const current = roomBackground === 'scene' && corner?.id === c.id;
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => {
-                    setCorner(c);
-                    setRoomBackground('scene');
-                  }}
-                  aria-pressed={current}
-                  className={`min-w-0 text-left transition-opacity ${current ? '' : 'opacity-60 hover:opacity-100'}`}
-                >
-                  <div
-                    className={`aspect-video w-full rounded-[6px] bg-cover bg-center ${current ? 'ring-1 ring-ink' : ''}`}
-                    style={{ backgroundImage: `url("${sceneUrl(c.id)}"), ${c.gradient}` }}
-                  />
-                  <span className="mt-1 block truncate text-[11px] text-muted">{c.name}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <ScenePicker />
       </div>
     </Sheet>
   );

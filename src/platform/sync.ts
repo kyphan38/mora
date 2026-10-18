@@ -20,6 +20,7 @@ import {
 import { getDb } from './firebase';
 import { useStore } from '../store/useStore';
 import { CORNERS } from '../data/corners';
+import { cornerFromUserScene, USER_SCENE_PREFIX } from '../data/sceneManifest';
 import {
   diffDocs,
   fingerprint,
@@ -31,6 +32,7 @@ import {
   sessionsFromDocs,
   taskToDoc,
   tasksFromDocs,
+  userScenesFromDocs,
   type Doc,
   type SyncedPrefs,
 } from '../core/syncModel';
@@ -74,6 +76,7 @@ function localPrefs(s: State): SyncedPrefs {
     dailyGoalMin: s.dailyGoalMin,
     logiEnabled: s.logi.enabled,
     logiUrl: s.logi.url,
+    hiddenScenes: s.hiddenScenes,
   };
 }
 
@@ -181,7 +184,18 @@ export function startSync(uid: string, onReady?: () => void): () => void {
       else schedule();
     });
 
+  const findCorner = (id: string) => {
+    const s = useStore.getState();
+    const own = s.userScenes.find((u) => USER_SCENE_PREFIX + u.id === id);
+    return own ? cornerFromUserScene(own) : (CORNERS.find((c) => c.id === id) ?? s.corner);
+  };
+
   const unsubs = [
+    // Uploaded scenes: read-only mirror (uploads and deletes write directly).
+    onSnapshot(collection(db, ...base, 'scenes'), (snap) => {
+      const docs = snap.docs.map((d) => ({ id: d.id, data: d.data() as Doc }));
+      apply(() => useStore.getState().applyRemote({ userScenes: userScenesFromDocs(docs) }));
+    }),
     listen('tasks'),
     listen('sessions'),
     listen('notes'),
@@ -198,10 +212,11 @@ export function startSync(uid: string, onReady?: () => void): () => void {
               sound: d.sound,
               setup: d.setup,
               roomBackground: d.roomBackground,
-              corner: d.cornerId ? (CORNERS.find((c) => c.id === d.cornerId) ?? useStore.getState().corner) : null,
+              corner: d.cornerId ? findCorner(d.cornerId) : null,
               autoContinue: d.autoContinue,
               dailyGoalMin: d.dailyGoalMin,
               logi: { enabled: d.logiEnabled, url: d.logiUrl },
+              hiddenScenes: Array.isArray(d.hiddenScenes) ? d.hiddenScenes : [],
             },
           }),
         );
@@ -224,6 +239,7 @@ export function startSync(uid: string, onReady?: () => void): () => void {
       s.corner !== prev.corner ||
       s.autoContinue !== prev.autoContinue ||
       s.dailyGoalMin !== prev.dailyGoalMin ||
+      s.hiddenScenes !== prev.hiddenScenes ||
       s.logi !== prev.logi
     ) {
       schedule();

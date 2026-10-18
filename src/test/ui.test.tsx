@@ -187,7 +187,7 @@ describe('Sound sheet', () => {
     seed();
     render(<App />);
     fireEvent.click(screen.getByTestId('room-settings-toggle'));
-    fireEvent.click(screen.getByText(CORNERS[1].name));
+    fireEvent.click(screen.getByRole('button', { name: CORNERS[1].name }));
     expect(st().corner?.id).toBe(CORNERS[1].id);
     expect(st().roomBackground).toBe('scene');
   });
@@ -265,5 +265,37 @@ describe('scene media urls', () => {
     } else {
       expect(u).toBe('/scenes/x.mp4');
     }
+  });
+});
+
+describe('scene picker', () => {
+  it('hides a default scene and shows it again', () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('room-settings-toggle'));
+    fireEvent.click(screen.getByLabelText(`Hide ${CORNERS[0].name}`));
+    expect(st().hiddenScenes).toEqual([CORNERS[0].id]);
+    expect(screen.queryByRole('button', { name: CORNERS[0].name })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText('1 hidden · show'));
+    expect(st().hiddenScenes).toEqual([]);
+  });
+
+  it('defaults have no delete; uploaded scenes do', () => {
+    useStore.setState({
+      userScenes: [{ id: 'm1', name: 'Train', videoUrl: 'https://x/v.mp4', imageUrl: 'https://x/i.jpg', videoPath: 'users/u/scenes/m1.mp4', imagePath: 'users/u/scenes/m1.jpg', createdAt: 1 }],
+    });
+    render(<App />);
+    fireEvent.click(screen.getByTestId('room-settings-toggle'));
+    expect(screen.queryByLabelText(`Delete ${CORNERS[0].name}`)).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Delete Train')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Train' }));
+    expect(st().corner).toMatchObject({ id: 'u_m1', video: 'https://x/v.mp4' });
+    expect(screen.getByText('add a scene')).toBeInTheDocument();
+  });
+
+  it('rejects a file that is not an mp4', async () => {
+    render(<App />);
+    fireEvent.click(screen.getByTestId('room-settings-toggle'));
+    fireEvent.change(screen.getByTestId('scene-file-input'), { target: { files: [new File(['x'], 'clip.mov', { type: 'video/quicktime' })] } });
+    expect(await screen.findByText('Choose an MP4 video.')).toBeInTheDocument();
   });
 });

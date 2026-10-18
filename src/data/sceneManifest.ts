@@ -9,3 +9,23 @@ export function mediaUrl(path: string): string {
 
 export const sceneUrl = (id: string) => mediaUrl(`defaults/scenes/${id}.jpg`);
 export const sceneVideoUrl = (id: string) => mediaUrl(`defaults/scenes/${id}.mp4`);
+
+import type { Corner, UserScene } from '../types';
+
+/** Image and video for any scene: uploaded ones carry their own URLs. */
+export const sceneImage = (c: Corner) => c.image ?? sceneUrl(c.id);
+export const sceneVideo = (c: Corner) => c.video ?? sceneVideoUrl(c.id);
+
+export const USER_SCENE_PREFIX = 'u_';
+
+export function cornerFromUserScene(s: UserScene): Corner {
+  return {
+    id: USER_SCENE_PREFIX + s.id,
+    name: s.name,
+    description: '',
+    ambient: 'Wind',
+    gradient: 'linear-gradient(135deg, #3a3a3a, #1a1a1a)',
+    video: s.videoUrl,
+    image: s.imageUrl,
+  };
+}

@@ -6,6 +6,7 @@
 
 import { getApp, getApps, initializeApp, type FirebaseApp } from 'firebase/app';
 import { connectAuthEmulator, getAuth, type Auth } from 'firebase/auth';
+import { connectStorageEmulator, getStorage, type FirebaseStorage } from 'firebase/storage';
 import {
   connectFirestoreEmulator,
   getFirestore,
@@ -44,7 +45,13 @@ function realConfig() {
   };
 }
 
-const emulatorConfig = { apiKey: 'demo-key', authDomain: 'demo-mora.firebaseapp.com', projectId: 'demo-mora', appId: 'demo-app' };
+const emulatorConfig = {
+  apiKey: 'demo-key',
+  authDomain: 'demo-mora.firebaseapp.com',
+  projectId: 'demo-mora',
+  storageBucket: 'demo-mora.appspot.com',
+  appId: 'demo-app',
+};
 
 /** Config keys that are missing (empty = ready). The sign-in screen shows it. */
 export function missingConfig(): string[] {
@@ -92,6 +99,15 @@ export function getDb(): Firestore {
   }
   if (USE_EMULATORS) connectFirestoreEmulator(db, '127.0.0.1', 8180);
   return db;
+}
+
+let storage: FirebaseStorage | null = null;
+
+export function getStorageClient(): FirebaseStorage {
+  if (storage) return storage;
+  storage = getStorage(firebaseApp());
+  if (USE_EMULATORS) connectStorageEmulator(storage, '127.0.0.1', 9399);
+  return storage;
 }
 
 /** The one account allowed to use mora. Only a readable early check; firestore.rules is the guard. */

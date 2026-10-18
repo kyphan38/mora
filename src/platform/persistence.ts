@@ -35,6 +35,7 @@ export interface PersistedState {
   muted?: boolean;
   logi?: LogiLink;
   outbox?: LogiBlock[];
+  hiddenScenes?: string[];
 }
 
 export interface StorageAdapter {
@@ -126,6 +127,7 @@ export function toPersisted(s: {
   muted?: boolean;
   logi?: LogiLink;
   outbox?: LogiBlock[];
+  hiddenScenes?: string[];
 }): PersistedState {
   return {
     version: PERSIST_VERSION,
@@ -151,6 +153,7 @@ export function toPersisted(s: {
     muted: s.muted ?? false,
     ...(s.logi ? { logi: s.logi } : {}),
     outbox: s.outbox ?? [],
+    hiddenScenes: s.hiddenScenes ?? [],
   };
 }
 

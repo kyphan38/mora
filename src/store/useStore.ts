@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind } from '../types';
+import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind, UserScene } from '../types';
 import { DURATIONS } from '../data/durations';
 import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
@@ -59,6 +59,7 @@ interface AppStore {
     muted?: boolean;
     logi?: LogiLink;
     outbox?: LogiBlock[];
+    hiddenScenes?: string[];
   }) => void;
   clearSessions: () => void;
 
@@ -134,12 +135,20 @@ interface AppStore {
   logiStatus: { state: 'idle' | 'sending' | 'ok' | 'error'; message: string; at: number };
   setLogiStatus: (s: AppStore['logiStatus']) => void;
 
+  /** Scenes the owner uploaded (cloud only, mirrored from Firestore). Not persisted locally. */
+  userScenes: UserScene[];
+  /** Default scene ids the owner hid from the picker (synced in prefs). */
+  hiddenScenes: string[];
+  toggleHiddenScene: (id: string) => void;
+  showAllScenes: () => void;
+
   /** Applies data that came from another device (cloud sync). */
   applyRemote: (p: {
     tasks?: Task[];
     sessions?: Session[];
     notes?: Note[];
-    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin'>> & {
+    userScenes?: UserScene[];
+    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes'>> & {
       sound?: Omit<SoundConfig, 'customTrackId'>;
       logi?: { enabled: boolean; url: string };
     };
@@ -215,6 +224,8 @@ export const useStore = create<AppStore>((set, get) => ({
   logi: { enabled: false, url: 'https://logi.kyphan38.com', token: '' },
   outbox: [],
   logiStatus: { state: 'idle', message: '', at: 0 },
+  userScenes: [],
+  hiddenScenes: [],
   setRoomBackground: (m) => {
     set({ roomBackground: m });
     if (m === 'scene' && get().corner === null) {
@@ -359,7 +370,8 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.sound !== undefined) update.sound = p.sound;
     if (p.setup !== undefined) update.setup = p.setup;
     // A saved scene may have been removed from the app since; fall back to a current one.
-    if (p.corner !== undefined) update.corner = p.corner && (CORNERS.find((c) => c.id === p.corner!.id) ?? CORNERS[0] ?? null);
+    if (p.corner !== undefined)
+      update.corner = p.corner && (p.corner.video ? p.corner : (CORNERS.find((c) => c.id === p.corner!.id) ?? CORNERS[0] ?? null));
     if (p.roomBackground !== undefined) update.roomBackground = p.roomBackground;
     if (p.elapsedSec !== undefined) update.elapsedSec = p.elapsedSec;
     if (p.isRunning !== undefined) update.isRunning = p.isRunning;
@@ -376,6 +388,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.muted !== undefined) update.muted = p.muted;
     if (p.logi !== undefined) update.logi = p.logi;
     if (p.outbox !== undefined) update.outbox = p.outbox;
+    if (p.hiddenScenes !== undefined) update.hiddenScenes = p.hiddenScenes;
     update.runSyncAt = null;
 
     // Auto-heal activeTaskId on load: it must point at an undone task.
@@ -671,7 +684,11 @@ export const useStore = create<AppStore>((set, get) => ({
   },
   setLogiStatus: (logiStatus) => set({ logiStatus }),
 
-  applyRemote: ({ tasks, sessions, notes, prefs }) => {
+  toggleHiddenScene: (id) =>
+    set((s) => ({ hiddenScenes: s.hiddenScenes.includes(id) ? s.hiddenScenes.filter((x) => x !== id) : [...s.hiddenScenes, id] })),
+  showAllScenes: () => set({ hiddenScenes: [] }),
+
+  applyRemote: ({ tasks, sessions, notes, prefs, userScenes }) => {
     const s = get();
     const patch: Partial<AppStore> = {};
     if (tasks) {
@@ -685,6 +702,11 @@ export const useStore = create<AppStore>((set, get) => ({
     }
     if (sessions) patch.sessions = sessions;
     if (notes) patch.notes = notes;
+    if (userScenes) {
+      patch.userScenes = userScenes;
+      // The scene in use was deleted on another device.
+      if (s.corner?.video && !userScenes.some((u) => 'u_' + u.id === s.corner!.id)) patch.corner = CORNERS[0] ?? null;
+    }
     if (prefs) {
       const { sound, logi, ...rest } = prefs;
       Object.assign(patch, rest);

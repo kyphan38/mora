@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { sceneUrl, sceneVideoUrl } from '../data/sceneManifest';
+import { sceneImage, sceneVideo } from '../data/sceneManifest';
 import { useCachedMedia } from '../hooks/useCachedMedia';
 import type { Corner } from '../types';
 
@@ -38,13 +38,13 @@ function SceneSlide({ corner, top, playVideo }: { corner: Corner; top: boolean; 
   const [videoOn, setVideoOn] = useState(false);
   const [videoError, setVideoError] = useState(false);
   // Device copy when saved; first play streams and saves in the background.
-  const videoSrc = useCachedMedia(playVideo ? sceneVideoUrl(corner.id) : null);
+  const videoSrc = useCachedMedia(playVideo ? sceneVideo(corner) : null);
 
   return (
     <div className={`absolute inset-0 ${top ? 'scene-in' : ''}`}>
       <div
         className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url("${sceneUrl(corner.id)}"), ${corner.gradient}` }}
+        style={{ backgroundImage: `url("${sceneImage(corner)}"), ${corner.gradient}` }}
       />
       {playVideo && !videoError && videoSrc && (
         <video

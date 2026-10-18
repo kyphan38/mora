@@ -105,7 +105,9 @@ fingerprint against the last remote copy and written in batches (deletes
 included). First sync per device merges by id (`mora.synced.<uid>` in
 localStorage). Device-only: custom track, mute, theme, logi token.
 Integration tests: `PATH=/opt/homebrew/opt/openjdk@21/bin:$PATH npm run
-test:emu` (emulators on 9199/8180, rules from `firestore.emu.rules`).
+test:emu` (emulators: auth 9199, firestore 8180, storage 9399; rules from the
+`*.emu.rules` files). `npm run emu` + launch config `mora-emu` (port 1430)
+for trying the app against the emulators.
 
 ## Deploy (web)
 
@@ -144,7 +146,10 @@ Scenes: list in `src/data/scenes.json` (descriptions in
 `media/scenes/` (git-ignored); `scripts/upload-defaults.sh` uploads new
 files (gsutil, long cache). Bucket CORS: `storage.cors.json`
 (`gsutil cors set storage.cors.json gs://kyphan38-mora-app.firebasestorage.app`).
-Scene video is saved on the device after the first play
+Owner uploads (`ui/ScenePicker.tsx`, `platform/sceneUpload.ts`): Storage
+`users/{uid}/scenes/<id>.mp4|jpg` (thumbnail taken in the browser),
+listed in Firestore `users/{uid}/scenes`; defaults can only be hidden
+(`hiddenScenes`, synced in prefs). Scene video is saved on the device after the first play
 (`platform/mediaCache.ts`, Cache Storage, 500 MB LRU) and plays offline. `public/audio/ambient|music/<slug>.mp3`
 where slug comes from `core/soundFormat.slug`. Missing files degrade to a
 gradient or silence. Scene tools live in `scripts/`.

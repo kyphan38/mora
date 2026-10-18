@@ -95,3 +95,11 @@ của Storage. Nhờ cache trên máy, mỗi scene chỉ tải một lần trên
   lần đầu phát từ mạng và lưu bản sao nền vào Cache Storage
   (`mora-media-v1`), lần sau phát từ máy (chạy offline). Tối đa 500MB, bỏ
   file lâu không dùng trước. Đã thử với file thật trên Storage.
+- **V3 xong (2026-10-18):** "add a scene" trong sheet Sound & scene (chỉ
+  web/PWA đã đăng nhập): chọn mp4 ≤60MB, đặt tên, app tự chụp thumbnail,
+  upload có tiến độ và nút huỷ, file ở `users/{uid}/scenes/`, danh sách ở
+  Firestore `users/{uid}/scenes` (sync mọi máy). Scene của mình có "delete"
+  (bấm 2 lần); scene mặc định chỉ có "hide", "N hidden · show" để hiện lại
+  (danh sách ẩn sync trong prefs). Rules Firestore + Storage đã deploy.
+  Thử thật bằng emulator trong trình duyệt: upload, thumbnail, tiến độ,
+  xoá. Test emulator: 11 (thêm 4 cho Storage, cổng 9399).

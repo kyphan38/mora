@@ -46,6 +46,14 @@ service cloud.firestore {
         && (!d.keys().hasAny(['note']) || shortText(d.note, 500));
     }
 
+    function validScene(d) {
+      return shortText(d.name, 80) && d.name.size() > 0
+        && shortText(d.videoUrl, 2000) && shortText(d.imageUrl, 2000)
+        && shortText(d.videoPath, 300) && shortText(d.imagePath, 300)
+        && d.videoPath.matches('users/' + request.auth.uid + '/scenes/.*')
+        && d.createdAt is int;
+    }
+
     function validNote(d) {
       return shortText(d.text, 500) && d.text.size() > 0 && d.createdAt is int;
     }
@@ -62,6 +70,10 @@ service cloud.firestore {
       match /notes/{id} {
         allow read, delete: if isOwner(uid);
         allow create, update: if isOwner(uid) && validNote(request.resource.data);
+      }
+      match /scenes/{id} {
+        allow read, delete: if isOwner(uid);
+        allow create, update: if isOwner(uid) && validScene(request.resource.data);
       }
       // prefs/main (settings) and live/current (running timer): small maps.
       match /prefs/{id} {

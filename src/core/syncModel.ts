@@ -1,7 +1,7 @@
 // Pure helpers for syncing the store with Firestore: doc shapes, diffs, merge.
 // No Firebase here, so the rules of sync are easy to test.
 
-import type { Note, Session, SoundConfig, SessionSetup, Task } from '../types';
+import type { Note, Session, SoundConfig, SessionSetup, Task, UserScene } from '../types';
 
 export type Doc = Record<string, unknown>;
 
@@ -89,6 +89,23 @@ export function notesFromDocs(docs: { id: string; data: Doc }[]): Note[] {
     .sort((a, b) => a.createdAt - b.createdAt);
 }
 
+// ---- uploaded scenes: newest first; written by platform/sceneUpload, not diffed ----
+
+export function userScenesFromDocs(docs: { id: string; data: Doc }[]): UserScene[] {
+  return docs
+    .map(({ id, data }) => ({
+      id,
+      name: String(data.name ?? ''),
+      videoUrl: String(data.videoUrl ?? ''),
+      imageUrl: String(data.imageUrl ?? ''),
+      videoPath: String(data.videoPath ?? ''),
+      imagePath: String(data.imagePath ?? ''),
+      createdAt: Number(data.createdAt ?? 0),
+    }))
+    .filter((s) => s.videoUrl)
+    .sort((a, b) => b.createdAt - a.createdAt);
+}
+
 // ---- prefs: one doc; device-only things (custom track, mute, theme, logi token) stay local ----
 
 export interface SyncedPrefs {
@@ -100,6 +117,7 @@ export interface SyncedPrefs {
   dailyGoalMin: number;
   logiEnabled: boolean;
   logiUrl: string;
+  hiddenScenes: string[];
 }
 
 export function prefsToDoc(p: SyncedPrefs): Doc {

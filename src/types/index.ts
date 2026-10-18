@@ -6,6 +6,20 @@ export interface Corner {
   description: string;
   ambient: string;      // default ambient sound paired with this corner
   gradient: string;     // CSS gradient string for the thumbnail
+  /** Owner-uploaded scenes carry their own media URLs; defaults use Storage paths by id. */
+  video?: string;
+  image?: string;
+}
+
+/** A scene the owner uploaded (Firestore users/{uid}/scenes/{id}). */
+export interface UserScene {
+  id: string;
+  name: string;
+  videoUrl: string;
+  imageUrl: string;
+  videoPath: string;
+  imagePath: string;
+  createdAt: number;
 }
 
 export type FocusKind = 'learn' | 'work';
