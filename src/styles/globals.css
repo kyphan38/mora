@@ -305,6 +305,30 @@ input[type="range"]::-moz-range-thumb {
   pointer-events: none;
 }
 
+/* Breathe in 4s, out 6s. */
+@keyframes breath {
+  0%, 100% { transform: scale(0.82); }
+  40% { transform: scale(1); }
+}
+.breath {
+  animation: breath 10s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* One digit rolls up when it changes. */
+@keyframes digit-out {
+  to { transform: translateY(-40%); opacity: 0; }
+}
+@keyframes digit-in {
+  from { transform: translateY(40%); opacity: 0; }
+}
+.digit-out {
+  animation: digit-out 280ms var(--ease-soft) both;
+}
+.digit-in {
+  animation: digit-in 280ms var(--ease-soft) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -312,5 +336,8 @@ input[type="range"]::-moz-range-thumb {
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 1ms !important;
+  }
+  .breath {
+    display: none;
   }
 }

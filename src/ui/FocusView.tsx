@@ -9,6 +9,7 @@ import { useIdle } from '../hooks/useIdle';
 import { useShortcuts } from '../hooks/useShortcuts';
 import { Ring } from './Ring';
 import { HoldButton } from './HoldButton';
+import { RollingDigits } from './RollingDigits';
 import { Sheet } from './Sheet';
 import { TaskList } from './TaskList';
 import { ReviewSheet } from './ReviewSheet';
@@ -127,6 +128,7 @@ export function FocusView() {
         <Ring
           progress={isBreak || !idle ? progress : 0}
           settleKey={settleKey}
+          breath={isBreak}
           adjust={idle && !zen ? { minutes: setup.durationSec / 60, onChange: setCustomDuration } : undefined}
         >
           {/* Phase or task changes cross-fade the middle of the ring. */}
@@ -142,7 +144,7 @@ export function FocusView() {
               </button>
             )}
             <div className="digits mt-2 text-[clamp(52px,15vw,84px)] leading-none font-extralight">
-              {formatTime(remainingSec(timer))}
+              <RollingDigits text={formatTime(remainingSec(timer))} roll={!idle} />
             </div>
             <p className="mt-3 text-[12px] text-faint">
               {isBreak ? 'Break time left' : timer.mode === 'countdown' ? 'Time left' : 'Elapsed'}

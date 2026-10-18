@@ -61,6 +61,15 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
   checkbox dot pops; rows already done on open show no effect.
 - A finished focus block (focus -> review) makes the ring settle (`.ring-settle`)
   and send one ripple (`settleKey` from `FocusView` to `Ring`).
+- Break: a faint circle breathes behind the ring text (`breath`, 4s in, 6s
+  out, `Ring` prop `breath`); hidden under reduced motion.
+- Minute/hour digits roll when they change (`ui/RollingDigits.tsx`); seconds
+  do not, and rolling is off while the clock waits (drag, picker). The whole
+  time is in an `sr-only` span.
+- Scene parallax (`hooks/useParallax.ts`, used by `SceneLayer`): mouse devices
+  only; the slide layer moves up to 12px against the mouse, eased in rAF,
+  style written by ref. It settles back after 4s without input while the
+  clock runs or in fullscreen.
 - Ring drag (`ui/Ring.tsx`, `adjust` prop): while the clock waits, drag the
   band (outside 34% of the width) to pick 5-120 min in 5 min steps; the
   middle stays clickable. Also `role="slider"` with arrow keys. Haptic 4ms

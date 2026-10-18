@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { sceneImage, sceneVideo } from '../data/sceneManifest';
 import { useCachedMedia } from '../hooks/useCachedMedia';
 import { usePortrait } from '../hooks/useOrientation';
+import { useIdle } from '../hooks/useIdle';
+import { useParallax } from '../hooks/useParallax';
+import { useStore } from '../store/useStore';
 import type { Corner } from '../types';
 
 const CROSSFADE_MS = 900;
@@ -13,6 +16,11 @@ const CROSSFADE_MS = 900;
  */
 export function SceneLayer({ corner, visible }: { corner: Corner; visible: boolean }) {
   const [layers, setLayers] = useState<Corner[]>([corner]);
+  const shift = useRef<HTMLDivElement>(null);
+  // While the clock runs (or in fullscreen) and the mouse rests, the scene settles back.
+  const watching = useStore((s) => s.isRunning) || !!document.fullscreenElement;
+  const still = useIdle(4000, watching);
+  useParallax(shift, visible && !still);
 
   useEffect(() => {
     setLayers((prev) => (prev[prev.length - 1]?.id === corner.id ? prev : [...prev.slice(-1), corner]));
@@ -27,9 +35,12 @@ export function SceneLayer({ corner, visible }: { corner: Corner; visible: boole
       data-testid="room-scene-bg"
       aria-hidden="true"
     >
-      {layers.map((c, i) => (
-        <SceneSlide key={c.id} corner={c} top={i === layers.length - 1 && layers.length > 1} playVideo={visible} />
-      ))}
+      {/* The outer layer moves with the mouse; the slides keep their own animations. */}
+      <div ref={shift} className="absolute inset-0 will-change-transform" data-testid="scene-shift">
+        {layers.map((c, i) => (
+          <SceneSlide key={c.id} corner={c} top={i === layers.length - 1 && layers.length > 1} playVideo={visible} />
+        ))}
+      </div>
       <div className="absolute inset-0 bg-black/45" />
     </div>
   );

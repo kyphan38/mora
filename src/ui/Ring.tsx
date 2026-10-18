@@ -32,12 +32,15 @@ export function Ring({
   progress,
   adjust,
   settleKey = 0,
+  breath = false,
   children,
 }: {
   progress: number;
   adjust?: Adjust;
   /** Goes up by 1 each time a block ends; the ring settles and a ripple spreads once. */
   settleKey?: number;
+  /** A slow breathing circle behind the text (break time). */
+  breath?: boolean;
   children: ReactNode;
 }) {
   const boxRef = useRef<HTMLDivElement>(null);
@@ -146,6 +149,13 @@ export function Ring({
           )}
         </svg>
       </div>
+      {breath && (
+        <span
+          className="breath absolute inset-0 m-auto h-[70%] w-[70%] rounded-full bg-ink/5"
+          data-testid="breath"
+          aria-hidden="true"
+        />
+      )}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-10 text-center">{children}</div>
     </div>
   );
