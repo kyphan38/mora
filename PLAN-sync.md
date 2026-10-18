@@ -93,3 +93,16 @@ liệu thật khi chạy test.
 2. **Timer sống giữa các máy (S3):** có làm không.
 3. **Gửi sang logi bằng Cloud Function (S4):** có làm không.
 4. **Đăng nhập:** tuỳ chọn (đề xuất) hay bắt buộc.
+
+## Quyết định của owner (2026-10-18)
+
+1. Desktop: **PWA** trên Mac/PC (có sync). Bản Tauri giữ lại, chạy local,
+   không đăng nhập, không sync.
+2. Timer sống giữa các máy: **có**, làm ở S3.
+3. Gửi sang logi bằng **Cloud Function** (S4). Sau đó bỏ phần nhập token
+   trên từng máy.
+4. Đăng nhập **bắt buộc** trên web/PWA (giống hodi/legi): mở app là thấy
+   màn đăng nhập trước. Riêng bản Tauri bỏ qua màn này (chạy local).
+
+Màn đăng nhập phải theo kiểu "đồng hồ là màn hình" của mora, không chép
+nguyên màn login của hodi.
