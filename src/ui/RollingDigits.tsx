@@ -16,9 +16,15 @@ function Digit({ ch, roll }: { ch: string; roll: boolean }) {
       return;
     }
     setOld(from);
+  }, [ch, roll]);
+
+  // Own effect, so a re-render that changes `roll` cannot cancel the clean-up
+  // and leave the old digit stuck on screen.
+  useEffect(() => {
+    if (old === null) return;
     const t = setTimeout(() => setOld(null), ROLL_MS);
     return () => clearTimeout(t);
-  }, [ch, roll]);
+  }, [old]);
 
   return (
     <span className="relative inline-block">
