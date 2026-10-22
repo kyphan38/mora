@@ -95,6 +95,10 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - Audio: play fades in (800ms), pause fades out (450ms) before pausing,
   track changes fade the old track out first (350ms). See
   `platform/audio.ts`.
+  A level of 0 (slider or sound off) sets `muted` and pauses the channel:
+  iPhone Safari ignores `volume` writes.
+- Duration words stay on one line: a dragged, non-preset length takes the
+  place of `custom` (tap it to type minutes).
 
 ## PWA (web build)
 

@@ -69,6 +69,7 @@ export function FocusView() {
   const timer = sessionTimer({ phase, lastFocusSec, longBreak, setup, elapsedSec, isRunning });
   const isBreak = phase === 'break';
   const idle = phase === 'focus' && !isRunning && elapsedSec === 0;
+  const timeText = formatTime(remainingSec(timer));
   const started = sessionActive && phase === 'focus' && (isRunning || elapsedSec > 0);
   const lastMinute =
     timer.mode === 'countdown' && !isBreak && phase === 'focus' && isRunning && remainingSec(timer) <= 60 && remainingSec(timer) > 0;
@@ -182,9 +183,9 @@ export function FocusView() {
               </button>
             )}
             <div
-              className={`digits mt-2 text-[clamp(52px,15vw,84px)] leading-none ${lastMinute ? 'font-light' : 'font-extralight'}`}
+              className={`digits mt-2 leading-none ${timeText.length > 5 ? 'text-[clamp(40px,11vw,68px)]' : 'text-[clamp(52px,15vw,84px)]'} ${lastMinute ? 'font-light' : 'font-extralight'}`}
             >
-              <RollingDigits text={formatTime(remainingSec(timer))} roll={!idle} />
+              <RollingDigits text={timeText} roll={!idle} />
             </div>
             <p className="mt-3 text-[12px] text-faint">
               {isBreak ? 'Break time left' : timer.mode === 'countdown' ? 'Time left' : 'Elapsed'}

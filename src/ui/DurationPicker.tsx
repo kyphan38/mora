@@ -14,10 +14,11 @@ export function DurationPicker() {
   const [draft, setDraft] = useState('');
 
   const isPreset = DURATIONS.some((d) => d.label === setup.durationLabel);
+  // A non-preset length takes the place of "custom", so the row keeps the same
+  // number of words while the ring is dragged and never wraps on a phone.
   const options = [
     ...DURATIONS.map((d) => ({ value: d.label, label: d.label === 'Count Up' ? 'count up' : d.label })),
-    ...(isPreset ? [] : [{ value: setup.durationLabel, label: setup.durationLabel }]),
-    { value: CUSTOM, label: 'custom' },
+    isPreset ? { value: CUSTOM, label: 'custom' } : { value: setup.durationLabel, label: setup.durationLabel },
   ];
 
   if (typing) {
@@ -50,8 +51,9 @@ export function DurationPicker() {
       label="Duration"
       options={options}
       value={setup.durationLabel}
+      nowrap
       onChange={(v) => {
-        if (v === CUSTOM) {
+        if (v === CUSTOM || (!isPreset && v === setup.durationLabel)) {
           setDraft(String(Math.round(setup.durationSec / 60) || ''));
           setTyping(true);
         } else if (DURATIONS.some((d) => d.label === v)) setDuration(v);

@@ -95,8 +95,13 @@ export function createAudioEngine(): AudioEngine {
     }, STEP_MS);
   };
 
+  // iPhone Safari ignores `volume` writes (it always plays at 1), so a level
+  // of 0 must use `muted` and pause, or "off" and a slider at 0 keep playing.
+  const silent = (c: Channel) => c.target === 0;
+
   const startChannel = (c: Channel) => {
-    if (!c.el.src) return;
+    if (!c.el.src || silent(c)) return;
+    c.el.muted = false;
     if (c.el.paused !== false) {
       try {
         c.el.volume = 0;
@@ -143,7 +148,22 @@ export function createAudioEngine(): AudioEngine {
   };
 
   const setTarget = (c: Channel, gain: number) => {
+    const wasSilent = silent(c);
     c.target = Math.max(0, Math.min(1, gain));
+    if (silent(c)) {
+      c.el.muted = true;
+      // A swap still has to set the new source; it will not start a silent channel.
+      if (!c.swapping) {
+        stopFade(c);
+        if (c.el.src) c.el.pause();
+      }
+      return;
+    }
+    // Back from 0 while playing: start again with the usual fade in.
+    if (wasSilent && playing && !c.swapping) {
+      startChannel(c);
+      return;
+    }
     // A running fade reads the live target; otherwise apply now.
     if (!c.timer && !c.swapping && (playing || c.el.paused !== false)) {
       try {

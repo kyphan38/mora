@@ -144,4 +144,22 @@ describe('AudioEngine unit tests', () => {
     engine.setMusicUrl(null);
     expect(musicMock.play).not.toHaveBeenCalled();
   });
+  it('a level of 0 mutes and pauses the channel, even where volume is fixed (iPhone)', () => {
+    const engine = createAudioEngine();
+    engine.setAmbient('Wind');
+    engine.play();
+    const ambientMock = (window.Audio as any).mock.results[0].value;
+
+    engine.setAmbientVolume(0);
+    expect(ambientMock.muted).toBe(true);
+    expect(ambientMock.pause).toHaveBeenCalled();
+
+    ambientMock.play.mockClear();
+    engine.play();
+    expect(ambientMock.play).not.toHaveBeenCalled();
+
+    engine.setAmbientVolume(0.5);
+    expect(ambientMock.muted).toBe(false);
+    expect(ambientMock.play).toHaveBeenCalled();
+  });
 });

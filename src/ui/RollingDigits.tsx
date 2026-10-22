@@ -45,15 +45,18 @@ export function RollingDigits({ text, roll = true }: { text: string; roll?: bool
   return (
     <>
       <span className="sr-only">{text}</span>
-      <span aria-hidden="true">
-        {chars.map((c, i) =>
-          c === ':' || i >= secondsFrom ? (
-            <span key={i}>{c}</span>
+      <span aria-hidden="true" className="whitespace-nowrap">
+        {chars.map((c, i) => {
+          // Keyed from the right so a new hour digit does not shift the others.
+          // The prefix keeps keys unique: a plain number for both kinds made
+          // React keep stale spans, and the clock showed piles of digits.
+          const key = chars.length - i;
+          return c === ':' || i >= secondsFrom ? (
+            <span key={`s${key}`}>{c}</span>
           ) : (
-            // Keyed from the right so a new hour digit does not shift the others.
-            <Digit key={chars.length - i} ch={c} roll={roll} />
-          ),
-        )}
+            <Digit key={`d${key}`} ch={c} roll={roll} />
+          );
+        })}
       </span>
     </>
   );
