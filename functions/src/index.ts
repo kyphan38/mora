@@ -4,6 +4,8 @@
 //              stops a focus run, tell logi (one logi record per run).
 // stopFromLogi: logi calls this when the owner stops a mora run in logi;
 //              the timer stops on every device and the block is saved.
+// logiRoutine: the app reads today's logi routine and ticks items through
+//              this (the token must not reach the browser).
 // Tokens live in Secret Manager. The owner turns the link on in Settings
 // (prefs/main logiEnabled); results go to users/{uid}/meta/logi.
 
@@ -13,7 +15,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { logger, setGlobalOptions } from 'firebase-functions';
 import { onDocumentWritten } from 'firebase-functions/firestore';
-import { onRequest } from 'firebase-functions/https';
+import { HttpsError, onCall, onRequest } from 'firebase-functions/https';
 import { defineSecret, defineString } from 'firebase-functions/params';
 
 import { liveCalls, stopFromLogi as planStop, type LiveDoc, type LogiCall } from './live.ts';
@@ -101,4 +103,31 @@ export const stopFromLogi = onRequest({ secrets: [CONTROL_TOKEN] }, async (req, 
     return 'stopped';
   });
   res.json({ ok: true, result });
+});
+
+export const logiRoutine = onCall({ secrets: [INGEST_TOKEN] }, async (req) => {
+  const email = req.auth?.token.email;
+  if (!req.auth || !email || email !== ALLOWED_USER_EMAIL.value()) throw new HttpsError('permission-denied', 'not allowed');
+  const prefs = await db().doc(`users/${req.auth.uid}/prefs/main`).get();
+  if (prefs.get('logiEnabled') !== true) throw new HttpsError('failed-precondition', 'link is off');
+  const d = (req.data ?? {}) as Record<string, unknown>;
+  const body =
+    d.action === 'tick'
+      ? { action: 'tick', date: String(d.date ?? ''), itemId: String(d.itemId ?? ''), on: d.on === true }
+      : { action: 'get' };
+  let res: Response;
+  try {
+    res = await fetch(`${LOGI_URL.value().replace(/\/+$/, '')}/api/ingest/mora/routine`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${INGEST_TOKEN.value()}` },
+      body: JSON.stringify(body),
+    });
+  } catch {
+    throw new HttpsError('unavailable', 'network');
+  }
+  const out = (await res.json().catch(() => ({}))) as { snapshot?: unknown; error?: string };
+  // An old-day tick still returns today's list, so the app can catch up.
+  if (out.snapshot) return { snapshot: out.snapshot, error: res.ok ? null : (out.error ?? `logi ${res.status}`) };
+  if (res.status === 401) throw new HttpsError('permission-denied', 'token rejected');
+  throw new HttpsError('unavailable', out.error ?? `logi ${res.status}`);
 });

@@ -5,6 +5,7 @@ import { uid } from '../core/uid';
 import { CORNERS } from '../data/corners';
 import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../core/pomodoro';
 import { liveElapsed, TAKEOVER_SEC, type LiveTimer } from '../core/liveModel';
+import { mergeRoutine, pruneHidden, type LogiRoutine } from '../core/logiTasks';
 
 export type Phase = 'focus' | 'break' | 'review';
 
@@ -34,6 +35,15 @@ interface AppStore {
   activeTask: () => Task | undefined;
   toggleTask: (id: string) => void;
   clearCompletedTasks: () => void;
+  /** Makes a task the current one (moves it first) and sets the clock to its length. Only while the clock waits. */
+  startTask: (id: string) => void;
+  /** Ids of logi tasks removed here today (synced in prefs). */
+  logiHidden: string[];
+  /** Merges a fresh logi routine into the tasks. `pending` = ticks not yet confirmed. */
+  applyLogiRoutine: (r: LogiRoutine, pending?: ReadonlyMap<string, boolean>, keepDone?: boolean) => void;
+  /** Last fetch of the logi routine, for the task sheet. Not persisted. */
+  logiSync: { state: 'idle' | 'loading' | 'ok' | 'error'; message: string; at: number };
+  setLogiSync: (s: AppStore['logiSync']) => void;
   roomBackground: 'color' | 'scene';
   setRoomBackground: (m: 'color' | 'scene') => void;
   completeActive: (elapsedSec: number) => void;
@@ -61,6 +71,7 @@ interface AppStore {
     muted?: boolean;
     logi?: LogiLink;
     hiddenScenes?: string[];
+    logiHidden?: string[];
   }) => void;
   clearSessions: () => void;
 
@@ -160,7 +171,7 @@ interface AppStore {
     notes?: Note[];
     userScenes?: UserScene[];
     userTracks?: UserTrack[];
-    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes'>> & {
+    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes' | 'logiHidden'>> & {
       sound?: Omit<SoundConfig, 'customTrackId'> & { customTrackId?: string | null };
       logi?: { enabled: boolean };
     };
@@ -169,6 +180,26 @@ interface AppStore {
 
 export interface LogiLink {
   enabled: boolean;
+}
+
+// The logi routine sync listens for ticks made here (platform/logiRoutine).
+let logiTickHandler: ((t: Task) => void) | null = null;
+export function setLogiTickHandler(fn: ((t: Task) => void) | null) {
+  logiTickHandler = fn;
+}
+function tellLogi(before: Task[], after: Task[]) {
+  if (!logiTickHandler) return;
+  const old = new Map(before.map((t) => [t.id, t.done]));
+  for (const t of after) if (t.logi && old.has(t.id) && old.get(t.id) !== t.done) logiTickHandler(t);
+}
+
+// "Read 50m", "Gym 1.5h": a planned length at the end of the name.
+function readLength(name: string): { name: string; min?: number } {
+  const m = name.match(/^(.*\S)\s+(\d{1,3})m$/i) ?? null;
+  if (m && Number(m[2]) >= 1 && Number(m[2]) <= 600) return { name: m[1], min: Number(m[2]) };
+  const h = name.match(/^(.*\S)\s+(\d(?:\.\d)?)h$/i);
+  if (h && Number(h[2]) > 0 && Number(h[2]) <= 10) return { name: h[1], min: Math.round(Number(h[2]) * 60) };
+  return { name };
 }
 
 const clamp = (v: number) => Math.max(0, Math.min(100, v));
@@ -287,13 +318,22 @@ export const useStore = create<AppStore>((set, get) => ({
     }
   },
   addTask: (name) => {
-    // "Write report ~3" adds the task with an estimate of 3 focus blocks.
+    // "Write report ~3" adds the task with an estimate of 3 focus blocks; "Read 50m" plans 50 minutes.
     const m = name.trim().match(/^(.*?)\s*~\s*(\d{1,2})$/);
-    const trimmed = (m ? m[1] : name).trim().slice(0, 200);
+    const len = readLength((m ? m[1] : name).trim());
+    const trimmed = len.name.trim().slice(0, 200);
     if (!trimmed) return;
     const est = m ? Math.max(1, Number(m[2])) : undefined;
     set((state) => {
-      const task: Task = { id: uid(), name: trimmed, done: false, createdAt: Date.now(), kind: 'learn', ...(est ? { est } : {}) };
+      const task: Task = {
+        id: uid(),
+        name: trimmed,
+        done: false,
+        createdAt: Date.now(),
+        kind: 'learn',
+        ...(est ? { est } : {}),
+        ...(len.min ? { min: len.min } : {}),
+      };
       const newTasks = [...state.tasks, task];
       const firstUndone = newTasks.find((t) => !t.done);
       return {
@@ -304,6 +344,7 @@ export const useStore = create<AppStore>((set, get) => ({
   },
   removeTask: (id) =>
     set((state) => {
+      const gone = state.tasks.find((t) => t.id === id);
       const newTasks = state.tasks.filter((t) => t.id !== id);
       const firstUndone = newTasks.find((t) => !t.done);
       return {
@@ -311,6 +352,7 @@ export const useStore = create<AppStore>((set, get) => ({
         activeTaskId: firstUndone ? firstUndone.id : null,
         ...(firstUndone ? {} : run(false)),
         sessionActive: firstUndone ? state.sessionActive : false,
+        ...(gone?.logi && !state.logiHidden.includes(id) ? { logiHidden: [...state.logiHidden, id] } : {}),
         // A removed task's time is discarded, not moved to the next task.
         ...switchPatch(state, newTasks, false),
       };
@@ -323,6 +365,7 @@ export const useStore = create<AppStore>((set, get) => ({
       const firstUndone = copy.find((t) => !t.done);
       return {
         tasks: copy,
+        logiHidden: state.logiHidden.filter((h) => h !== task.id),
         activeTaskId: firstUndone ? firstUndone.id : null,
         ...switchPatch(state, copy, true),
       };
@@ -345,10 +388,39 @@ export const useStore = create<AppStore>((set, get) => ({
       };
     }),
   activeTask: () => get().tasks.find((t) => !t.done),
+  startTask: (id) => {
+    const s = get();
+    const started = s.phase !== 'focus' || s.isRunning || s.elapsedSec > 0;
+    const from = s.tasks.findIndex((t) => t.id === id);
+    if (started || from === -1 || s.tasks[from].done) return;
+    const task = s.tasks[from];
+    if (from > 0) s.reorderTasks(from, 0);
+    if (task.min) s.setCustomDuration(task.min);
+  },
+  logiHidden: [],
+  logiSync: { state: 'idle', message: '', at: 0 },
+  setLogiSync: (logiSync) => set({ logiSync }),
+  applyLogiRoutine: (r, pending, keepDone) =>
+    set((state) => {
+      const hidden = pruneHidden(state.logiHidden, r.date);
+      const newTasks = mergeRoutine(state.tasks, r, hidden, pending, keepDone);
+      const patch: Partial<AppStore> = hidden.length !== state.logiHidden.length ? { logiHidden: hidden } : {};
+      if (newTasks === state.tasks) return patch;
+      const firstUndone = newTasks.find((t) => !t.done);
+      return {
+        ...patch,
+        tasks: newTasks,
+        activeTaskId: firstUndone ? firstUndone.id : null,
+        ...(firstUndone ? {} : run(false)),
+        sessionActive: firstUndone ? state.sessionActive : false,
+        ...switchPatch(state, newTasks, true),
+      };
+    }),
   toggleTask: (id) =>
     set((state) => {
       const newTasks = state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
       const firstUndone = newTasks.find((t) => !t.done);
+      tellLogi(state.tasks, newTasks);
       return {
         tasks: newTasks,
         activeTaskId: firstUndone ? firstUndone.id : null,
@@ -361,9 +433,12 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => {
       const newTasks = state.tasks.filter((t) => !t.done);
       const firstUndone = newTasks.find((t) => !t.done);
+      // Cleared logi tasks stay hidden for today, or the next fetch brings them back.
+      const cleared = state.tasks.filter((t) => t.done && t.logi && !state.logiHidden.includes(t.id)).map((t) => t.id);
       return {
         tasks: newTasks,
         activeTaskId: firstUndone ? firstUndone.id : null,
+        ...(cleared.length ? { logiHidden: [...state.logiHidden, ...cleared] } : {}),
       };
     }),
   completeActive: (elapsedSec) => {
@@ -373,6 +448,7 @@ export const useStore = create<AppStore>((set, get) => ({
     const session = buildSession(state, t, elapsedSec);
     const updatedTasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
     const firstUndone = updatedTasks.find((task) => !task.done);
+    tellLogi(state.tasks, updatedTasks);
     set({
       sessions: session ? [session, ...state.sessions] : state.sessions,
       focusStartedAt: null,
@@ -414,6 +490,7 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.muted !== undefined) update.muted = p.muted;
     if (p.logi !== undefined) update.logi = { enabled: p.logi.enabled === true };
     if (p.hiddenScenes !== undefined) update.hiddenScenes = p.hiddenScenes;
+    if (p.logiHidden !== undefined) update.logiHidden = p.logiHidden;
     update.runSyncAt = null;
 
     // Auto-heal activeTaskId on load: it must point at an undone task.

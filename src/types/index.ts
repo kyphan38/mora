@@ -47,6 +47,18 @@ export interface Task {
   kind?: FocusKind;     // missing = learn
   est?: number;         // estimated focus blocks
   blocks?: number;      // finished focus blocks
+  min?: number;         // planned length in minutes (sets the clock when it becomes current)
+  /** Set on tasks that come from today's logi routine. */
+  logi?: LogiLinkInfo;
+}
+
+export type LogiCategory = 'learn' | 'work' | 'fitness' | 'leisure';
+
+export interface LogiLinkInfo {
+  date: string;         // logi logical day, "YYYY-MM-DD"
+  itemId: string;
+  group: string;
+  category?: LogiCategory;
 }
 
 /** A thought parked during focus, to deal with later. */

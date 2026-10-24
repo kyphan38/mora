@@ -14,6 +14,11 @@ describe('live link: what logi hears', () => {
     ]);
   });
 
+  it('a logi routine task keeps its category in logi', () => {
+    expect(liveCalls(paused({ runId: null }), running({ taskCategory: 'fitness' }), 0)[0]).toMatchObject({ kind: 'fitness' });
+    expect(liveCalls(paused({ runId: null }), running({ taskCategory: 'nap' }), 0)[0]).toMatchObject({ kind: 'work' });
+  });
+
   it('Pause, Stop or Done stops the run at the action time', () => {
     expect(liveCalls(running(), paused(), 0)).toEqual([{ action: 'stop', runId: 'r1', endAt: 2_000_000 }]);
     expect(liveCalls(running(), { ...paused(), sessionActive: false }, 0)[0].action).toBe('stop');

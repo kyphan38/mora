@@ -29,4 +29,19 @@ export function useCloudSync() {
       stop?.();
     };
   }, [uid]);
+
+  // Today's logi routine joins the tasks while the logi link is on.
+  const logiOn = useStore((s) => s.logi.enabled);
+  useEffect(() => {
+    if (!uid || !logiOn) return;
+    let stop: (() => void) | null = null;
+    let cancelled = false;
+    void import('../platform/logiRoutine').then(({ startLogiRoutine }) => {
+      if (!cancelled) stop = startLogiRoutine();
+    });
+    return () => {
+      cancelled = true;
+      stop?.();
+    };
+  }, [uid, logiOn]);
 }

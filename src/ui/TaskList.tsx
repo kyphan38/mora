@@ -5,6 +5,8 @@ import { useStore } from '../store/useStore';
 import { UpIcon, DownIcon, CloseIcon } from './Icons';
 import { withTransition } from './viewTransition';
 import type { Task } from '../types';
+import { lengthLabel, plannedLeft } from '../core/logiTasks';
+import { formatClock } from '../core/format';
 
 // Row tools wait for the pointer; on touch screens they stay visible but faint.
 const ROW_TOOL =
@@ -140,7 +142,55 @@ function SwipeRow({ onDone, onDelete, children }: { onDone: () => void; onDelete
   );
 }
 
-export function TaskList() {
+/** Done share as a hairline that fills with scaleX, plus what is left to plan for. */
+function TaskSummary({ tasks }: { tasks: Task[] }) {
+  const done = tasks.filter((t) => t.done).length;
+  const planned = plannedLeft(tasks);
+  return (
+    <div className="mb-3" data-testid="task-summary">
+      <div className="flex items-baseline justify-between font-mono text-[11px] text-faint tabular-nums">
+        <span>
+          {done} of {tasks.length} done
+        </span>
+        {planned > 0 && <span aria-label="Planned time left">{lengthLabel(planned)} left</span>}
+      </div>
+      <div className="mt-1.5 h-px w-full overflow-hidden bg-line" aria-hidden="true">
+        <div
+          className="h-px origin-left bg-ink transition-transform duration-300 ease-[var(--ease-soft)]"
+          style={{ transform: `scaleX(${tasks.length ? done / tasks.length : 0})` }}
+          data-testid="task-progress"
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Length, blocks and where a task came from, after the kind in the line under the name. */
+function taskMeta(t: Task): string[] {
+  const parts: string[] = [];
+  if (t.min) parts.push(lengthLabel(t.min));
+  if (t.est || t.blocks) parts.push(`${t.blocks ?? 0}${t.est ? `/${t.est}` : ''} blocks`);
+  if (t.logi) parts.push(t.logi.group ? `logi · ${t.logi.group}` : 'logi');
+  return parts;
+}
+
+function LogiLine() {
+  const on = useStore((s) => s.logi.enabled);
+  const sync = useStore((s) => s.logiSync);
+  if (!on || sync.state === 'idle') return null;
+  return (
+    <p className={`fade-in mt-1 flex items-center gap-2 font-mono text-[11px] ${sync.state === 'error' ? 'text-ink' : 'text-faint'}`} data-testid="logi-sync">
+      {sync.state === 'loading' && <span className="breathe h-1 w-1 rounded-full bg-faint" aria-hidden="true" />}
+      {sync.state === 'loading' ? 'logi' : sync.state === 'error' ? `logi · ${sync.message}` : `logi · ${formatClock(sync.at)}`}
+    </p>
+  );
+}
+
+/**
+ * `onStart` makes a task the current one and starts the clock (only while the
+ * clock waits; otherwise moving a task first would switch the running block).
+ */
+export function TaskList({ onStart }: { onStart?: (id: string) => void } = {}) {
   const tasks = useStore((s) => s.tasks);
   const addTask = useStore((s) => s.addTask);
   const toggleTask = useStore((s) => s.toggleTask);
@@ -151,6 +201,7 @@ export function TaskList() {
   const notes = useStore((s) => s.notes);
   const noteToTask = useStore((s) => s.noteToTask);
   const removeNote = useStore((s) => s.removeNote);
+  const clockWaits = useStore((s) => s.phase === 'focus' && !s.isRunning && s.elapsedSec === 0);
   const [draft, setDraft] = useState('');
   const [leaving, setLeaving] = useState<string | null>(null);
   const restoreTask = useStore((s) => s.restoreTask);
@@ -185,6 +236,7 @@ export function TaskList() {
 
   return (
     <section aria-label="Task list">
+      {tasks.length > 0 && <TaskSummary tasks={tasks} />}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -196,65 +248,89 @@ export function TaskList() {
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           autoFocus={tasks.length === 0}
-          placeholder="Add a task…  (~3 = three blocks)"
+          placeholder="Add a task…  (50m, ~3 blocks)"
           aria-label="Add a task"
           className="w-full border-b border-line bg-transparent py-2 text-[15px] transition-colors placeholder:text-faint focus:border-line-strong"
         />
       </form>
 
       <ul className="mt-1">
-        {tasks.map((t, i) => (
-          <li key={t.id} ref={flip(t.id)} className={`task-row group ${leaving === t.id ? 'row-out' : 'rise'}`}>
-            <SwipeRow onDone={() => toggle(t.id)} onDelete={() => swipeDelete(t, i)}>
-              <TaskCheck done={t.done} onToggle={() => toggle(t.id)} name={t.name} />
-              <TaskName done={t.done} name={t.name} active={t.id === activeId} />
-              {t.id === activeId && <span className="shrink-0 font-mono text-[11px] text-faint">now</span>}
-              <span className="flex-1" />
-              {(t.est || t.blocks) && (
-                <span className="shrink-0 font-mono text-[11px] text-faint" aria-label="Blocks done">
-                  {t.blocks ?? 0}
-                  {t.est ? `/${t.est}` : ''}
+        {tasks.map((t, i) => {
+          const meta = taskMeta(t);
+          const isActive = t.id === activeId;
+          return (
+            <li key={t.id} ref={flip(t.id)} className={`task-row group ${leaving === t.id ? 'row-out' : 'rise'}`}>
+              <SwipeRow onDone={() => toggle(t.id)} onDelete={() => swipeDelete(t, i)}>
+                <TaskCheck done={t.done} onToggle={() => toggle(t.id)} name={t.name} />
+                <span className="flex min-w-0 flex-1 flex-col">
+                  <TaskName done={t.done} name={t.name} active={isActive} />
+                  <span
+                    className={`truncate font-mono text-[11px] text-faint transition-opacity ${t.done ? 'opacity-60' : ''}`}
+                    data-testid="task-meta"
+                  >
+                    {isActive && <span className="text-ink">now </span>}
+                    {t.logi ? (
+                      <span>{t.logi.category ?? t.kind ?? 'learn'}</span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setTaskKind(t.id, (t.kind ?? 'learn') === 'learn' ? 'work' : 'learn')}
+                        className="hover:text-ink"
+                        aria-label={`Kind of ${t.name}: ${t.kind ?? 'learn'}`}
+                      >
+                        {t.kind ?? 'learn'}
+                      </button>
+                    )}
+                    {meta.length > 0 && ` · ${meta.join(' · ')}`}
+                  </span>
                 </span>
-              )}
-              <button
-                type="button"
-                onClick={() => setTaskKind(t.id, (t.kind ?? 'learn') === 'learn' ? 'work' : 'learn')}
-                className="w-9 shrink-0 text-right font-mono text-[11px] text-faint hover:text-ink"
-                aria-label={`Kind of ${t.name}: ${t.kind ?? 'learn'}`}
-              >
-                {t.kind ?? 'learn'}
-              </button>
-              <button
-                type="button"
-                className={ROW_TOOL}
-                onClick={() => reorderTasks(i, i - 1)}
-                disabled={i === 0}
-                aria-label={`Move ${t.name} up`}
-                data-testid={`room-task-move-up-${i}`}
-              >
-                <UpIcon />
-              </button>
-              <button
-                type="button"
-                className={ROW_TOOL}
-                onClick={() => reorderTasks(i, i + 1)}
-                disabled={i === tasks.length - 1}
-                aria-label={`Move ${t.name} down`}
-                data-testid={`room-task-move-down-${i}`}
-              >
-                <DownIcon />
-              </button>
-              <button type="button" className={ROW_TOOL} onClick={() => remove(t.id)} aria-label={`Remove ${t.name}`}>
-                <CloseIcon />
-              </button>
-            </SwipeRow>
-          </li>
-        ))}
+                {onStart && (
+                  // A fixed slot keeps the row tools in line.
+                  <span className="flex w-9 shrink-0 justify-end">
+                    {clockWaits && !t.done && (
+                      <button
+                        type="button"
+                        className={`${isActive ? '' : ROW_TOOL} text-[12px] text-faint hover:text-ink active:scale-[0.97]`}
+                        onClick={() => onStart(t.id)}
+                        aria-label={`Start ${t.name}`}
+                      >
+                        start
+                      </button>
+                    )}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  className={ROW_TOOL}
+                  onClick={() => reorderTasks(i, i - 1)}
+                  disabled={i === 0}
+                  aria-label={`Move ${t.name} up`}
+                  data-testid={`room-task-move-up-${i}`}
+                >
+                  <UpIcon />
+                </button>
+                <button
+                  type="button"
+                  className={ROW_TOOL}
+                  onClick={() => reorderTasks(i, i + 1)}
+                  disabled={i === tasks.length - 1}
+                  aria-label={`Move ${t.name} down`}
+                  data-testid={`room-task-move-down-${i}`}
+                >
+                  <DownIcon />
+                </button>
+                <button type="button" className={ROW_TOOL} onClick={() => remove(t.id)} aria-label={`Remove ${t.name}`}>
+                  <CloseIcon />
+                </button>
+              </SwipeRow>
+            </li>
+          );
+        })}
       </ul>
 
       {undo && (
         <div className="fade-in mt-2 flex items-baseline gap-3 text-[12px] text-faint" data-testid="task-undo">
-          <span>deleted</span>
+          <span>{undo.task.logi ? 'hidden for today' : 'deleted'}</span>
           <span>·</span>
           <button
             type="button"
@@ -284,6 +360,7 @@ export function TaskList() {
           )}
         </div>
       )}
+      <LogiLine />
 
       {notes.length > 0 && (
         <div className="mt-6" aria-label="Parked thoughts">

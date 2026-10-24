@@ -1,7 +1,7 @@
 // Pure helpers for syncing the store with Firestore: doc shapes, diffs, merge.
 // No Firebase here, so the rules of sync are easy to test.
 
-import type { Note, Session, SoundConfig, SessionSetup, Task, UserScene, UserTrack } from '../types';
+import type { LogiCategory, LogiLinkInfo, Note, Session, SoundConfig, SessionSetup, Task, UserScene, UserTrack } from '../types';
 
 export type Doc = Record<string, unknown>;
 
@@ -15,6 +15,19 @@ function clean(d: Doc): Doc {
 
 // ---- tasks: array order lives in `order` ----
 
+const CATEGORIES: readonly string[] = ['learn', 'work', 'fitness', 'leisure'];
+
+function readLogi(v: unknown): LogiLinkInfo | undefined {
+  const l = v as Record<string, unknown> | undefined;
+  if (!l || typeof l.date !== 'string' || typeof l.itemId !== 'string') return undefined;
+  return clean({
+    date: l.date,
+    itemId: l.itemId,
+    group: String(l.group ?? ''),
+    category: CATEGORIES.includes(String(l.category)) ? (l.category as LogiCategory) : undefined,
+  }) as unknown as LogiLinkInfo;
+}
+
 export function taskToDoc(t: Task, order: number): Doc {
   return clean({
     name: t.name.slice(0, MAX_NAME),
@@ -24,6 +37,8 @@ export function taskToDoc(t: Task, order: number): Doc {
     kind: t.kind,
     est: t.est,
     blocks: t.blocks,
+    min: t.min,
+    logi: t.logi ? clean({ ...t.logi }) : undefined,
   });
 }
 
@@ -40,6 +55,8 @@ export function tasksFromDocs(docs: { id: string; data: Doc }[]): Task[] {
         kind: data.kind === 'work' ? 'work' : data.kind === 'learn' ? 'learn' : undefined,
         est: typeof data.est === 'number' ? data.est : undefined,
         blocks: typeof data.blocks === 'number' ? data.blocks : undefined,
+        min: typeof data.min === 'number' ? data.min : undefined,
+        logi: readLogi(data.logi),
       }) as unknown as Task,
     );
 }
@@ -134,6 +151,8 @@ export interface SyncedPrefs {
   dailyGoalMin: number;
   logiEnabled: boolean;
   hiddenScenes: string[];
+  /** Ids of logi tasks removed in mora today, so the next fetch does not bring them back. */
+  logiHidden: string[];
 }
 
 export function prefsToDoc(p: SyncedPrefs): Doc {

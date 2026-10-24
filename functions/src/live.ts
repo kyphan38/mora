@@ -8,6 +8,8 @@ export interface LiveDoc {
   runId?: string | null;
   taskName?: string;
   taskKind?: string;
+  /** Category of a logi routine item, so logi files the run under it. */
+  taskCategory?: string | null;
   anchorAt?: number | null;
   elapsedBase?: number;
   focusStartedAt?: number | null;
@@ -16,8 +18,11 @@ export interface LiveDoc {
   [k: string]: unknown;
 }
 
+export type LogiKind = 'learn' | 'work' | 'fitness' | 'leisure';
+const KINDS: readonly string[] = ['learn', 'work', 'fitness', 'leisure'];
+
 export type LogiCall =
-  | { action: 'start'; runId: string; kind: 'learn' | 'work'; label: string; startAt: number }
+  | { action: 'start'; runId: string; kind: LogiKind; label: string; startAt: number }
   | { action: 'stop'; runId: string; endAt: number };
 
 const runningFocus = (l: LiveDoc | undefined): l is LiveDoc & { runId: string } =>
@@ -39,7 +44,7 @@ export function liveCalls(before: LiveDoc | undefined, after: LiveDoc | undefine
     calls.push({
       action: 'start',
       runId: a.runId,
-      kind: a.taskKind === 'work' ? 'work' : 'learn',
+      kind: KINDS.includes(String(a.taskCategory)) ? (a.taskCategory as LogiKind) : a.taskKind === 'work' ? 'work' : 'learn',
       label: String(a.taskName ?? '').slice(0, 120),
       startAt: typeof a.anchorAt === 'number' ? a.anchorAt : (a.at ?? now),
     });

@@ -86,6 +86,14 @@ export function FocusView() {
     setFullscreen(next);
   };
 
+  // A task with a planned length sets the clock when it becomes current.
+  const activeMin = active?.min;
+  useEffect(() => {
+    if (idle && activeMin && activeMin * 60 !== useStore.getState().setup.durationSec) setCustomDuration(activeMin);
+    // Only when the current task or the waiting state changes, so a drag on the ring still wins.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.id, idle]);
+
   const playPause = () => {
     if (!canPlay) return;
     // The first Play starts a session; play() runs inside the tap for autoplay rules.
@@ -118,6 +126,24 @@ export function FocusView() {
   }, [nameFlash, corner?.id]);
   const swipe = useSceneSwipe(scene && sheet === null && phase !== 'review', stepScene);
 
+  // Start from the task sheet: that task first, its length on the clock, then Play.
+  const startFromList = (id: string) => {
+    useStore.getState().startTask(id);
+    setSheet(null);
+    if (useStore.getState().isRunning) return;
+    if (!useStore.getState().sessionActive) {
+      startFocus();
+      askNotificationPermissionOnce();
+    }
+    getAudioEngine().play();
+    setIsRunning(true);
+  };
+
+  const openTasks = () => {
+    setSheet('tasks');
+    if (useStore.getState().logi.enabled) void import('../platform/logiRoutine').then((m) => m.refreshLogiRoutine());
+  };
+
   const closeSheet = () => {
     if (sheet === 'sound' && !useStore.getState().isRunning) getAudioEngine().pause();
     setSheet(null);
@@ -130,7 +156,7 @@ export function FocusView() {
       s: () => isBreak && finishBreak(),
       z: toggleZen,
       Escape: () => zen && toggleZen(),
-      n: () => setSheet('tasks'),
+      n: () => openTasks(),
       q: () => setSheet('note'),
       m: () => setMuted(!muted),
       h: () => setScreen('history'),
@@ -178,7 +204,7 @@ export function FocusView() {
                 </span>
               </p>
             ) : (
-              <button type="button" className="text-[14px] text-faint hover:text-ink" onClick={() => setSheet('tasks')}>
+              <button type="button" className="text-[14px] text-faint hover:text-ink" onClick={() => openTasks()}>
                 Add a task to begin
               </button>
             )}
@@ -202,7 +228,7 @@ export function FocusView() {
               </div>
             )}
             {isBreak && notes.length > 0 && (
-              <button type="button" className={WORD} onClick={() => setSheet('tasks')}>
+              <button type="button" className={WORD} onClick={() => openTasks()}>
                 {notes.length} parked {notes.length === 1 ? 'thought' : 'thoughts'}
               </button>
             )}
@@ -261,7 +287,7 @@ export function FocusView() {
           <button
             type="button"
             className="px-3 py-2 text-[13px] text-faint hover:text-ink"
-            onClick={() => setSheet('tasks')}
+            onClick={() => openTasks()}
             data-testid="tasks-toggle-btn"
           >
             {left === 0 ? 'tasks' : `${left} ${left === 1 ? 'task' : 'tasks'}`}
@@ -282,7 +308,7 @@ export function FocusView() {
       )}
 
       <Sheet open={sheet === 'tasks'} label="Tasks" onClose={closeSheet} testId="tasks-sheet">
-        <TaskList />
+        <TaskList onStart={startFromList} />
       </Sheet>
       <SoundSheet open={sheet === 'sound'} onClose={closeSheet} />
       <NoteSheet open={sheet === 'note'} onClose={closeSheet} />

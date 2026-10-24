@@ -25,6 +25,8 @@ export interface LiveTimer {
   runId: string | null;
   taskName: string;
   taskKind: 'learn' | 'work';
+  /** Category of a logi routine task, so logi files the run under it. */
+  taskCategory?: string | null;
   /** Wall-clock ms of the action that wrote this. */
   at: number;
   /** Set by the server when logi stopped the run, so it is not sent back. */
@@ -44,7 +46,7 @@ export interface RuntimeSlice {
   focusStartedAt: number | null;
   lastEvent: LiveTimer['event'];
   runId: string | null;
-  tasks: { name: string; done: boolean; kind?: 'learn' | 'work' }[];
+  tasks: { name: string; done: boolean; kind?: 'learn' | 'work'; logi?: { category?: string } }[];
 }
 
 /** Snapshot of this device's timer, anchored at `now`. */
@@ -69,6 +71,7 @@ export function toLive(s: RuntimeSlice, deviceId: string, now: number): LiveTime
     runId: s.runId,
     taskName: active?.name ?? '',
     taskKind: active?.kind ?? 'learn',
+    taskCategory: active?.logi?.category ?? null,
     at: now,
     stoppedBy: null,
   };

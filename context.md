@@ -178,6 +178,23 @@ logi's `moraStopped`, which calls mora's `stopFromLogi` (token
 saved. Rules in `functions/src/live.ts` (tested from src/test). Status in
 `users/{uid}/meta/logi`.
 
+Routine (same switch): today's logi routine joins the task list.
+`platform/logiRoutine.ts` calls the callable `logiRoutine`, which posts to
+logi `/api/ingest/mora/routine` (`get` or `tick`, same token). Pulled on
+start, on return to the front, every 3 min while visible and when the task
+sheet opens. Merge rules in `core/logiTasks.ts`: task id
+`logi-<date>-<itemId>`, mora keeps its own order, other days and removed
+items go, removed/cleared ones stay hidden for today (`logiHidden`, synced
+in prefs). A tick here (`toggleTask`, review done) is sent at once and wins
+over fetches until logi confirms. A routine item's category goes to logi as
+`taskCategory`, so a Gym run is filed as fitness.
+
+Task sheet: done share as a hairline (`scaleX`), planned time left, a line
+under each name (now, kind, length, blocks, logi group), `start` while the
+clock waits (moves the task first, sets its length, plays). Typing "Read
+50m" or "Gym 1.5h" plans a length; a task with a length sets the clock when
+it becomes current.
+
 ## Commands
 
 - `npm run dev` web dev server (port 1420)
