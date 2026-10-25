@@ -1,4 +1,4 @@
-import { ambientUrl, musicUrl } from '../data/audioManifest';
+import { ambientUrl, idleUrl, musicUrl } from '../data/audioManifest';
 import { cachedObjectUrl, saveForLater } from './mediaCache';
 
 export interface AudioEngine {
@@ -7,6 +7,13 @@ export interface AudioEngine {
   setMusicUrl(url: string | null): void;
   setAmbientVolume(gain: number): void;
   setMusicVolume(gain: number): void;
+  /** Waiting-screen music; null for none. */
+  setIdle(name: string | null): void;
+  setIdleVolume(gain: number): void;
+  /** True while no session is active, so the idle music may play. */
+  setIdleWanted(wanted: boolean): void;
+  /** True while the sound sheet is open: idle music stays quiet so picks can be heard. */
+  holdIdle(hold: boolean): void;
   play(): void;
   pause(): void;
   chime(): void;
@@ -19,6 +26,10 @@ export const noopAudioEngine: AudioEngine = {
   setMusicUrl: () => {},
   setAmbientVolume: () => {},
   setMusicVolume: () => {},
+  setIdle: () => {},
+  setIdleVolume: () => {},
+  setIdleWanted: () => {},
+  holdIdle: () => {},
   play: () => {},
   pause: () => {},
   chime: () => {},
@@ -58,16 +69,23 @@ export function createAudioEngine(): AudioEngine {
     target: number;
     timer: ReturnType<typeof setInterval> | null;
     swapping: boolean;
+    /** Whether this channel should be sounding right now. */
+    live: () => boolean;
   }
 
-  const makeChannel = (): Channel => {
+  let playing = false;
+  let idleWanted = false;
+  let idleHeld = false;
+
+  const makeChannel = (live: () => boolean): Channel => {
     const el = new Audio();
     el.loop = true;
-    return { el, key: '', target: 1, timer: null, swapping: false };
+    return { el, key: '', target: 1, timer: null, swapping: false, live };
   };
-  const ambient = makeChannel();
-  const music = makeChannel();
-  let playing = false;
+  const ambient = makeChannel(() => playing);
+  const music = makeChannel(() => playing);
+  // The idle channel gives way to the session sound and to any preview.
+  const idle = makeChannel(() => idleWanted && !idleHeld && !playing);
 
   const stopFade = (c: Channel) => {
     if (c.timer) clearInterval(c.timer);
@@ -134,16 +152,16 @@ export function createAudioEngine(): AudioEngine {
   const setSource = (c: Channel, key: string, src: string, autoplay: boolean) => {
     if (key === c.key) return;
     c.key = key;
-    if (!playing || !c.el.src) {
+    if (!c.live() || !c.el.src) {
       c.el.src = src;
-      if (playing && autoplay) startChannel(c);
+      if (c.live() && autoplay) startChannel(c);
       return;
     }
     c.swapping = true;
     fade(c, 0, SWAP_MS, () => {
       c.swapping = false;
       c.el.src = src;
-      if (playing && autoplay) startChannel(c);
+      if (c.live() && autoplay) startChannel(c);
     });
   };
 
@@ -160,12 +178,12 @@ export function createAudioEngine(): AudioEngine {
       return;
     }
     // Back from 0 while playing: start again with the usual fade in.
-    if (wasSilent && playing && !c.swapping) {
+    if (wasSilent && c.live() && !c.swapping) {
       startChannel(c);
       return;
     }
     // A running fade reads the live target; otherwise apply now.
-    if (!c.timer && !c.swapping && (playing || c.el.paused !== false)) {
+    if (!c.timer && !c.swapping && (c.live() || c.el.paused !== false)) {
       try {
         c.el.volume = c.target;
       } catch {
@@ -173,6 +191,27 @@ export function createAudioEngine(): AudioEngine {
       }
     }
   };
+
+  // Starts or fades out the idle music to match its live state.
+  const syncIdle = () => {
+    if (idle.live()) {
+      if (idle.el.paused !== false || idle.timer) startChannel(idle);
+      return;
+    }
+    if (!idle.el.src || idle.el.paused !== false) return;
+    fade(idle, 0, FADE_OUT_MS, () => {
+      if (!idle.live()) idle.el.pause();
+    });
+  };
+
+  // Browsers block sound before the first tap; try the idle music again then.
+  if (typeof window !== 'undefined') {
+    const retry = () => {
+      if (idle.live() && idle.el.paused !== false) startChannel(idle);
+    };
+    window.addEventListener('pointerdown', retry, true);
+    window.addEventListener('keydown', retry, true);
+  }
 
   const engine: AudioEngine = {
     setAmbient(name: string) {
@@ -200,8 +239,34 @@ export function createAudioEngine(): AudioEngine {
       setTarget(music, gain);
     },
 
+    setIdle(name: string | null) {
+      if ((name ?? '') === idle.key) return;
+      if (name) resolve(idle, name, idleUrl(name), true);
+      else {
+        stopFade(idle);
+        idle.key = '';
+        idle.el.pause();
+        idle.el.removeAttribute('src');
+      }
+    },
+
+    setIdleVolume(gain: number) {
+      setTarget(idle, gain);
+    },
+
+    setIdleWanted(wanted: boolean) {
+      idleWanted = wanted;
+      syncIdle();
+    },
+
+    holdIdle(hold: boolean) {
+      idleHeld = hold;
+      syncIdle();
+    },
+
     play() {
       playing = true;
+      syncIdle();
       startChannel(ambient);
       startChannel(music);
     },
@@ -214,6 +279,7 @@ export function createAudioEngine(): AudioEngine {
           if (!playing) c.el.pause();
         });
       }
+      syncIdle();
     },
 
     chime() {
@@ -259,7 +325,8 @@ export function createAudioEngine(): AudioEngine {
 
     dispose() {
       playing = false;
-      for (const c of [ambient, music]) {
+      idleWanted = false;
+      for (const c of [ambient, music, idle]) {
         stopFade(c);
         c.el.pause();
       }

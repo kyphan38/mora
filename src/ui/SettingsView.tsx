@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { loadTheme, saveTheme, type Theme } from '../platform/prefs';
 import { Words, Label } from './Words';
 import { LogiSettings } from './LogiSettings';
+import { DEFAULT_IDLE_TRACK, DEFAULT_IDLE_VOLUME, IDLE_OFF, IDLE_TRACKS } from '../data/sound';
 import { useAuth, signOut } from '../platform/auth';
 
 const KEYS: [string, string][] = [
@@ -26,6 +27,10 @@ export function SettingsView() {
   const dailyGoalMin = useStore((s) => s.dailyGoalMin);
   const setDailyGoal = useStore((s) => s.setDailyGoal);
   const clearSessions = useStore((s) => s.clearSessions);
+  const idleTrack = useStore((s) => s.sound.idleTrack ?? DEFAULT_IDLE_TRACK);
+  const idleVolume = useStore((s) => s.sound.idleVolume ?? DEFAULT_IDLE_VOLUME);
+  const setIdleTrack = useStore((s) => s.setIdleTrack);
+  const setIdleVolume = useStore((s) => s.setIdleVolume);
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [confirmClear, setConfirmClear] = useState(false);
   const user = useAuth((s) => s.user);
@@ -63,6 +68,31 @@ export function SettingsView() {
             onChange={setRoomBackground}
           />
         </div>
+      </section>
+
+      <section>
+        <Label>waiting music</Label>
+        <Words
+          label="Waiting music"
+          options={[
+            { value: IDLE_OFF, label: 'off' },
+            ...IDLE_TRACKS.map((t) => ({ value: t, label: t })),
+          ]}
+          value={idleTrack}
+          onChange={setIdleTrack}
+        />
+        {idleTrack !== IDLE_OFF && (
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={idleVolume}
+            onChange={(e) => setIdleVolume(Number(e.target.value))}
+            aria-label="Waiting music volume"
+            className="mt-3 w-full"
+          />
+        )}
+        <p className="mt-2 text-[13px] text-faint">Plays before a session. Stops when you start or open sound.</p>
       </section>
 
       <section>

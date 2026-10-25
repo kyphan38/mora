@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createAudioEngine, resetAudioEngineInstanceForTest } from '../platform/audio';
-import { ambientUrl, musicUrl } from '../data/audioManifest';
+import { ambientUrl, idleUrl, musicUrl } from '../data/audioManifest';
 
 class MockHTMLAudioElement {
   src = '';
@@ -8,6 +8,7 @@ class MockHTMLAudioElement {
   loop = false;
   play = vi.fn().mockResolvedValue(undefined);
   pause = vi.fn();
+  removeAttribute = vi.fn();
 }
 
 describe('AudioEngine unit tests', () => {
@@ -51,7 +52,7 @@ describe('AudioEngine unit tests', () => {
     engine.setMusic('Nature');
 
     const audioCalls = (window.Audio as any).mock.results;
-    expect(audioCalls.length).toBe(2);
+    expect(audioCalls.length).toBe(3);
 
     const ambientMock = audioCalls[0].value;
     const musicMock = audioCalls[1].value;
@@ -161,5 +162,43 @@ describe('AudioEngine unit tests', () => {
     engine.setAmbientVolume(0.5);
     expect(ambientMock.muted).toBe(false);
     expect(ambientMock.play).toHaveBeenCalled();
+  });
+
+  it('idle music plays only while waiting, and gives way to a session or the sound sheet', () => {
+    vi.useFakeTimers();
+    try {
+      const engine = createAudioEngine();
+      engine.setIdle('Drift');
+      engine.setIdleVolume(0.2);
+      const idleMock = (window.Audio as any).mock.results[2].value;
+      expect(idleMock.src).toBe(idleUrl('Drift'));
+      expect(idleMock.play).not.toHaveBeenCalled();
+
+      engine.setIdleWanted(true);
+      expect(idleMock.play).toHaveBeenCalledTimes(1);
+      idleMock.paused = false;
+
+      // A session (or a preview) starts: the idle music fades out and pauses.
+      engine.play();
+      vi.advanceTimersByTime(1000);
+      expect(idleMock.pause).toHaveBeenCalled();
+      idleMock.paused = true;
+
+      // Back to waiting: it comes back.
+      engine.pause();
+      expect(idleMock.play).toHaveBeenCalledTimes(2);
+      idleMock.paused = false;
+
+      // The sound sheet holds it quiet.
+      idleMock.pause.mockClear();
+      engine.holdIdle(true);
+      vi.advanceTimersByTime(1000);
+      expect(idleMock.pause).toHaveBeenCalled();
+      idleMock.paused = true;
+      engine.holdIdle(false);
+      expect(idleMock.play).toHaveBeenCalledTimes(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

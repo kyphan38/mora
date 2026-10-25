@@ -86,6 +86,8 @@ export interface SoundConfig {
   ambientVolume: number; // 0..100
   musicVolume: number;   // 0..100
   customTrackId: string | null; // id of the selected custom uploaded track, takes precedence over musicStyle when set
+  idleTrack?: string;    // waiting-screen music: a name from IDLE_TRACKS or 'off'
+  idleVolume?: number;   // 0..100
 }
 
 export interface CustomTrack {

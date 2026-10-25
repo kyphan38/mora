@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { AMBIENTS } from '../data/sound';
 import { getAudioEngine } from '../platform/audio';
@@ -17,6 +18,12 @@ export function SoundSheet({ open, onClose }: { open: boolean; onClose: () => vo
   const setMuted = useStore((s) => s.setMuted);
 
   const preview = () => getAudioEngine().play();
+
+  // The waiting-screen music steps aside while sound is being picked.
+  useEffect(() => {
+    getAudioEngine().holdIdle(open);
+    return () => getAudioEngine().holdIdle(false);
+  }, [open]);
 
   return (
     <Sheet open={open} label="Sound and scene" onClose={onClose} testId="room-settings-panel">

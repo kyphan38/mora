@@ -22,6 +22,8 @@ interface AppStore {
   setMusicStyle: (name: string) => void;
   setAmbientVolume: (v: number) => void;
   setMusicVolume: (v: number) => void;
+  setIdleTrack: (name: string) => void;
+  setIdleVolume: (v: number) => void;
   customTracks: CustomTrack[];
   addCustomTrack: (track: CustomTrack) => void;
   selectCustomTrack: (id: string) => void;
@@ -296,6 +298,10 @@ export const useStore = create<AppStore>((set, get) => ({
     set((state) => ({ sound: { ...state.sound, ambientVolume: clamp(v) } })),
   setMusicVolume: (v) =>
     set((state) => ({ sound: { ...state.sound, musicVolume: clamp(v) } })),
+  setIdleTrack: (name) =>
+    set((state) => ({ sound: { ...state.sound, idleTrack: name } })),
+  setIdleVolume: (v) =>
+    set((state) => ({ sound: { ...state.sound, idleVolume: clamp(v) } })),
   addCustomTrack: (track) => set(() => ({ customTracks: [track] })),
   selectCustomTrack: (id) =>
     set((state) => ({ sound: { ...state.sound, customTrackId: id } })),

@@ -97,6 +97,13 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
   `platform/audio.ts`.
   A level of 0 (slider or sound off) sets `muted` and pauses the channel:
   iPhone Safari ignores `volume` writes.
+- Waiting music: a third engine channel (`setIdle`, `setIdleWanted`,
+  `holdIdle`) loops a track from `IDLE_TRACKS` (`data/sound.ts`) while no
+  session is active. It fades out on Play, on any preview and while the
+  sound sheet is open, and back in after Stop. Picked in Settings
+  (`sound.idleTrack`, `'off'` or a name; `sound.idleVolume`, synced). Before
+  the first tap the browser blocks it; the engine retries on the first
+  pointer or key press.
 - Duration words stay on one line: a dragged, non-preset length takes the
   place of `custom` (tap it to type minutes).
 
@@ -221,7 +228,7 @@ Scene video is saved on the device after the first play
 `users/{uid}/audio/`, Firestore `users/{uid}/tracks`; the chosen track id
 syncs in prefs; a device-saved track (IndexedDB) moves up once
 (`migrateLocalTrack`).
-Sounds: Cloud Storage `defaults/audio/ambient|music/<slug>.mp3` (slug from
+Sounds: Cloud Storage `defaults/audio/ambient|music|background/<slug>.mp3` (slug from
 `core/soundFormat.slug`), staged in `media/audio/`, uploaded with
 `scripts/upload-defaults.sh audio`; the engine plays the device copy when
 saved (same cache as scenes). Missing files degrade to a

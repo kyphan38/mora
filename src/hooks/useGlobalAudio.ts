@@ -3,6 +3,7 @@ import { useStore, shouldPlayAudio } from '../store/useStore';
 import { getAudioEngine } from '../platform/audio';
 import { volumeToGain } from '../core/soundFormat';
 import { getCustomTrack } from '../platform/customTrackDb';
+import { DEFAULT_IDLE_TRACK, DEFAULT_IDLE_VOLUME, IDLE_OFF, IDLE_TRACKS } from '../data/sound';
 
 /** A track still saved on this device from before cloud tracks (moves up once). */
 const customTracksLocal = (id: string) => useStore.getState().customTracks.some((t) => t.id === id);
@@ -24,6 +25,10 @@ export function useGlobalAudio() {
   const cloudUrl = useStore((s) => (customTrackId ? (s.userTracks.find((t) => t.id === customTrackId)?.url ?? '') : ''));
   const tracksLoaded = useStore((s) => s.userTracks.length > 0);
   const active = useStore(shouldPlayAudio);
+  const idleTrack = useStore((s) => s.sound.idleTrack ?? DEFAULT_IDLE_TRACK);
+  const idleVolume = useStore((s) => s.sound.idleVolume ?? DEFAULT_IDLE_VOLUME);
+  // The waiting screen: no session yet (or it was stopped). A paused session stays quiet.
+  const waiting = useStore((s) => !s.sessionActive && !s.isRunning);
 
   useEffect(() => {
     getAudioEngine().setAmbient(ambient);
@@ -73,4 +78,16 @@ export function useGlobalAudio() {
     if (active) engine.play();
     else engine.pause();
   }, [active]);
+
+  useEffect(() => {
+    getAudioEngine().setIdle(IDLE_TRACKS.includes(idleTrack) ? idleTrack : idleTrack === IDLE_OFF ? null : DEFAULT_IDLE_TRACK);
+  }, [idleTrack]);
+
+  useEffect(() => {
+    getAudioEngine().setIdleVolume(muted ? 0 : volumeToGain(idleVolume));
+  }, [idleVolume, muted]);
+
+  useEffect(() => {
+    getAudioEngine().setIdleWanted(waiting);
+  }, [waiting]);
 }
