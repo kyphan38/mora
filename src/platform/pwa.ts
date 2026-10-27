@@ -58,3 +58,44 @@ export async function setScreenAwake(on: boolean): Promise<void> {
 export function wakeLockLost(): void {
   sentinel = null;
 }
+
+const ENTRY = /\/assets\/index-[^"']+\.js/;
+
+/** The entry script of a page, like /assets/index-C9WnuUGy.js. Vite hashes it per build. */
+export function buildId(html: string): string | null {
+  return html.match(ENTRY)?.[0] ?? null;
+}
+
+/** The build this page is running, or null in dev (no hashed entry). */
+export function runningBuild(): string | null {
+  if (!isWeb()) return null;
+  const s = document.querySelector<HTMLScriptElement>('script[type="module"][src*="/assets/index-"]');
+  return s ? buildId(new URL(s.src).pathname) : null;
+}
+
+/**
+ * Asks the server for the page and reports whether a newer build is out.
+ * When it is, the fresh page also goes into the service worker cache: the
+ * worker answers a reload from its cache first, so without this the reload
+ * would open the old build again.
+ */
+export async function checkForNewBuild(): Promise<boolean> {
+  const running = runningBuild();
+  if (!running) return false;
+  try {
+    const res = await fetch('/', { cache: 'no-store' });
+    if (!res.ok) return false;
+    const latest = buildId(await res.clone().text());
+    if (!latest || latest === running) return false;
+    if ('caches' in window) {
+      for (const key of await caches.keys()) {
+        if (key.startsWith('mora-')) await (await caches.open(key)).put('/', res.clone());
+      }
+    }
+    void navigator.serviceWorker?.getRegistration?.().then((r) => r?.update());
+    return true;
+  } catch {
+    // Offline: try again later.
+    return false;
+  }
+}

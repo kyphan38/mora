@@ -117,6 +117,11 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
 - `platform/pwa.ts`: register the SW (production only),
   ask for persistent storage, ask notification permission on the first
   Play, hold a screen wake lock while running.
+- `hooks/useAppUpdate.ts`: a home-screen app can stay open for days. Every
+  30 min and on return to the front it fetches `/` and compares the
+  hashed entry script with the running one. On a new build it puts the
+  fresh page in the SW cache, then reloads the first time the timer is
+  idle (focus phase, not running, 0 elapsed, no sheet, no text field).
 - Notifications on the web go through the SW registration when there is
   one (needed for iOS home-screen apps).
 

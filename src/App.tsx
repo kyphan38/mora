@@ -3,6 +3,7 @@ import { useStore } from './store/useStore';
 import type { Corner } from './types';
 import { useGlobalAudio } from './hooks/useGlobalAudio';
 import { useSessionRuntime } from './hooks/useSessionRuntime';
+import { useAppUpdate } from './hooks/useAppUpdate';
 import { useCloudSync } from './hooks/useCloudSync';
 import { FocusView } from './ui/FocusView';
 import { HistoryView } from './ui/HistoryView';
@@ -27,6 +28,7 @@ function MoraApp() {
   useGlobalAudio();
   useSessionRuntime();
   useCloudSync();
+  useAppUpdate();
   const screen = useStore((s) => s.screen);
   const setScreen = useStore((s) => s.setScreen);
   const corner = useStore((s) => s.corner);
