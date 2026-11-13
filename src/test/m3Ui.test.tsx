@@ -85,8 +85,9 @@ describe('focus screen', () => {
     expect(screen.getByRole('radio', { name: '40 min' })).toHaveAttribute('aria-checked', 'true');
   });
 
-  it('shows the estimate under the clock', () => {
+  it('shows the estimate of the picked task under the clock', () => {
     st().addTask('Write ~3');
+    st().pickTask(st().tasks[0].id);
     render(<App />);
     expect(screen.getByText(/Time left · 0\/3/)).toBeInTheDocument();
   });

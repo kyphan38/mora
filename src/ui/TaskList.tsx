@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { useFlip } from '../hooks/useFlip';
 import { reducedMotion } from '../hooks/usePresence';
-import { useStore } from '../store/useStore';
+import { currentTask, useStore } from '../store/useStore';
 import { UpIcon, DownIcon, CloseIcon } from './Icons';
 import { withTransition } from './viewTransition';
 import type { Task } from '../types';
@@ -176,7 +176,10 @@ function taskMeta(t: Task): string[] {
 
 function LogiLine() {
   const on = useStore((s) => s.logi.enabled);
-  const sync = useStore((s) => s.logiSync);
+  const routine = useStore((s) => s.logiSync);
+  const live = useStore((s) => s.logiStatus);
+  // A failed live send shows here too; the routine fetch shows otherwise.
+  const sync = live.state === 'error' && routine.state !== 'error' ? { ...routine, state: 'error' as const, message: live.message } : routine;
   if (!on || sync.state === 'idle') return null;
   return (
     <p className={`fade-in mt-1 flex items-center gap-2 font-mono text-[11px] ${sync.state === 'error' ? 'text-ink' : 'text-faint'}`} data-testid="logi-sync">
@@ -231,7 +234,8 @@ export function TaskList({ onStart }: { onStart?: (id: string) => void } = {}) {
     remove(task.id);
   };
 
-  const activeId = tasks.find((t) => !t.done)?.id;
+  const pickTask = useStore((s) => s.pickTask);
+  const activeId = useStore((s) => currentTask(s)?.id);
   const doneCount = tasks.filter((t) => t.done).length;
 
   return (
@@ -263,7 +267,17 @@ export function TaskList({ onStart }: { onStart?: (id: string) => void } = {}) {
               <SwipeRow onDone={() => toggle(t.id)} onDelete={() => swipeDelete(t, i)}>
                 <TaskCheck done={t.done} onToggle={() => toggle(t.id)} name={t.name} />
                 <span className="flex min-w-0 flex-1 flex-col">
-                  <TaskName done={t.done} name={t.name} active={isActive} />
+                  {/* Tap a name to pick it for the clock; tap again for no task. */}
+                  <button
+                    type="button"
+                    className="flex min-w-0 text-left disabled:cursor-default"
+                    onClick={() => pickTask(t.id)}
+                    disabled={t.done}
+                    aria-pressed={isActive}
+                    data-testid="task-pick"
+                  >
+                    <TaskName done={t.done} name={t.name} active={isActive} />
+                  </button>
                   <span
                     className={`truncate font-mono text-[11px] text-faint transition-opacity ${t.done ? 'opacity-60' : ''}`}
                     data-testid="task-meta"

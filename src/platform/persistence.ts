@@ -19,7 +19,8 @@ export interface PersistedState {
   elapsedSec?: number;
   isRunning?: boolean;
   sessionActive?: boolean;
-  activeTaskId?: string | null;
+  /** Task picked for the clock. A new key: the old `activeTaskId` was an automatic pick and is ignored. */
+  pickedTaskId?: string | null;
   autoContinue?: boolean;
   customTracks?: CustomTrack[];
   phase?: Phase;
@@ -109,7 +110,7 @@ export function toPersisted(s: {
     elapsedSec: s.elapsedSec ?? 0,
     isRunning: s.isRunning ?? false,
     sessionActive: s.sessionActive ?? false,
-    activeTaskId: s.activeTaskId ?? null,
+    pickedTaskId: s.activeTaskId ?? null,
     autoContinue: s.autoContinue ?? false,
     customTracks: s.customTracks ?? [],
     phase: s.phase ?? 'focus',

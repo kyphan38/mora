@@ -57,19 +57,34 @@ describe('Places', () => {
 const openTasks = () => fireEvent.click(screen.getByTestId('tasks-toggle-btn'));
 
 describe('Focus screen', () => {
-  it('asks for a task when there is none, and shows no Play', () => {
+  it('plays with no task: shows "no task" and Play', () => {
     render(<App />);
-    expect(screen.getByText('Add a task to begin')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Play')).not.toBeInTheDocument();
+    expect(screen.getByTestId('no-task')).toHaveTextContent('no task');
+    fireEvent.click(screen.getByLabelText('Play'));
+    expect(st().isRunning).toBe(true);
+    expect(st().activeTaskId).toBeNull();
   });
 
-  it('adding a task shows it with Play', () => {
+  it('a new task is not picked; tapping its name puts it on the clock', () => {
     render(<App />);
-    fireEvent.click(screen.getByText('Add a task to begin'));
+    fireEvent.click(screen.getByTestId('no-task'));
     fireEvent.change(screen.getByLabelText('Add a task'), { target: { value: 'Write' } });
     fireEvent.submit(screen.getByLabelText('Add a task').closest('form')!);
     expect(st().tasks.map((t) => t.name)).toEqual(['Write']);
-    expect(screen.getByLabelText('Play')).toBeInTheDocument();
+    expect(st().activeTaskId).toBeNull();
+    fireEvent.click(screen.getByTestId('task-pick'));
+    expect(st().activeTask()?.name).toBe('Write');
+  });
+
+  it('the logi word on the bar turns the link on and off', () => {
+    render(<App />);
+    const logi = screen.getByTestId('logi-toggle');
+    expect(logi).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(logi);
+    expect(st().logi.enabled).toBe(true);
+    expect(logi).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(logi);
+    expect(st().logi.enabled).toBe(false);
   });
 
   it('first Play starts a session; Pause stops the clock', () => {
@@ -92,14 +107,16 @@ describe('Focus screen', () => {
     expect(screen.queryByRole('radiogroup', { name: 'Duration' })).not.toBeInTheDocument();
   });
 
-  it('done opens the review sheet; mark done moves to the next task', () => {
+  it('done opens the review sheet; mark done leaves no task picked', () => {
     seed();
+    st().pickTask(st().tasks[0].id);
     render(<App />);
     fireEvent.click(screen.getByLabelText('Play'));
     fireEvent.click(screen.getByLabelText('Complete now'));
     expect(screen.getByTestId('review-sheet')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('review-mark-done'));
-    expect(screen.getByText('Next: Task B')).toBeInTheDocument();
+    expect(screen.getByText('Task A · done')).toBeInTheDocument();
+    expect(st().activeTaskId).toBeNull();
     expect(screen.queryByTestId('review-mark-done')).not.toBeInTheDocument();
   });
 

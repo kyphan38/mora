@@ -15,6 +15,7 @@ function seedRoom() {
   });
   store.addTask('Task A');
   store.addTask('Task B');
+  store.pickTask(useStore.getState().tasks[0].id);
   store.startFocus();
 }
 
@@ -100,7 +101,7 @@ describe('reviewMarkDone', () => {
     expect(state.sessions.length).toBe(1);
     expect(state.sessions[0].taskName).toBe('Task A');
     expect(state.tasks[0].done).toBe(true);
-    expect(state.activeTaskId).toBe(state.tasks[1].id); // Task B
+    expect(state.activeTaskId).toBeNull(); // no jump to Task B
   });
 
   it('false: keeps current task; the block was logged once at review', () => {
@@ -210,34 +211,28 @@ describe('autoContinue path', () => {
     expect(state.sessions.length).toBe(1); // Task A logged
     expect(state.tasks[0].done).toBe(true);
 
-    // Finish break → auto-starts next focus
+    // Finish break → auto-starts the next focus block, with no task
     useStore.getState().finishBreak();
     state = useStore.getState();
     expect(state.phase).toBe('focus');
     expect(state.isRunning).toBe(true);
-    expect(state.activeTaskId).toBe(state.tasks[1].id); // Task B
+    expect(state.activeTaskId).toBeNull();
   });
 
-  it('stops when no undone tasks remain', () => {
+  it('keeps cycling with no task', () => {
     seedRoom();
+    useStore.getState().pickTask(null);
     useStore.getState().setAutoContinue(true);
-
-    // Complete Task A
     useStore.setState({ elapsedSec: 3000 });
     useStore.getState().enterReview();
-    // Now in break with Task B as next
     useStore.getState().finishBreak();
-    // Now focusing on Task B
-
-    // Complete Task B
     useStore.setState({ elapsedSec: 3000 });
     useStore.getState().enterReview();
-    // No more tasks → should stop
     const state = useStore.getState();
-    expect(state.sessionActive).toBe(false);
-    expect(state.isRunning).toBe(false);
-    expect(state.phase).toBe('focus');
-    expect(state.sessions.length).toBe(2);
+    expect(state.sessionActive).toBe(true);
+    expect(state.phase).toBe('break');
+    expect(state.sessions.map((x) => x.taskName)).toEqual(['Focus', 'Focus']);
+    expect(state.tasks.every((t) => !t.done)).toBe(true);
   });
 });
 
@@ -278,5 +273,15 @@ describe('Room review-phase render', () => {
     expect(screen.getByTestId('review-stop')).toBeInTheDocument();
     // Break duration label: 3000s focus → 600s break → 10m
     expect(screen.getByText('Take a break · 10m')).toBeInTheDocument();
+  });
+
+  it('with no task: no mark done, Focus again still offered', () => {
+    seedRoom();
+    useStore.getState().pickTask(null);
+    useStore.setState({ phase: 'review', lastFocusSec: 3000 });
+    render(<App />);
+    expect(screen.getByText('Focus')).toBeInTheDocument();
+    expect(screen.queryByTestId('review-mark-done')).toBeNull();
+    expect(screen.getByTestId('review-focus-again')).toBeInTheDocument();
   });
 });

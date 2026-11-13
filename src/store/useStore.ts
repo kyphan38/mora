@@ -6,6 +6,7 @@ import { CORNERS } from '../data/corners';
 import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../core/pomodoro';
 import { liveElapsed, TAKEOVER_SEC, type LiveTimer } from '../core/liveModel';
 import { mergeRoutine, pruneHidden, type LogiRoutine } from '../core/logiTasks';
+import { dropOldTasks } from '../core/day';
 
 export type Phase = 'focus' | 'break' | 'review';
 
@@ -34,11 +35,16 @@ interface AppStore {
   /** Puts a removed task back at `index` (undo). Its time is not restored. */
   restoreTask: (task: Task, index: number) => void;
   reorderTasks: (from: number, to: number) => void;
+  /** The task picked for the clock; undefined when the clock runs with no task. */
   activeTask: () => Task | undefined;
   toggleTask: (id: string) => void;
   clearCompletedTasks: () => void;
-  /** Makes a task the current one (moves it first) and sets the clock to its length. Only while the clock waits. */
+  /** Picks a task for the clock (null = no task). Same id again = unpick. */
+  pickTask: (id: string | null) => void;
+  /** Picks a task and sets the clock to its length. Only while the clock waits. */
   startTask: (id: string) => void;
+  /** Drops tasks from days before `today` ("YYYY-MM-DD"), unless a block is in progress. */
+  resetDay: (today: string) => void;
   /** Ids of logi tasks removed here today (synced in prefs). */
   logiHidden: string[];
   /** Merges a fresh logi routine into the tasks. `pending` = ticks not yet confirmed. */
@@ -60,7 +66,7 @@ interface AppStore {
     elapsedSec?: number;
     isRunning?: boolean;
     sessionActive?: boolean;
-    activeTaskId?: string | null;
+    pickedTaskId?: string | null;
     autoContinue?: boolean;
     customTracks?: CustomTrack[];
     phase?: Phase;
@@ -81,6 +87,7 @@ interface AppStore {
   elapsedSec: number;
   isRunning: boolean;
   sessionActive: boolean;
+  /** The task the user picked; null = the clock runs with no task (the default). */
   activeTaskId: string | null;
 
   // Pomodoro phase machine
@@ -212,17 +219,28 @@ const run = (on: boolean) => (on ? { isRunning: true, runSyncAt: Date.now(), run
 // Blocks shorter than a minute are not worth a History row.
 const MIN_LOG_SEC = 60;
 
+/** The picked task while it is still there and undone. */
+export const currentTask = (s: { tasks: readonly Task[]; activeTaskId: string | null }): Task | undefined =>
+  s.activeTaskId ? s.tasks.find((t) => t.id === s.activeTaskId && !t.done) : undefined;
+
+/** Keeps a pick only while it points at an undone task. */
+const keepPick = (id: string | null | undefined, tasks: readonly Task[]): string | null =>
+  id && tasks.some((t) => t.id === id && !t.done) ? id : null;
+
+/** Name logged for a block with no task (logi uses the same word). */
+export const NO_TASK_NAME = 'Focus';
+
 function buildSession(
   state: { corner: Corner | null; sound: SoundConfig; focusStartedAt: number | null },
-  task: Task,
+  task: Task | undefined,
   elapsedSec: number,
 ): Session | null {
   if (elapsedSec < MIN_LOG_SEC) return null;
   const endedAt = Date.now();
   return {
     id: uid(),
-    taskName: task.name,
-    kind: task.kind ?? 'learn',
+    taskName: task?.name ?? NO_TASK_NAME,
+    kind: task?.kind ?? 'learn',
     minutes: Math.round(elapsedSec / 60),
     startedAt: state.focusStartedAt ?? endedAt - elapsedSec * 1000,
     endedAt,
@@ -340,27 +358,20 @@ export const useStore = create<AppStore>((set, get) => ({
         ...(est ? { est } : {}),
         ...(len.min ? { min: len.min } : {}),
       };
-      const newTasks = [...state.tasks, task];
-      const firstUndone = newTasks.find((t) => !t.done);
-      return {
-        tasks: newTasks,
-        activeTaskId: firstUndone ? firstUndone.id : null,
-      };
+      return { tasks: [...state.tasks, task] };
     });
   },
   removeTask: (id) =>
     set((state) => {
       const gone = state.tasks.find((t) => t.id === id);
       const newTasks = state.tasks.filter((t) => t.id !== id);
-      const firstUndone = newTasks.find((t) => !t.done);
+      const activeTaskId = keepPick(state.activeTaskId, newTasks);
       return {
         tasks: newTasks,
-        activeTaskId: firstUndone ? firstUndone.id : null,
-        ...(firstUndone ? {} : run(false)),
-        sessionActive: firstUndone ? state.sessionActive : false,
+        activeTaskId,
         ...(gone?.logi && !state.logiHidden.includes(id) ? { logiHidden: [...state.logiHidden, id] } : {}),
-        // A removed task's time is discarded, not moved to the next task.
-        ...switchPatch(state, newTasks, false),
+        // A removed task's time is discarded, not moved to another task.
+        ...switchPatch(state, newTasks, activeTaskId, false),
       };
     }),
   restoreTask: (task, index) =>
@@ -368,13 +379,7 @@ export const useStore = create<AppStore>((set, get) => ({
       if (state.tasks.some((t) => t.id === task.id)) return {};
       const copy = [...state.tasks];
       copy.splice(Math.max(0, Math.min(index, copy.length)), 0, task);
-      const firstUndone = copy.find((t) => !t.done);
-      return {
-        tasks: copy,
-        logiHidden: state.logiHidden.filter((h) => h !== task.id),
-        activeTaskId: firstUndone ? firstUndone.id : null,
-        ...switchPatch(state, copy, true),
-      };
+      return { tasks: copy, logiHidden: state.logiHidden.filter((h) => h !== task.id) };
     }),
   reorderTasks: (from, to) =>
     set((state) => {
@@ -386,23 +391,31 @@ export const useStore = create<AppStore>((set, get) => ({
       if (moved) {
         copy.splice(to, 0, moved);
       }
-      const firstUndone = copy.find((t) => !t.done);
-      return {
-        tasks: copy,
-        activeTaskId: firstUndone ? firstUndone.id : null,
-        ...switchPatch(state, copy, true),
-      };
+      return { tasks: copy };
     }),
-  activeTask: () => get().tasks.find((t) => !t.done),
+  activeTask: () => currentTask(get()),
+  pickTask: (id) =>
+    set((state) => {
+      const next = id === state.activeTaskId ? null : keepPick(id, state.tasks);
+      if (next === state.activeTaskId) return {};
+      return { activeTaskId: next, ...switchPatch(state, state.tasks, next, true) };
+    }),
   startTask: (id) => {
     const s = get();
     const started = s.phase !== 'focus' || s.isRunning || s.elapsedSec > 0;
-    const from = s.tasks.findIndex((t) => t.id === id);
-    if (started || from === -1 || s.tasks[from].done) return;
-    const task = s.tasks[from];
-    if (from > 0) s.reorderTasks(from, 0);
+    const task = s.tasks.find((t) => t.id === id);
+    if (started || !task || task.done) return;
+    set({ activeTaskId: id });
     if (task.min) s.setCustomDuration(task.min);
   },
+  resetDay: (today) =>
+    set((state) => {
+      // A block in progress keeps its task; the next check resets.
+      if (state.isRunning || state.elapsedSec > 0 || state.phase !== 'focus') return {};
+      const tasks = dropOldTasks(state.tasks, today);
+      if (tasks === state.tasks) return {};
+      return { tasks, activeTaskId: keepPick(state.activeTaskId, tasks) };
+    }),
   logiHidden: [],
   logiSync: { state: 'idle', message: '', at: 0 },
   setLogiSync: (logiSync) => set({ logiSync }),
@@ -412,61 +425,51 @@ export const useStore = create<AppStore>((set, get) => ({
       const newTasks = mergeRoutine(state.tasks, r, hidden, pending, keepDone);
       const patch: Partial<AppStore> = hidden.length !== state.logiHidden.length ? { logiHidden: hidden } : {};
       if (newTasks === state.tasks) return patch;
-      const firstUndone = newTasks.find((t) => !t.done);
+      const activeTaskId = keepPick(state.activeTaskId, newTasks);
       return {
         ...patch,
         tasks: newTasks,
-        activeTaskId: firstUndone ? firstUndone.id : null,
-        ...(firstUndone ? {} : run(false)),
-        sessionActive: firstUndone ? state.sessionActive : false,
-        ...switchPatch(state, newTasks, true),
+        activeTaskId,
+        ...switchPatch(state, newTasks, activeTaskId, true),
       };
     }),
   toggleTask: (id) =>
     set((state) => {
       const newTasks = state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-      const firstUndone = newTasks.find((t) => !t.done);
+      const activeTaskId = keepPick(state.activeTaskId, newTasks);
       tellLogi(state.tasks, newTasks);
       return {
         tasks: newTasks,
-        activeTaskId: firstUndone ? firstUndone.id : null,
-        ...(firstUndone ? {} : run(false)),
-        sessionActive: firstUndone ? state.sessionActive : false,
-        ...switchPatch(state, newTasks, true),
+        activeTaskId,
+        ...switchPatch(state, newTasks, activeTaskId, true),
       };
     }),
   clearCompletedTasks: () =>
     set((state) => {
       const newTasks = state.tasks.filter((t) => !t.done);
-      const firstUndone = newTasks.find((t) => !t.done);
       // Cleared logi tasks stay hidden for today, or the next fetch brings them back.
       const cleared = state.tasks.filter((t) => t.done && t.logi && !state.logiHidden.includes(t.id)).map((t) => t.id);
       return {
         tasks: newTasks,
-        activeTaskId: firstUndone ? firstUndone.id : null,
         ...(cleared.length ? { logiHidden: [...state.logiHidden, ...cleared] } : {}),
       };
     }),
   completeActive: (elapsedSec) => {
     const state = get();
-    const t = state.tasks.find((task) => !task.done);
-    if (!t) return;
+    const t = currentTask(state);
     const session = buildSession(state, t, elapsedSec);
-    const updatedTasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
-    const firstUndone = updatedTasks.find((task) => !task.done);
+    const updatedTasks = t ? state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task)) : state.tasks;
     tellLogi(state.tasks, updatedTasks);
     set({
       sessions: session ? [session, ...state.sessions] : state.sessions,
       focusStartedAt: null,
       tasks: updatedTasks,
-      activeTaskId: firstUndone ? firstUndone.id : null,
+      activeTaskId: keepPick(state.activeTaskId, updatedTasks),
     });
   },
   stopActive: (elapsedSec) => {
     const state = get();
-    const t = state.tasks.find((task) => !task.done);
-    if (!t) return false;
-    const session = buildSession(state, t, elapsedSec);
+    const session = buildSession(state, currentTask(state), elapsedSec);
     if (!session) return false;
     set({ sessions: [session, ...state.sessions] });
     return true;
@@ -499,22 +502,17 @@ export const useStore = create<AppStore>((set, get) => ({
     if (p.logiHidden !== undefined) update.logiHidden = p.logiHidden;
     update.runSyncAt = null;
 
-    // Auto-heal activeTaskId on load: it must point at an undone task.
-    const tasksList = p.tasks !== undefined ? p.tasks : get().tasks;
-    const firstUndone = tasksList.find((t) => !t.done);
-    const savedOk = p.activeTaskId && tasksList.some((t) => t.id === p.activeTaskId && !t.done);
-    update.activeTaskId = savedOk ? p.activeTaskId! : (firstUndone ? firstUndone.id : null);
+    // The saved pick must still point at an undone task.
+    update.activeTaskId = keepPick(p.pickedTaskId, p.tasks !== undefined ? p.tasks : get().tasks);
 
     set(update);
   },
   clearSessions: () => set({ sessions: [] }),
   startFocus: () => {
-    const firstUndone = get().tasks.find((t) => !t.done);
     set({
       sessionActive: true,
       elapsedSec: 0,
       isRunning: false,
-      activeTaskId: firstUndone ? firstUndone.id : null,
       screen: 'focus',
       phase: 'focus',
       runSyncAt: null,
@@ -532,7 +530,6 @@ export const useStore = create<AppStore>((set, get) => ({
   togglePlay: () => {
     const s = get();
     if (!s.sessionActive || s.phase === 'review') return;
-    if (s.phase === 'focus' && !s.tasks.some((t) => !t.done)) return;
     get().setIsRunning(!s.isRunning);
   },
   tickSession: (deltaSec = 1) => {
@@ -567,19 +564,15 @@ export const useStore = create<AppStore>((set, get) => ({
     }
     if (state.phase !== 'focus') return;
 
-    // Focus phase
-    const current = state.tasks.find((t) => t.id === state.activeTaskId && !t.done)
-      ?? state.tasks.find((t) => !t.done);
-    if (!current) return;
-
+    // Focus phase: a task is optional.
     const total = state.setup.durationSec;
     const elapsed = total > 0
       ? Math.min(total, state.elapsedSec + deltaSec)
       : state.elapsedSec + deltaSec;
-    set({ elapsedSec: elapsed, activeTaskId: current.id });
+    set({ elapsedSec: elapsed });
     if (total > 0 && elapsed >= total) {
       if (waitForLeader()) return;
-      set({ lastEvent: { kind: 'focus-done', taskName: current.name, at: Date.now() } });
+      set({ lastEvent: { kind: 'focus-done', taskName: currentTask(state)?.name ?? '', at: Date.now() } });
       get().enterReview();
     }
   },
@@ -603,7 +596,6 @@ export const useStore = create<AppStore>((set, get) => ({
       sessionActive: false,
       ...run(false),
       elapsedSec: 0,
-      activeTaskId: null,
       phase: 'focus',
       focusStartedAt: null,
     });
@@ -620,28 +612,17 @@ export const useStore = create<AppStore>((set, get) => ({
     const counted = state.elapsedSec >= MIN_LOG_SEC;
     const cycleCount = counted ? state.cycleCount + 1 : state.cycleCount;
     const longBreak = cycleCount >= LONG_BREAK_EVERY;
-    const current = state.tasks.find((t) => !t.done);
+    const current = currentTask(state);
     if (counted && current) {
       set({ tasks: state.tasks.map((t) => (t.id === current.id ? { ...t, blocks: (t.blocks ?? 0) + 1 } : t)) });
     }
     set({ cycleCount, longBreak });
 
     if (state.autoContinue) {
-      // Auto-continue: log + mark done the active task, then start break
-      const elapsed = state.elapsedSec;
-      get().completeActive(elapsed);
-      const nextUndone = get().tasks.find((t) => !t.done);
-      if (!nextUndone) {
-        // No more tasks - stop
-        set({
-          sessionActive: false, ...run(false), elapsedSec: 0,
-          activeTaskId: null, phase: 'focus', lastFocusSec: focusDur,
-        });
-        return;
-      }
+      // Auto-continue: log the block (and mark the picked task done), then start the break.
+      get().completeActive(state.elapsedSec);
       set({
         ...(longBreak ? { cycleCount: 0 } : {}),
-        activeTaskId: nextUndone.id,
         lastFocusSec: focusDur,
         phase: 'break',
         elapsedSec: 0,
@@ -652,8 +633,7 @@ export const useStore = create<AppStore>((set, get) => ({
 
     // Manual: log the finished block now, so every choice on the review
     // sheet (keep working, break, focus again, stop) keeps that time.
-    const active = get().tasks.find((t) => !t.done);
-    const session = active ? buildSession(state, active, state.elapsedSec) : null;
+    const session = buildSession(state, currentTask(get()), state.elapsedSec);
     set({
       sessions: session ? [session, ...state.sessions] : state.sessions,
       lastSessionId: session?.id ?? null,
@@ -669,11 +649,11 @@ export const useStore = create<AppStore>((set, get) => ({
     if (done) {
       // The block was already logged by enterReview; only mark the task.
       const state = get();
-      const t = state.tasks.find((task) => !task.done);
+      const t = currentTask(state);
       if (!t) return;
       const tasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
-      const nextUndone = tasks.find((task) => !task.done);
-      set({ tasks, activeTaskId: nextUndone ? nextUndone.id : null });
+      tellLogi(state.tasks, tasks);
+      set({ tasks, activeTaskId: null });
     } else {
       set({
         phase: 'focus',
@@ -697,33 +677,21 @@ export const useStore = create<AppStore>((set, get) => ({
     if (get().longBreak && get().cycleCount === 0) set({ longBreak: false });
     const state = get();
     if (state.autoContinue) {
-      // Auto-continue: go straight to next focus
-      const nextUndone = get().tasks.find((t) => !t.done);
-      if (!nextUndone) {
-        set({
-          sessionActive: false, ...run(false), elapsedSec: 0,
-          activeTaskId: null, phase: 'focus',
-        });
-        return;
-      }
+      // Auto-continue: go straight to the next focus block.
       set({
         phase: 'focus',
         elapsedSec: 0,
         ...run(true),
         focusStartedAt: Date.now(),
-        activeTaskId: nextUndone.id,
       });
       return;
     }
     // Manual: go to ready state (paused)
-    const firstUndone = state.tasks.find((t) => !t.done);
     set({
       phase: 'focus',
       elapsedSec: 0,
       ...run(false),
       focusStartedAt: null,
-      activeTaskId: firstUndone ? firstUndone.id : null,
-      sessionActive: firstUndone ? state.sessionActive : false,
     });
   },
 
@@ -827,6 +795,8 @@ export const useStore = create<AppStore>((set, get) => ({
       cycleCount: l.cycleCount,
       focusStartedAt: l.focusStartedAt,
       runId: l.runId ?? null,
+      // Older timers carry no task id: keep this device's pick then.
+      activeTaskId: keepPick(l.taskId === undefined ? s.activeTaskId : l.taskId, s.tasks),
       liveFollower: true,
       overdueSince: null,
       ...(freshEvent ? { lastEvent: l.event } : {}),
@@ -843,12 +813,8 @@ export const useStore = create<AppStore>((set, get) => ({
     const patch: Partial<AppStore> = {};
     if (tasks) {
       patch.tasks = tasks;
-      const first = tasks.find((t) => !t.done);
-      patch.activeTaskId = first ? first.id : null;
-      // The task being focused on was finished or removed elsewhere.
-      if (!first && s.sessionActive && s.phase === 'focus') {
-        Object.assign(patch, { sessionActive: false, ...run(false), elapsedSec: 0, focusStartedAt: null });
-      }
+      // The picked task was finished or removed elsewhere: the clock goes on with no task.
+      patch.activeTaskId = keepPick(s.activeTaskId, tasks);
     }
     if (sessions) patch.sessions = sessions;
     if (notes) patch.notes = notes;
@@ -877,28 +843,30 @@ export const useStore = create<AppStore>((set, get) => ({
 }));
 
 /**
- * When an edit changes which task is active in the middle of a focus block,
- * close that block: log it for the old task (if asked) and restart the
- * clock at 0 for the new one. Without this, the old task's seconds would
- * silently move to the next task.
+ * When an edit changes the picked task in the middle of a focus block, close
+ * that block: log it for the old task (if asked) and restart the clock at 0.
+ * Without this, the old task's seconds would silently move to the next one.
+ * A block with no task simply becomes the newly picked task's block.
  */
 function switchPatch(
   state: AppStore,
   newTasks: Task[],
+  nextId: string | null,
   logOld: boolean,
 ): Partial<AppStore> {
   if (state.phase !== 'focus' || state.elapsedSec <= 0) return {};
-  const before = state.tasks.find((t) => !t.done);
-  const after = newTasks.find((t) => !t.done);
-  if (before?.id === after?.id) return {};
-  const session = logOld && before ? buildSession(state, before, state.elapsedSec) : null;
+  const before = currentTask(state);
+  if (!before) return {};
+  const after = currentTask({ tasks: newTasks, activeTaskId: nextId });
+  if (before.id === after?.id) return {};
+  const session = logOld ? buildSession(state, before, state.elapsedSec) : null;
   const now = Date.now();
   return {
     sessions: session ? [session, ...state.sessions] : state.sessions,
     elapsedSec: 0,
-    focusStartedAt: state.isRunning && after ? now : null,
-    runSyncAt: state.isRunning && after ? now : null,
-    ...(state.isRunning && after ? { runId: uid() } : {}),
+    focusStartedAt: state.isRunning ? now : null,
+    runSyncAt: state.isRunning ? now : null,
+    ...(state.isRunning ? { runId: uid() } : {}),
   };
 }
 

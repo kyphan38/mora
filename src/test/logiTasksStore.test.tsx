@@ -54,11 +54,12 @@ describe('logi tasks in the store', () => {
     expect(useStore.getState().tasks.map((t) => t.name)).toEqual(['Read']);
   });
 
-  it('startTask moves the task first and sets the clock to its length', () => {
+  it('startTask picks the task in place and sets the clock to its length', () => {
     useStore.getState().addTask('Own');
     useStore.getState().applyLogiRoutine(routine);
     useStore.getState().startTask(logiTaskId(DAY, 'b'));
-    expect(useStore.getState().tasks[0].name).toBe('Gym');
+    expect(useStore.getState().tasks[0].name).toBe('Own');
+    expect(useStore.getState().activeTask()?.name).toBe('Gym');
     expect(useStore.getState().setup.durationSec).toBe(90 * 60);
   });
 });
@@ -68,6 +69,7 @@ describe('task sheet', () => {
     useStore.getState().addTask('Own');
     useStore.getState().applyLogiRoutine(routine);
     useStore.getState().toggleTask(useStore.getState().tasks[0].id);
+    useStore.getState().pickTask(useStore.getState().tasks[1].id);
     render(<TaskList />);
     expect(screen.getByTestId('task-summary').textContent).toContain('1 of 3 done');
     expect(screen.getByLabelText('Planned time left').textContent).toBe('2h 20m left');
@@ -88,5 +90,16 @@ describe('task sheet', () => {
     act(() => useStore.setState({ isRunning: true }));
     rerender(<TaskList onStart={onStart} />);
     expect(screen.queryByLabelText('Start Gym')).toBeNull();
+  });
+
+  it('tapping a name picks it for the clock; tapping again unpicks', () => {
+    useStore.getState().applyLogiRoutine(routine);
+    render(<TaskList />);
+    const gym = screen.getAllByTestId('task-pick').find((b) => b.textContent?.includes('Gym'))!;
+    fireEvent.click(gym);
+    expect(useStore.getState().activeTask()?.name).toBe('Gym');
+    expect(gym).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(gym);
+    expect(useStore.getState().activeTaskId).toBeNull();
   });
 });

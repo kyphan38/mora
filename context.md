@@ -30,7 +30,9 @@ Library (jsdom). Firebase (Auth, Firestore, Storage, Functions).
 The clock is the screen (`FocusView`): a hairline `Ring` with the task,
 time and phase inside, duration words before a block starts, one filled
 Play button, `done` / `stop` / `skip break` as words. A bottom bar of small
-icons (history, tasks count, sound, settings) fades while a block runs.
+icons (history, note, the `logi` on/off word, tasks count, sound, zen,
+settings) fades while a block runs. On phones the bar leaves out the parked
+count.
 Tasks, sound + scene, review, history and settings are `Sheet`s (bottom
 sheet on phones, centered panel on wide screens). Screen state:
 `'focus' | 'history' | 'settings'`.
@@ -132,8 +134,18 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
   `visibilitychange`. `tickSession(delta)` applies the time.
 - A focus block is logged once, when it ends (`enterReview`), or on stop.
   Blocks under 60s are not logged. Start time is the first Play.
-- Changing the active task mid-block logs the old block and restarts at 0;
-  removing a task discards its time. Break time is never logged.
+- A task is optional. `activeTaskId` is the task the user picked (tap a name
+  in the task sheet, or `start`); null by default, and nothing picks one on
+  its own (not adding, finishing or removing a task, not auto-continue). A
+  block with no task is logged as `Focus` (`NO_TASK_NAME`). Saved as
+  `pickedTaskId`, so the old automatic `activeTaskId` in a save is ignored.
+- Picking another task mid-block logs the old block and restarts at 0;
+  removing the picked task discards its time. A block with no task becomes
+  the block of a task picked during it. Break time is never logged.
+- The task list is a list for one day (`core/day.ts`, 04:00 cut like logi):
+  `useDailyReset` drops tasks from earlier days (own and logi) on start,
+  every minute, on return to the front and when tasks change; it waits while
+  a block is in progress.
 - A restored session is always paused. Clock-only changes are saved at
   most every 15s.
 
@@ -181,14 +193,15 @@ Firebase project kyphan38-mora-app (env `VITE_FIREBASE_*`, `VITE_ALLOWED_USER_EM
 
 ## Link to logi
 
-Live (PLAN-live-logi.md), off by default (Settings, synced per account): every run of the clock has a `runId`.
+Live (PLAN-live-logi.md), off by default (the `logi` word on the bottom bar, synced per account): every run of the clock has a `runId`.
 Function `liveToLogi` watches `live/current` and calls logi
 `/api/ingest/mora/live` start/stop (one logi record `mora_<runId>` per
 run, token `MORA_INGEST_TOKEN`). Stopping a mora record in logi triggers
 logi's `moraStopped`, which calls mora's `stopFromLogi` (token
 `LOGI_CONTROL_TOKEN`): the timer stops on every device and the block is
 saved. Rules in `functions/src/live.ts` (tested from src/test). Status in
-`users/{uid}/meta/logi`.
+`users/{uid}/meta/logi`; a failed send shows on the task sheet's logi line.
+The shared timer carries `taskId` (the pick), so followers show the same task.
 
 Routine (same switch): today's logi routine joins the task list.
 `platform/logiRoutine.ts` calls the callable `logiRoutine`, which posts to
@@ -202,8 +215,8 @@ over fetches until logi confirms. A routine item's category goes to logi as
 `taskCategory`, so a Gym run is filed as fitness.
 
 Task sheet: done share as a hairline (`scaleX`), planned time left, a line
-under each name (now, kind, length, blocks, logi group), `start` while the
-clock waits (moves the task first, sets its length, plays). Typing "Read
+under each name (now, kind, length, blocks, logi group), tap a name to pick
+or unpick it, `start` while the clock waits (picks it, sets its length, plays). Typing "Read
 50m" or "Gym 1.5h" plans a length; a task with a length sets the clock when
 it becomes current.
 

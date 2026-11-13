@@ -57,6 +57,7 @@ describe('tasks', () => {
   it('"name ~3" sets an estimate; blocks count finished blocks', () => {
     st().addTask('Write report ~3');
     expect(st().tasks[0]).toMatchObject({ name: 'Write report', est: 3, kind: 'learn' });
+    st().pickTask(st().tasks[0].id);
     st().startFocus();
     finishBlock();
     expect(st().tasks[0].blocks).toBe(1);
@@ -65,9 +66,18 @@ describe('tasks', () => {
   it('kind is copied onto the logged session', () => {
     st().addTask('Ship');
     st().setTaskKind(st().tasks[0].id, 'work');
+    st().pickTask(st().tasks[0].id);
     st().startFocus();
     finishBlock();
     expect(st().sessions[0].kind).toBe('work');
+  });
+
+  it('a block with no task is logged as Focus and counts on no task', () => {
+    st().addTask('Ship');
+    st().startFocus();
+    finishBlock();
+    expect(st().sessions[0]).toMatchObject({ taskName: 'Focus', kind: 'learn', minutes: 25 });
+    expect(st().tasks[0].blocks).toBeUndefined();
   });
 });
 

@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useStore } from '../store/useStore';
 import { loadTheme, saveTheme, type Theme } from '../platform/prefs';
 import { Words, Label } from './Words';
-import { LogiSettings } from './LogiSettings';
 import { DEFAULT_IDLE_TRACK, DEFAULT_IDLE_VOLUME, IDLE_OFF, IDLE_TRACKS } from '../data/sound';
 import { useAuth, signOut } from '../platform/auth';
 
@@ -117,8 +116,6 @@ export function SettingsView() {
           onChange={setDailyGoal}
         />
       </section>
-
-      <LogiSettings />
 
       <section>
         <Label>history</Label>

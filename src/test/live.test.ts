@@ -104,10 +104,27 @@ describe('runs', () => {
 
   it('the shared timer carries the run, the task and its kind', () => {
     st().setTaskKind(st().tasks[0].id, 'work');
+    st().pickTask(st().tasks[0].id);
     st().startFocus();
     st().setIsRunning(true);
     const l = toLive({ ...st() }, 'mac', 5_000);
-    expect(l).toMatchObject({ runId: st().runId, taskName: 'A', taskKind: 'work', at: 5_000, stoppedBy: null });
+    expect(l).toMatchObject({ runId: st().runId, taskId: st().tasks[0].id, taskName: 'A', taskKind: 'work', at: 5_000, stoppedBy: null });
+  });
+
+  it('with no task picked, the shared timer names no task', () => {
+    st().startFocus();
+    expect(toLive({ ...st() }, 'mac', 5_000)).toMatchObject({ taskId: null, taskName: '', taskKind: 'learn' });
+  });
+
+  it("a follower takes the leader's pick; an older timer without one keeps its own", () => {
+    const id = st().tasks[0].id;
+    st().startFocus();
+    st().applyLive({ ...toLive({ ...st(), activeTaskId: id }, 'mac', 5_000) }, 5_000);
+    expect(st().activeTaskId).toBe(id);
+    const old = toLive({ ...st(), activeTaskId: null }, 'mac', 6_000);
+    delete old.taskId;
+    st().applyLive(old, 6_000);
+    expect(st().activeTaskId).toBe(id);
   });
 
   it('a new run changes the action key', () => {

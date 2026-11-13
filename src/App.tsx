@@ -5,6 +5,7 @@ import { useGlobalAudio } from './hooks/useGlobalAudio';
 import { useSessionRuntime } from './hooks/useSessionRuntime';
 import { useAppUpdate } from './hooks/useAppUpdate';
 import { useCloudSync } from './hooks/useCloudSync';
+import { useDailyReset } from './hooks/useDailyReset';
 import { FocusView } from './ui/FocusView';
 import { HistoryView } from './ui/HistoryView';
 import { SettingsView } from './ui/SettingsView';
@@ -28,6 +29,7 @@ function MoraApp() {
   useGlobalAudio();
   useSessionRuntime();
   useCloudSync();
+  useDailyReset();
   useAppUpdate();
   const screen = useStore((s) => s.screen);
   const setScreen = useStore((s) => s.setScreen);

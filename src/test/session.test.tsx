@@ -7,7 +7,7 @@ describe('session runtime store logic', () => {
     useStore.setState(useStore.getInitialState());
   });
 
-  it('startFocus sets sessionActive, activeTaskId=first undone, screen=focus, elapsed 0, isRunning false', () => {
+  it('startFocus sets sessionActive, screen=focus, elapsed 0, isRunning false, and picks no task', () => {
     const store = useStore.getState();
     store.addTask('Task A');
     store.addTask('Task B');
@@ -19,7 +19,7 @@ describe('session runtime store logic', () => {
     expect(state.screen).toBe('focus');
     expect(state.elapsedSec).toBe(0);
     expect(state.isRunning).toBe(false);
-    expect(state.activeTaskId).toBe(state.tasks[0].id);
+    expect(state.activeTaskId).toBeNull();
   });
 
   it('tickSession increments elapsed only when running; does nothing when paused', () => {
@@ -106,7 +106,7 @@ describe('session runtime store logic', () => {
     expect(persisted.elapsedSec).toBe(15);
     expect(persisted.isRunning).toBe(true);
     expect(persisted.sessionActive).toBe(true);
-    expect(persisted.activeTaskId).toBe('task-123');
+    expect(persisted.pickedTaskId).toBe('task-123');
 
     // hydrate
     useStore.getState().hydrate(persisted);
@@ -115,6 +115,14 @@ describe('session runtime store logic', () => {
     expect(updated.isRunning).toBe(true);
     expect(updated.sessionActive).toBe(true);
     expect(updated.activeTaskId).toBe('task-123');
+  });
+
+  it('an old save with the automatic activeTaskId loads with no task picked', () => {
+    useStore.getState().hydrate({
+      tasks: [{ id: 'task-123', name: 'Saved task', done: false, createdAt: 1 }],
+      ...({ activeTaskId: 'task-123' } as object),
+    });
+    expect(useStore.getState().activeTaskId).toBeNull();
   });
 
   it('navigate focus->history->focus preserves elapsed', () => {

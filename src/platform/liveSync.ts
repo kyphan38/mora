@@ -40,6 +40,7 @@ function slice(s: ReturnType<typeof useStore.getState>): RuntimeSlice {
     focusStartedAt: s.focusStartedAt,
     lastEvent: s.lastEvent,
     runId: s.runId,
+    activeTaskId: s.activeTaskId,
     tasks: s.tasks,
   };
 }

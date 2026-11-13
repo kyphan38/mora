@@ -12,6 +12,7 @@ function seedRoom() {
   });
   store.addTask('Task A');
   store.addTask('Task B');
+  store.pickTask(useStore.getState().tasks[0].id);
   store.setScreen('focus');
 }
 
@@ -20,13 +21,15 @@ beforeEach(() => {
 });
 
 describe('store - activeTask', () => {
-  it('returns first not-done task', () => {
+  it('returns the picked task while it is undone, else nothing', () => {
     useStore.getState().addTask('X');
     useStore.getState().addTask('Y');
-    expect(useStore.getState().activeTask()?.name).toBe('X');
-    const id = useStore.getState().tasks[0].id;
-    useStore.getState().toggleTask(id);
+    expect(useStore.getState().activeTask()).toBeUndefined();
+    const id = useStore.getState().tasks[1].id;
+    useStore.getState().pickTask(id);
     expect(useStore.getState().activeTask()?.name).toBe('Y');
+    useStore.getState().toggleTask(id);
+    expect(useStore.getState().activeTask()).toBeUndefined();
   });
 });
 
@@ -42,7 +45,7 @@ describe('store - completeActive', () => {
     expect(s.sessions[0].corner).toBe('Da Lat Misty Dawn');
     expect(s.sessions[0].ambient).toBe('Wind');
     expect(s.tasks[0].done).toBe(true);
-    expect(s.activeTask()?.name).toBe('Task B');
+    expect(s.activeTask()).toBeUndefined();
   });
 
   it('minutes round; blocks under a minute are not logged', () => {
@@ -55,15 +58,16 @@ describe('store - completeActive', () => {
     expect(useStore.getState().sessions[0].minutes).toBe(12);
   });
 
-  it('no-op when no active task', () => {
+  it('with no task picked, logs a Focus block and marks nothing done', () => {
     seedRoom();
-    // Complete both
     useStore.getState().completeActive(100);
+    expect(useStore.getState().sessions.length).toBe(1);
+    // Now no task is picked
     useStore.getState().completeActive(100);
-    expect(useStore.getState().sessions.length).toBe(2);
-    // Now no active
-    useStore.getState().completeActive(100);
-    expect(useStore.getState().sessions.length).toBe(2);
+    const s = useStore.getState();
+    expect(s.sessions.length).toBe(2);
+    expect(s.sessions[0].taskName).toBe('Focus');
+    expect(s.tasks[1].done).toBe(false);
   });
 });
 
@@ -87,15 +91,15 @@ describe('store - stopActive', () => {
 });
 
 describe('store - toggleTask', () => {
-  it('flips done and changes active', () => {
+  it('flips done; a done task is no longer picked, even when undone again', () => {
     seedRoom();
     const id = useStore.getState().tasks[0].id;
     useStore.getState().toggleTask(id);
     expect(useStore.getState().tasks[0].done).toBe(true);
-    expect(useStore.getState().activeTask()?.name).toBe('Task B');
+    expect(useStore.getState().activeTask()).toBeUndefined();
     // Toggle back
     useStore.getState().toggleTask(id);
     expect(useStore.getState().tasks[0].done).toBe(false);
-    expect(useStore.getState().activeTask()?.name).toBe('Task A');
+    expect(useStore.getState().activeTask()).toBeUndefined();
   });
 });

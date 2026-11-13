@@ -10,6 +10,7 @@ function seed(durationLabel = '25 min') {
   const s = useStore.getState();
   s.addTask('Task A');
   s.addTask('Task B');
+  s.pickTask(useStore.getState().tasks[0].id);
   s.setDuration(durationLabel);
   s.startFocus();
 }
@@ -67,12 +68,29 @@ describe('time stays with the right task', () => {
     expect(st().isRunning).toBe(true);
   });
 
-  it('moving another task to the top closes the current block', () => {
+  it('picking another task closes the current block', () => {
+    seed();
+    useStore.setState({ elapsedSec: 300 });
+    st().pickTask(st().tasks[1].id);
+    expect(st().sessions[0].taskName).toBe('Task A');
+    expect(st().elapsedSec).toBe(0);
+  });
+
+  it('moving tasks around does not touch the clock', () => {
     seed();
     useStore.setState({ elapsedSec: 300 });
     st().reorderTasks(1, 0);
-    expect(st().sessions[0].taskName).toBe('Task A');
-    expect(st().elapsedSec).toBe(0);
+    expect(st().sessions.length).toBe(0);
+    expect(st().elapsedSec).toBe(300);
+  });
+
+  it('a block with no task becomes the block of the task picked during it', () => {
+    seed();
+    st().pickTask(null);
+    useStore.setState({ elapsedSec: 300 });
+    st().pickTask(st().tasks[1].id);
+    expect(st().sessions.length).toBe(0);
+    expect(st().elapsedSec).toBe(300);
   });
 
   it('removing the active task discards its time', () => {
@@ -127,14 +145,16 @@ describe('review and break', () => {
     expect(st().isRunning).toBe(false);
   });
 
-  it('a manual break end with no tasks left ends the session', () => {
+  it('a manual break end with no tasks left waits for Play', () => {
     seed();
     st().enterReview();
     st().reviewMarkDone(true);
     useStore.setState({ tasks: st().tasks.map((t) => ({ ...t, done: true })) });
     st().startBreak();
     st().finishBreak();
-    expect(st().sessionActive).toBe(false);
+    expect(st().sessionActive).toBe(true);
+    expect(st().phase).toBe('focus');
+    expect(st().isRunning).toBe(false);
   });
 
   it('a natural break end records an event; skipping does not', () => {
@@ -175,17 +195,17 @@ describe('session details', () => {
 });
 
 describe('restore', () => {
-  it('hydrate heals an activeTaskId that points at a done task and restores the phase', () => {
+  it('hydrate drops a pick that points at a done task and restores the phase', () => {
     st().hydrate({
       tasks: [
         { id: 'a', name: 'A', done: true, createdAt: 1 },
         { id: 'b', name: 'B', done: false, createdAt: 2 },
       ],
-      activeTaskId: 'a',
+      pickedTaskId: 'a',
       phase: 'break',
       lastFocusSec: 1500,
     });
-    expect(st().activeTaskId).toBe('b');
+    expect(st().activeTaskId).toBeNull();
     expect(st().phase).toBe('break');
     expect(st().lastFocusSec).toBe(1500);
   });

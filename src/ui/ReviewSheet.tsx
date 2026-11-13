@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useStore } from '../store/useStore';
+import { currentTask, NO_TASK_NAME, useStore } from '../store/useStore';
 import { breakForSeconds, longBreakForSeconds, NEXT_DURATIONS } from '../core/pomodoro';
 import { Sheet } from './Sheet';
 import { Words } from './Words';
@@ -8,7 +8,7 @@ const WORD = 'text-[14px] text-faint transition-colors hover:text-ink';
 
 /** Shown when a focus block ends. A choice is required, so it does not close on its own. */
 export function ReviewSheet({ open }: { open: boolean }) {
-  const active = useStore((s) => s.tasks.find((t) => !t.done));
+  const active = useStore((s) => currentTask(s));
   const lastFocusSec = useStore((s) => s.lastFocusSec);
   const longBreak = useStore((s) => s.longBreak);
   const lastSessionId = useStore((s) => s.lastSessionId);
@@ -18,19 +18,20 @@ export function ReviewSheet({ open }: { open: boolean }) {
   const startBreak = useStore((s) => s.startBreak);
   const focusAgain = useStore((s) => s.focusAgain);
   const stopAllSessions = useStore((s) => s.stopAllSessions);
-  const [markedDone, setMarkedDone] = useState(false);
+  // Name of the task marked done here; empty until then.
+  const [doneName, setDoneName] = useState('');
   const [pickDuration, setPickDuration] = useState(false);
   const [note, setNote] = useState('');
   useEffect(() => {
     if (open) {
-      setMarkedDone(false);
+      setDoneName('');
       setPickDuration(false);
       setNote('');
     }
   }, [open]);
 
   const breakMin = Math.round((longBreak ? longBreakForSeconds(lastFocusSec) : breakForSeconds(lastFocusSec)) / 60);
-  const line = markedDone ? (active ? `Next: ${active.name}` : 'All tasks done') : (active?.name ?? 'Task completed');
+  const line = doneName ? `${doneName} · done` : (active?.name ?? NO_TASK_NAME);
 
   return (
     <Sheet open={open} label="Session complete" testId="review-sheet">
@@ -50,14 +51,14 @@ export function ReviewSheet({ open }: { open: boolean }) {
         />
       )}
 
-      {!markedDone && active && (
+      {!doneName && active && (
         <div className="mt-5 flex items-baseline gap-4">
           <button
             type="button"
             className="text-[14px] text-ink"
             onClick={() => {
+              setDoneName(active.name);
               reviewMarkDone(true);
-              setMarkedDone(true);
             }}
             data-testid="review-mark-done"
           >
@@ -78,11 +79,9 @@ export function ReviewSheet({ open }: { open: boolean }) {
         >
           {longBreak ? 'Long break' : 'Take a break'} · {breakMin}m
         </button>
-        {active && (
-          <button type="button" className={WORD} onClick={() => setPickDuration((v) => !v)} data-testid="review-focus-again">
-            Focus again
-          </button>
-        )}
+        <button type="button" className={WORD} onClick={() => setPickDuration((v) => !v)} data-testid="review-focus-again">
+          Focus again
+        </button>
         <button type="button" className={WORD} onClick={stopAllSessions} data-testid="review-stop">
           Stop
         </button>

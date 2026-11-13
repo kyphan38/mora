@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useStore } from '../store/useStore';
+import { currentTask, useStore } from '../store/useStore';
 import { formatTime, remainingSec } from '../core/timer';
 import { sessionTimer } from '../core/sessionTimer';
 import { getAudioEngine } from '../platform/audio';
@@ -36,6 +36,9 @@ export function FocusView() {
   const isRunning = useStore((s) => s.isRunning);
   const sessionActive = useStore((s) => s.sessionActive);
   const tasks = useStore((s) => s.tasks);
+  const activeTaskId = useStore((s) => s.activeTaskId);
+  const logiOn = useStore((s) => s.logi.enabled);
+  const setLogi = useStore((s) => s.setLogi);
   const notes = useStore((s) => s.notes);
   const screen = useStore((s) => s.screen);
   const corner = useStore((s) => s.corner);
@@ -64,7 +67,7 @@ export function FocusView() {
     prevPhase.current = phase;
   }, [phase]);
 
-  const active = tasks.find((t) => !t.done);
+  const active = currentTask({ tasks, activeTaskId });
   const left = tasks.filter((t) => !t.done).length;
   const timer = sessionTimer({ phase, lastFocusSec, longBreak, setup, elapsedSec, isRunning });
   const isBreak = phase === 'break';
@@ -73,7 +76,8 @@ export function FocusView() {
   const started = sessionActive && phase === 'focus' && (isRunning || elapsedSec > 0);
   const lastMinute =
     timer.mode === 'countdown' && !isBreak && phase === 'focus' && isRunning && remainingSec(timer) <= 60 && remainingSec(timer) > 0;
-  const canPlay = !!active && phase === 'focus';
+  // A block runs with or without a task.
+  const canPlay = phase === 'focus';
   // Count up has no end, so the ring shows the current hour.
   const progress = timer.mode === 'countdown' ? timer.elapsedSec / timer.totalSec : (timer.elapsedSec % 3600) / 3600;
   // Chrome steps back while a focus block runs and the user is away.
@@ -204,8 +208,14 @@ export function FocusView() {
                 </span>
               </p>
             ) : (
-              <button type="button" className="text-[14px] text-faint hover:text-ink" onClick={() => openTasks()}>
-                Add a task to begin
+              <button
+                type="button"
+                className="flex items-center gap-2 text-[14px] text-faint transition-colors hover:text-ink"
+                onClick={() => openTasks()}
+                data-testid="no-task"
+              >
+                {isRunning && <span className="breathe h-1.5 w-1.5 shrink-0 rounded-full bg-ink" aria-hidden="true" />}
+                no task
               </button>
             )}
             <div
@@ -283,15 +293,26 @@ export function FocusView() {
             <button type="button" className={ICON} onClick={() => setSheet('note')} aria-label="Park a thought">
               <NoteIcon />
             </button>
+            <button
+              type="button"
+              className={`px-2 py-2 font-mono text-[11px] transition-colors hover:text-ink ${logiOn ? 'text-ink' : 'text-faint'}`}
+              onClick={() => setLogi({ enabled: !logiOn })}
+              aria-pressed={logiOn}
+              aria-label="Send to logi"
+              data-testid="logi-toggle"
+            >
+              logi
+            </button>
           </div>
           <button
             type="button"
-            className="px-3 py-2 text-[13px] text-faint hover:text-ink"
+            className="px-3 py-2 text-[13px] whitespace-nowrap text-faint hover:text-ink"
             onClick={() => openTasks()}
             data-testid="tasks-toggle-btn"
           >
             {left === 0 ? 'tasks' : `${left} ${left === 1 ? 'task' : 'tasks'}`}
-            {notes.length > 0 ? ` · ${notes.length} parked` : ''} ▴
+            {/* Phones have no room next to the logi word; the sheet lists them. */}
+            {notes.length > 0 && <span className="hidden sm:inline">{` · ${notes.length} parked`}</span>} ▴
           </button>
           <div className="flex items-center">
             <button type="button" className={ICON} onClick={() => setSheet('sound')} aria-label="Sound and scene" data-testid="room-settings-toggle">

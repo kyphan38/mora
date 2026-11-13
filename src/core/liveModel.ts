@@ -23,6 +23,8 @@ export interface LiveTimer {
   event: { kind: 'focus-done' | 'break-done'; taskName: string; at: number } | null;
   /** Id of the current run (Play to Pause); logi keeps one record per run. */
   runId: string | null;
+  /** The picked task; null = no task. Missing on timers from older builds. */
+  taskId?: string | null;
   taskName: string;
   taskKind: 'learn' | 'work';
   /** Category of a logi routine task, so logi files the run under it. */
@@ -46,12 +48,16 @@ export interface RuntimeSlice {
   focusStartedAt: number | null;
   lastEvent: LiveTimer['event'];
   runId: string | null;
-  tasks: { name: string; done: boolean; kind?: 'learn' | 'work'; logi?: { category?: string } }[];
+  activeTaskId: string | null;
+  tasks: { id: string; name: string; done: boolean; kind?: 'learn' | 'work'; logi?: { category?: string } }[];
 }
+
+/** The picked task, if it is still undone. */
+const picked = (s: RuntimeSlice) => (s.activeTaskId ? s.tasks.find((t) => t.id === s.activeTaskId && !t.done) : undefined);
 
 /** Snapshot of this device's timer, anchored at `now`. */
 export function toLive(s: RuntimeSlice, deviceId: string, now: number): LiveTimer {
-  const active = s.tasks.find((t) => !t.done);
+  const active = picked(s);
   // Sub-second progress since the last whole-second sync counts too.
   const extra = s.isRunning && s.runSyncAt !== null ? Math.max(0, now - s.runSyncAt) / 1000 : 0;
   return {
@@ -69,6 +75,7 @@ export function toLive(s: RuntimeSlice, deviceId: string, now: number): LiveTime
     focusStartedAt: s.focusStartedAt,
     event: s.lastEvent,
     runId: s.runId,
+    taskId: active?.id ?? null,
     taskName: active?.name ?? '',
     taskKind: active?.kind ?? 'learn',
     taskCategory: active?.logi?.category ?? null,
@@ -96,7 +103,8 @@ export function actionKey(s: RuntimeSlice): string {
     s.focusStartedAt,
     s.lastEvent?.at ?? null,
     s.runId,
-    s.tasks.find((t) => !t.done)?.name ?? null,
+    picked(s)?.id ?? null,
+    picked(s)?.name ?? null,
     // A reset or a jump (not a +1 tick) is an action too.
     s.isRunning ? null : s.elapsedSec,
   ]);

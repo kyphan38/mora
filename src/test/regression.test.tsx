@@ -39,9 +39,9 @@ describe('Regression Audits', () => {
     });
   });
 
-  // Zone 2: Timer State Self-Healing
-  describe('Timer State Self-Healing', () => {
-    it('tickSession auto-resolves activeTaskId to the first eligible task and increments elapsedSec if activeTaskId was null', () => {
+  // Zone 2: the clock runs with no task
+  describe('Timer with no task', () => {
+    it('tickSession counts time with no task picked and does not pick one', () => {
       useStore.setState({
         tasks: [
           { id: 't1', name: 'Task 1', done: false, createdAt: 100 },
@@ -56,67 +56,69 @@ describe('Regression Audits', () => {
       useStore.getState().tickSession();
       const state = useStore.getState();
       expect(state.elapsedSec).toBe(1);
-      expect(state.activeTaskId).toBe('t1');
+      expect(state.activeTaskId).toBeNull();
     });
   });
 
-  // Zone 3: Active Task Lifecycle Synchronization
-  describe('Active Task Lifecycle Synchronization', () => {
-    it('addTask auto-assigns itself as active if no task is currently active', () => {
-      expect(useStore.getState().activeTaskId).toBeNull();
+  // Zone 3: a task is current only when picked
+  describe('Picked task lifecycle', () => {
+    it('addTask does not pick the new task', () => {
       useStore.getState().addTask('Solo Task');
-      expect(useStore.getState().activeTaskId).not.toBeNull();
       expect(useStore.getState().tasks[0].name).toBe('Solo Task');
-      expect(useStore.getState().activeTaskId).toBe(useStore.getState().tasks[0].id);
+      expect(useStore.getState().activeTaskId).toBeNull();
     });
 
-    it('completing (toggleTask) the active task automatically shifts focus to the next available incomplete task', () => {
+    it('pickTask picks a task; the same id again unpicks it', () => {
       const store = useStore.getState();
       store.addTask('Task 1');
       store.addTask('Task 2');
-      const [t1, t2] = useStore.getState().tasks;
-      expect(useStore.getState().activeTaskId).toBe(t1.id);
-
-      // Complete Task 1
-      store.toggleTask(t1.id);
-      expect(useStore.getState().tasks[0].done).toBe(true);
+      const [, t2] = useStore.getState().tasks;
+      store.pickTask(t2.id);
       expect(useStore.getState().activeTaskId).toBe(t2.id);
+      expect(useStore.getState().activeTask()?.id).toBe(t2.id);
+      store.pickTask(t2.id);
+      expect(useStore.getState().activeTaskId).toBeNull();
     });
 
-    it('deleting (removeTask) the active task automatically shifts focus to the next available incomplete task', () => {
+    it('completing the picked task leaves no task picked (no jump to the next one)', () => {
+      const store = useStore.getState();
+      store.addTask('Task 1');
+      store.addTask('Task 2');
+      const [t1] = useStore.getState().tasks;
+      store.pickTask(t1.id);
+      store.toggleTask(t1.id);
+      expect(useStore.getState().tasks[0].done).toBe(true);
+      expect(useStore.getState().activeTaskId).toBeNull();
+    });
+
+    it('deleting the picked task leaves no task picked', () => {
       const store = useStore.getState();
       store.addTask('Task A');
       store.addTask('Task B');
-      const [tA, tB] = useStore.getState().tasks;
-      expect(useStore.getState().activeTaskId).toBe(tA.id);
-
-      // Remove Task A
+      const [tA] = useStore.getState().tasks;
+      store.pickTask(tA.id);
       store.removeTask(tA.id);
       expect(useStore.getState().tasks.length).toBe(1);
-      expect(useStore.getState().activeTaskId).toBe(tB.id);
+      expect(useStore.getState().activeTaskId).toBeNull();
     });
 
-    it('completing/deleting the last task safely auto-pauses the session (isRunning: false, sessionActive: false)', () => {
+    it('finishing or deleting the last task keeps the clock running', () => {
       const store = useStore.getState();
       store.addTask('Final Task');
       const task = useStore.getState().tasks[0];
+      store.pickTask(task.id);
       useStore.setState({ isRunning: true, sessionActive: true });
-
-      // Complete last task
       store.toggleTask(task.id);
-      expect(useStore.getState().isRunning).toBe(false);
-      expect(useStore.getState().sessionActive).toBe(false);
+      expect(useStore.getState().isRunning).toBe(true);
+      expect(useStore.getState().sessionActive).toBe(true);
 
-      // Reset and add another
       useStore.setState(useStore.getInitialState());
       store.addTask('Final Task 2');
       const task2 = useStore.getState().tasks[0];
       useStore.setState({ isRunning: true, sessionActive: true });
-
-      // Remove last task
       store.removeTask(task2.id);
-      expect(useStore.getState().isRunning).toBe(false);
-      expect(useStore.getState().sessionActive).toBe(false);
+      expect(useStore.getState().isRunning).toBe(true);
+      expect(useStore.getState().sessionActive).toBe(true);
     });
   });
 
