@@ -237,7 +237,7 @@ describe('Settings screen', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('radio', { name: 'scene' }));
     expect(st().roomBackground).toBe('scene');
-    fireEvent.click(screen.getByRole('radio', { name: 'break, then next task' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'break, then focus again' }));
     expect(st().autoContinue).toBe(true);
   });
 

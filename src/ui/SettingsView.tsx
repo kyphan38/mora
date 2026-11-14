@@ -100,7 +100,7 @@ export function SettingsView() {
           label="After a session"
           options={[
             { value: 'ask', label: 'ask' },
-            { value: 'auto', label: 'break, then next task' },
+            { value: 'auto', label: 'break, then focus again' },
           ]}
           value={autoContinue ? 'auto' : 'ask'}
           onChange={(v) => setAutoContinue(v === 'auto')}
