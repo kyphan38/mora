@@ -40,7 +40,8 @@ export function HistoryView() {
     else groups.push({ day, items: [s] });
   }
 
-  const stamp = new Date().toISOString().slice(0, 10);
+  // Local date: toISOString is UTC, so an export before 07:00 got yesterday's date.
+  const stamp = new Date().toLocaleDateString('en-CA');
 
   return (
     <div>
