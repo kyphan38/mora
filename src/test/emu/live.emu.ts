@@ -6,7 +6,7 @@ import { connectAuthEmulator, getAuth, GoogleAuthProvider, signInWithCredential 
 import { connectFirestoreEmulator, doc, getDoc, getFirestore, setDoc, type Firestore } from 'firebase/firestore';
 import { useStore } from '../../store/useStore';
 import { useAuth, signIn, startAuth } from '../../platform/auth';
-import { startLiveSync } from '../../platform/liveSync';
+import { startLiveSync } from '../../store/liveSync';
 import type { LiveTimer } from '../../core/liveModel';
 
 const cfg = { apiKey: 'demo-key', authDomain: 'demo-mora.firebaseapp.com', projectId: 'demo-mora', appId: 'demo-app' };

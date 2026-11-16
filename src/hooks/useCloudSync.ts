@@ -11,13 +11,13 @@ export function useCloudSync() {
     let stop: (() => void) | null = null;
     let cancelled = false;
     // Loaded on demand so the sign-in screen and tests never pull Firestore in.
-    void Promise.all([import('../platform/sync'), import('../platform/liveSync')]).then(([{ startSync }, { startLiveSync }]) => {
+    void Promise.all([import('../store/sync'), import('../store/liveSync')]).then(([{ startSync }, { startLiveSync }]) => {
       if (cancelled) return;
       const stopData = startSync(uid);
       const stopLive = startLiveSync(uid);
       // A track saved on this device before cloud tracks existed moves up once.
       if (useStore.getState().customTracks.length) {
-        void import('../platform/trackUpload').then(({ migrateLocalTrack }) => migrateLocalTrack(uid)).catch((e) => console.warn('[tracks] move failed', e));
+        void import('../store/trackUpload').then(({ migrateLocalTrack }) => migrateLocalTrack(uid)).catch((e) => console.warn('[tracks] move failed', e));
       }
       stop = () => {
         stopData();
@@ -36,7 +36,7 @@ export function useCloudSync() {
     if (!uid || !logiOn) return;
     let stop: (() => void) | null = null;
     let cancelled = false;
-    void import('../platform/logiRoutine').then(({ startLogiRoutine }) => {
+    void import('../store/logiRoutine').then(({ startLogiRoutine }) => {
       if (!cancelled) stop = startLogiRoutine();
     });
     return () => {

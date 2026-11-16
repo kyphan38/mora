@@ -7,7 +7,7 @@ import {
   PERSIST_VERSION,
   type PersistedState,
 } from '../platform/persistence';
-import { initPersistence } from '../platform/persist';
+import { initPersistence } from '../store/persist';
 import { useStore } from '../store/useStore';
 import { CORNERS } from '../data/corners';
 
@@ -153,7 +153,7 @@ describe('initPersistence', () => {
 describe('import side-effect free', () => {
   it('importing persistence modules does not auto-run', async () => {
     await import('../platform/persistence');
-    await import('../platform/persist');
+    await import('../store/persist');
     expect(useStore.getState().tasks).toEqual([]);
     expect(mockLS.length).toBe(0);
   });

@@ -43,7 +43,7 @@ export function MusicPicker() {
       return;
     }
     setError(null);
-    const { uploadTrack } = await import('../platform/trackUpload');
+    const { uploadTrack } = await import('../store/trackUpload');
     const h = uploadTrack(ownerUid, file, (p) => setUpload((u) => (u ? { ...u, progress: p } : u)));
     setUpload({ name: file.name.replace(/\.[^./]+$/, ''), progress: 0, cancel: h.cancel });
     try {
@@ -60,7 +60,7 @@ export function MusicPicker() {
   const removeSelected = async () => {
     if (!selected || !ownerUid) return;
     setMusicStyle(sound.musicStyle);
-    const { deleteTrack } = await import('../platform/trackUpload');
+    const { deleteTrack } = await import('../store/trackUpload');
     await deleteTrack(ownerUid, selected).catch(() => setError('Could not delete. Try again.'));
   };
 

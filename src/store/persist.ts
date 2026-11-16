@@ -1,10 +1,10 @@
-import { useStore } from '../store/useStore';
+import { useStore } from './useStore';
 import {
   type StorageAdapter,
   selectAdapter,
   toPersisted,
   migrate,
-} from './persistence';
+} from '../platform/persistence';
 
 const CLOCK_SAVE_MS = 15_000;
 const CLOCK_KEYS = new Set(['elapsedSec', 'runSyncAt', 'lastEvent']);

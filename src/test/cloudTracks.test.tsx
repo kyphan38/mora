@@ -6,7 +6,7 @@ import type { UserTrack } from '../types';
 
 const uploadTrack = vi.fn();
 const deleteTrack = vi.fn();
-vi.mock('../platform/trackUpload', () => ({ uploadTrack: (...a: unknown[]) => uploadTrack(...a), deleteTrack: (...a: unknown[]) => deleteTrack(...a) }));
+vi.mock('../store/trackUpload', () => ({ uploadTrack: (...a: unknown[]) => uploadTrack(...a), deleteTrack: (...a: unknown[]) => deleteTrack(...a) }));
 
 const st = () => useStore.getState();
 const track = (id: string, name: string): UserTrack => ({ id, name, url: `https://x/${id}.mp3`, path: `users/u/audio/${id}.mp3`, mimeType: 'audio/mpeg', size: 10, createdAt: 1 });

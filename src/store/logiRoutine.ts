@@ -5,9 +5,9 @@
 // goes to logi at once; until logi confirms it, the fetch does not undo it.
 
 import { httpsCallable } from 'firebase/functions';
-import { getFunctionsClient } from './functions';
+import { getFunctionsClient } from '../platform/functions';
 import { readRoutine, type LogiRoutine } from '../core/logiTasks';
-import { setLogiTickHandler, useStore } from '../store/useStore';
+import { setLogiTickHandler, useStore } from './useStore';
 import type { Task } from '../types';
 
 const POLL_MS = 3 * 60_000;

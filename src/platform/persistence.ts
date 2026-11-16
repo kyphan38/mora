@@ -1,10 +1,4 @@
-import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack, Note } from '../types';
-
-interface LogiLink {
-  enabled: boolean;
-}
-
-type Phase = 'focus' | 'break' | 'review';
+import type { Task, Session, SoundConfig, SessionSetup, Corner, CustomTrack, Note, Phase, LogiLink } from '../types';
 
 export const PERSIST_VERSION = 2;
 

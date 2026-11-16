@@ -3,7 +3,7 @@ import ReactDOM from "react-dom/client";
 import "./styles/globals.css";
 import App from "./App";
 import { ErrorBoundary } from "./ui/ErrorBoundary";
-import { initPersistence } from "./platform/persist";
+import { initPersistence } from "./store/persist";
 import { registerServiceWorker, requestPersistentStorage } from "./platform/pwa";
 
 initPersistence();

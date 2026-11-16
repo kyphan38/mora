@@ -3,8 +3,8 @@
 
 import { deleteObject, getDownloadURL, ref, uploadBytesResumable } from 'firebase/storage';
 import { deleteDoc, doc, setDoc } from 'firebase/firestore';
-import { getDb } from './firestore';
-import { getStorageClient } from './storage';
+import { getDb } from '../platform/firestore';
+import { getStorageClient } from '../platform/storage';
 import { uid as newId } from '../core/uid';
 import type { UserTrack } from '../types';
 
@@ -71,8 +71,8 @@ export async function deleteTrack(uid: string, track: UserTrack): Promise<void> 
  * cloud, keeps it selected if it was, then removes the device copy.
  */
 export async function migrateLocalTrack(uid: string): Promise<void> {
-  const { useStore } = await import('../store/useStore');
-  const { getCustomTrack, deleteCustomTrack } = await import('./customTrackDb');
+  const { useStore } = await import('./useStore');
+  const { getCustomTrack, deleteCustomTrack } = await import('../platform/customTrackDb');
   const local = useStore.getState().customTracks[0];
   if (!local) return;
   const rec = await getCustomTrack(local.id).catch(() => undefined);

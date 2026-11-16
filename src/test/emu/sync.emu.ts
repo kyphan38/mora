@@ -17,7 +17,7 @@ import {
 } from 'firebase/firestore';
 import { useStore } from '../../store/useStore';
 import { useAuth, signIn, startAuth } from '../../platform/auth';
-import { startSync } from '../../platform/sync';
+import { startSync } from '../../store/sync';
 
 const PROJECT = 'demo-mora';
 const cfg = { apiKey: 'demo-key', authDomain: 'demo-mora.firebaseapp.com', projectId: PROJECT, appId: 'demo-app' };

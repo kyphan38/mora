@@ -145,7 +145,7 @@ export function FocusView() {
 
   const openTasks = () => {
     setSheet('tasks');
-    if (useStore.getState().logi.enabled) void import('../platform/logiRoutine').then((m) => m.refreshLogiRoutine());
+    if (useStore.getState().logi.enabled) void import('../store/logiRoutine').then((m) => m.refreshLogiRoutine());
   };
 
   const closeSheet = () => {

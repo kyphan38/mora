@@ -1,9 +1,7 @@
 import type { StateCreator } from 'zustand';
-import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind, UserScene, UserTrack } from '../types';
+import type { Screen, Corner, SoundConfig, SessionSetup, Task, Session, CustomTrack, Note, FocusKind, UserScene, UserTrack, Phase, LogiLink } from '../types';
 import { type LiveTimer } from '../core/liveModel';
 import { type LogiRoutine } from '../core/logiTasks';
-
-export type Phase = 'focus' | 'break' | 'review';
 
 export interface AppStore {
   screen: Screen;
@@ -182,9 +180,7 @@ export interface AppStore {
   }) => void;
 }
 
-export interface LogiLink {
-  enabled: boolean;
-}
+export type { Phase, LogiLink };
 
 /** One part of the store; `set` and `get` see the whole store. */
 export type Slice<T> = StateCreator<AppStore, [], [], T>;

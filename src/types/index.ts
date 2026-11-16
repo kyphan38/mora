@@ -102,3 +102,11 @@ export interface SessionSetup {
   durationLabel: string; // 'Count Up' | '25 min' | '50 min' | '1.5h' | '2h'
   durationSec: number;   // 0 for Count Up
 }
+
+/** Pomodoro phase of the clock. */
+export type Phase = 'focus' | 'break' | 'review';
+
+/** Live link to logi (account-wide, synced in prefs). */
+export interface LogiLink {
+  enabled: boolean;
+}

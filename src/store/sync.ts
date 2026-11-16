@@ -17,8 +17,8 @@ import {
   type DocumentData,
   type QuerySnapshot,
 } from 'firebase/firestore';
-import { getDb } from './firestore';
-import { useStore } from '../store/useStore';
+import { getDb } from '../platform/firestore';
+import { useStore } from './useStore';
 import { CORNERS } from '../data/corners';
 import { cornerFromUserScene, USER_SCENE_PREFIX } from '../data/sceneManifest';
 import {
