@@ -33,10 +33,17 @@ export function SettingsView() {
   const [theme, setTheme] = useState<Theme>(loadTheme);
   const [confirmClear, setConfirmClear] = useState(false);
   const user = useAuth((s) => s.user);
+  const setScreen = useStore((s) => s.setScreen);
 
   return (
     <div className="space-y-7">
       <h2 className="text-[17px] font-medium">Settings</h2>
+      <section>
+        <Label>guide</Label>
+        <button type="button" className="text-[14px] text-faint hover:text-ink" onClick={() => setScreen('guide')}>
+          read
+        </button>
+      </section>
       <section>
         <Label>theme</Label>
         <Words

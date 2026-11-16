@@ -35,7 +35,9 @@ settings) fades while a block runs. On phones the bar leaves out the parked
 count.
 Tasks, sound + scene, review, history and settings are `Sheet`s (bottom
 sheet on phones, centered panel on wide screens). Screen state:
-`'focus' | 'history' | 'settings'`.
+`'focus' | 'history' | 'settings' | 'guide'`. The Guide (`ui/GuideView.tsx`,
+opened from the first row of Settings) explains every feature in plain
+English: update it with every feature change.
 
 Look: gray tokens from `ws/app/DESIGN.md`, system font, theme
 `system · light · dark` (`mora.theme` in localStorage, applied by an inline

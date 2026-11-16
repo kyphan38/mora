@@ -9,6 +9,7 @@ import { useDailyReset } from './hooks/useDailyReset';
 import { FocusView } from './ui/FocusView';
 import { HistoryView } from './ui/HistoryView';
 import { SettingsView } from './ui/SettingsView';
+import { GuideView } from './ui/GuideView';
 import { SceneLayer } from './ui/SceneLayer';
 import { Sheet } from './ui/Sheet';
 import { SignInView } from './ui/SignInView';
@@ -56,6 +57,15 @@ function MoraApp() {
       </Sheet>
       <Sheet open={screen === 'settings'} label="Settings" onClose={back} testId="settings-sheet">
         <SettingsView />
+      </Sheet>
+      {/* Opened from Settings; closing goes back there. */}
+      <Sheet
+        open={screen === 'guide'}
+        label="Guide"
+        onClose={() => withTransition('screen', () => setScreen('settings'))}
+        testId="guide-sheet"
+      >
+        <GuideView />
       </Sheet>
     </div>
   );
