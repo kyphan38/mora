@@ -1,5 +1,13 @@
 # PLAN-refactor (mora)
 
+Trạng thái: Phase 1-3 xong (2026-11-16, branch `refactor/store-slices`). Unit 310/310 (thêm 9), emulator 15/15, build OK. Phase 4 (TaskList) để sau.
+
+Kết quả:
+- `store/useStore.ts` 874 -> 24 dòng: ghép 6 slice trong `store/slices/` (sound, scenes, tasks, timer, history, link). `AppStore` ở `store/types.ts`, mỗi slice có kiểu `Pick<AppStore, ...>` nên thiếu field là tsc báo lỗi.
+- Hàm thuần dùng chung ở `store/helpers.ts` (có test `src/test/storeHelpers.test.ts`). Không chuyển sang `core/` vì chúng làm việc trực tiếp với kiểu của store.
+- persist, sync, liveSync, logiRoutine, trackUpload chuyển từ `platform/` sang `store/`. `platform/` không còn import store.
+- `Phase`, `LogiLink` chuyển vào `types/` (trước đó khai báo 2 lần).
+
 Mục tiêu: chia `src/store/useStore.ts` (874 dòng, một store chứa mọi thứ) thành nhiều phần nhỏ theo tính năng. Đưa logic thuần sang `core/`. Sửa chiều phụ thuộc giữa `platform/` và `store/`.
 
 Không đổi tính năng. Không đổi giao diện. API `useStore` giữ nguyên, nên UI và test không phải sửa.
