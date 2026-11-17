@@ -11,12 +11,14 @@ const BLOCKS: { title: string; lines: string[] }[] = [
       'Before you start, drag the ring to pick 5 to 120 minutes.',
       'done ends the block now. stop must be held for a moment, so a quick tap does nothing.',
       'In the last minute the ring gets a little thicker.',
+      'At the end, three soft bells ring, each a little louder. Music gets quieter under them.',
     ],
   },
   {
     title: 'breaks',
     lines: [
       'After a block, mora asks: Mark done, Keep working, Focus again or Stop. You can add a note.',
+      'Next step: write what to do first next time. It shows under the task name before the next Play. After a held stop, the same line asks for it. A new one replaces the old one; done clears it.',
       'A break follows. Every 4th break is long. skip break ends it.',
       'Settings: after a session, ask each time or go straight to a break and then focus again.',
     ],
@@ -42,6 +44,7 @@ const BLOCKS: { title: string; lines: string[] }[] = [
       'Add your own music. It is stored in the cloud for every device.',
       'Scene shows a calm photo or video behind the clock. Swipe the clock left or right (or [ and ]) to change it.',
       'Hide scenes you do not like, or add your own.',
+      'Scene by time (Settings, on by default): each new block picks a scene for the time of day. Morning 05-11, afternoon 11-17, evening 17-21, night 21-05. Your own scenes fit any time. A scene you pick stays until the next block.',
       'Waiting music plays before a session. Pick it in Settings.',
     ],
   },

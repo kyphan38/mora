@@ -34,7 +34,8 @@ service cloud.firestore {
         && d.updatedAt is int
         && (!d.keys().hasAny(['kind']) || d.kind in ['learn', 'work'])
         && (!d.keys().hasAny(['est']) || (d.est is int && d.est >= 1 && d.est <= 99))
-        && (!d.keys().hasAny(['blocks']) || (d.blocks is int && d.blocks >= 0));
+        && (!d.keys().hasAny(['blocks']) || (d.blocks is int && d.blocks >= 0))
+        && (!d.keys().hasAny(['next']) || shortText(d.next, 200));
     }
 
     function validSession(d) {

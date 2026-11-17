@@ -13,7 +13,8 @@ Library (jsdom). Firebase (Auth, Firestore, Storage, Functions).
 
 - `core/` pure logic, no React, no device APIs: `timer` (format, remaining),
   `sessionTimer`, `pomodoro` (break lengths), `format` (dates, minutes),
-  `soundFormat`, `uid`.
+  `soundFormat`, `uid`, `nextStep` (M1 task next step), `softBells` (M9
+  end sound), `sceneTime` (M10 day parts and scene tags).
 - `platform/` everything that touches the device or Firebase:
   `persistence` + `persist` (localStorage / memory), `audio`, `notify`,
   `customTrackDb` (IndexedDB, only for the one-time move to the cloud),
@@ -108,6 +109,12 @@ delays (`usePresence`, task removal, `useFlip`) are skipped then too.
   (`sound.idleTrack`, `'off'` or a name; `sound.idleVolume`, synced). Before
   the first tap the browser blocks it; the engine retries on the first
   pointer or key press.
+- End of a block (M9): three soft bells over ~6s, each louder
+  (`core/softBells`); ambient and music duck to 30% under them.
+- Next step (M1): `Task.next`, written in ReviewSheet or after a held stop
+  (`ui/NextStepInput`), shown faint under the task name while the clock waits.
+- Scene by time (M10): `sceneByTime` pref (default on); a fresh Play calls
+  `sceneForTime()`, which picks a scene tagged for the day part.
 - Duration words stay on one line: a dragged, non-preset length takes the
   place of `custom` (tap it to type minutes).
 

@@ -1,3 +1,4 @@
+import { clearNextOnDone } from '../../core/nextStep';
 import { DURATIONS } from '../../data/durations';
 import { breakForSeconds, longBreakForSeconds, LONG_BREAK_EVERY } from '../../core/pomodoro';
 import { TAKEOVER_SEC } from '../../core/liveModel';
@@ -204,7 +205,7 @@ export const timerSlice: Slice<TimerSlice> = (set, get) => ({
       const state = get();
       const t = currentTask(state);
       if (!t) return;
-      const tasks = state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task));
+      const tasks = clearNextOnDone(state.tasks.map((task) => (task.id === t.id ? { ...task, done: true } : task)));
       tellLogi(state.tasks, tasks);
       set({ tasks, activeTaskId: null });
     } else {

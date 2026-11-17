@@ -27,6 +27,7 @@ export interface PersistedState {
   muted?: boolean;
   logi?: LogiLink;
   hiddenScenes?: string[];
+  sceneByTime?: boolean;
   logiHidden?: string[];
 }
 
@@ -91,6 +92,7 @@ export function toPersisted(s: {
   muted?: boolean;
   logi?: LogiLink;
   hiddenScenes?: string[];
+  sceneByTime?: boolean;
   logiHidden?: string[];
 }): PersistedState {
   return {
@@ -117,6 +119,7 @@ export function toPersisted(s: {
     muted: s.muted ?? false,
     ...(s.logi ? { logi: s.logi } : {}),
     hiddenScenes: s.hiddenScenes ?? [],
+    sceneByTime: s.sceneByTime ?? true,
     logiHidden: s.logiHidden ?? [],
   };
 }

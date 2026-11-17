@@ -72,6 +72,7 @@ export interface AppStore {
     muted?: boolean;
     logi?: LogiLink;
     hiddenScenes?: string[];
+    sceneByTime?: boolean;
     logiHidden?: string[];
   }) => void;
   clearSessions: () => void;
@@ -129,6 +130,8 @@ export interface AppStore {
   noteToTask: (id: string) => void;
 
   setTaskKind: (id: string, kind: FocusKind) => void;
+  /** M1: set or clear (empty text) a task's next step. */
+  setTaskNext: (id: string, text: string) => void;
   setSessionNote: (id: string, note: string) => void;
   updateSession: (id: string, patch: { taskName?: string; minutes?: number }) => void;
   removeSession: (id: string) => Session | undefined;
@@ -153,6 +156,11 @@ export interface AppStore {
   /** Default scene ids the owner hid from the picker (synced in prefs). */
   hiddenScenes: string[];
   toggleHiddenScene: (id: string) => void;
+  /** M10: a new scene that fits the time of day at each fresh Play (synced in prefs). */
+  sceneByTime: boolean;
+  setSceneByTime: (on: boolean) => void;
+  /** M10: switch to a scene that fits the time, when scene mode and the setting are on. */
+  sceneForTime: (now?: number) => void;
   showAllScenes: () => void;
 
   /** Id of the current run of the clock (Play to Pause). Not persisted. */
@@ -173,7 +181,7 @@ export interface AppStore {
     notes?: Note[];
     userScenes?: UserScene[];
     userTracks?: UserTrack[];
-    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes' | 'logiHidden'>> & {
+    prefs?: Partial<Pick<AppStore, 'setup' | 'roomBackground' | 'corner' | 'autoContinue' | 'dailyGoalMin' | 'hiddenScenes' | 'sceneByTime' | 'logiHidden'>> & {
       sound?: Omit<SoundConfig, 'customTrackId'> & { customTrackId?: string | null };
       logi?: { enabled: boolean };
     };
@@ -186,8 +194,8 @@ export type { Phase, LogiLink };
 export type Slice<T> = StateCreator<AppStore, [], [], T>;
 
 export type SoundSlice = Pick<AppStore, 'sound' | 'customTracks' | 'setAmbient' | 'setMusicStyle' | 'setAmbientVolume' | 'setMusicVolume' | 'setIdleTrack' | 'setIdleVolume' | 'addCustomTrack' | 'selectCustomTrack' | 'removeCustomTrack' | 'muted' | 'setMuted'>;
-export type ScenesSlice = Pick<AppStore, 'screen' | 'corner' | 'roomBackground' | 'setRoomBackground' | 'randomScene' | 'setScreen' | 'setCorner' | 'userScenes' | 'userTracks' | 'hiddenScenes' | 'toggleHiddenScene' | 'showAllScenes'>;
-export type TasksSlice = Pick<AppStore, 'tasks' | 'activeTaskId' | 'addTask' | 'removeTask' | 'restoreTask' | 'reorderTasks' | 'activeTask' | 'pickTask' | 'startTask' | 'resetDay' | 'toggleTask' | 'clearCompletedTasks' | 'setTaskKind' | 'notes' | 'addNote' | 'removeNote' | 'noteToTask'>;
+export type ScenesSlice = Pick<AppStore, 'screen' | 'corner' | 'roomBackground' | 'setRoomBackground' | 'randomScene' | 'setScreen' | 'setCorner' | 'userScenes' | 'userTracks' | 'hiddenScenes' | 'toggleHiddenScene' | 'showAllScenes' | 'sceneByTime' | 'setSceneByTime' | 'sceneForTime'>;
+export type TasksSlice = Pick<AppStore, 'tasks' | 'activeTaskId' | 'addTask' | 'removeTask' | 'restoreTask' | 'reorderTasks' | 'activeTask' | 'pickTask' | 'startTask' | 'resetDay' | 'toggleTask' | 'clearCompletedTasks' | 'setTaskKind' | 'setTaskNext' | 'notes' | 'addNote' | 'removeNote' | 'noteToTask'>;
 export type TimerSlice = Pick<AppStore, 'setup' | 'setDuration' | 'setCustomDuration' | 'elapsedSec' | 'isRunning' | 'sessionActive' | 'phase' | 'lastFocusSec' | 'autoContinue' | 'runSyncAt' | 'focusStartedAt' | 'lastEvent' | 'cycleCount' | 'longBreak' | 'lastSessionId' | 'completeActive' | 'stopActive' | 'startFocus' | 'setIsRunning' | 'togglePlay' | 'tickSession' | 'syncClock' | 'stopFocus' | 'setAutoContinue' | 'enterReview' | 'reviewMarkDone' | 'startBreak' | 'finishBreak' | 'focusAgain' | 'stopAllSessions'>;
 export type HistorySlice = Pick<AppStore, 'sessions' | 'clearSessions' | 'setSessionNote' | 'updateSession' | 'removeSession' | 'restoreSession' | 'dailyGoalMin' | 'setDailyGoal'>;
 export type LinkSlice = Pick<AppStore, 'logi' | 'setLogi' | 'logiStatus' | 'setLogiStatus' | 'logiHidden' | 'logiSync' | 'setLogiSync' | 'applyLogiRoutine' | 'runId' | 'liveFollower' | 'overdueSince' | 'applyLive' | 'leadLive' | 'applyRemote' | 'hydrate'>;

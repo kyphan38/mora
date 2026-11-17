@@ -38,6 +38,7 @@ export function taskToDoc(t: Task, order: number): Doc {
     est: t.est,
     blocks: t.blocks,
     min: t.min,
+    next: t.next,
     logi: t.logi ? clean({ ...t.logi }) : undefined,
   });
 }
@@ -56,6 +57,7 @@ export function tasksFromDocs(docs: { id: string; data: Doc }[]): Task[] {
         est: typeof data.est === 'number' ? data.est : undefined,
         blocks: typeof data.blocks === 'number' ? data.blocks : undefined,
         min: typeof data.min === 'number' ? data.min : undefined,
+        next: typeof data.next === 'string' && data.next ? data.next.slice(0, 200) : undefined,
         logi: readLogi(data.logi),
       }) as unknown as Task,
     );
@@ -151,6 +153,8 @@ export interface SyncedPrefs {
   dailyGoalMin: number;
   logiEnabled: boolean;
   hiddenScenes: string[];
+  /** M10: pick a scene that fits the time of day at each Play. */
+  sceneByTime?: boolean;
   /** Ids of logi tasks removed in mora today, so the next fetch does not bring them back. */
   logiHidden: string[];
 }

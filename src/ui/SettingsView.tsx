@@ -21,6 +21,8 @@ export function SettingsView() {
   const roomBackground = useStore((s) => s.roomBackground);
   const setRoomBackground = useStore((s) => s.setRoomBackground);
   const autoContinue = useStore((s) => s.autoContinue);
+  const sceneByTime = useStore((s) => s.sceneByTime);
+  const setSceneByTime = useStore((s) => s.setSceneByTime);
   const setAutoContinue = useStore((s) => s.setAutoContinue);
   const sessionCount = useStore((s) => s.sessions.length);
   const dailyGoalMin = useStore((s) => s.dailyGoalMin);
@@ -112,6 +114,20 @@ export function SettingsView() {
           value={autoContinue ? 'auto' : 'ask'}
           onChange={(v) => setAutoContinue(v === 'auto')}
         />
+      </section>
+
+      <section>
+        <Label>scene by time</Label>
+        <Words
+          label="Scene by time"
+          options={[
+            { value: 'on', label: 'on' },
+            { value: 'off', label: 'off' },
+          ]}
+          value={sceneByTime ? 'on' : 'off'}
+          onChange={(v) => setSceneByTime(v === 'on')}
+        />
+        <p className="mt-2 text-[13px] text-faint">Each new block picks a scene for the time of day.</p>
       </section>
 
       <section>

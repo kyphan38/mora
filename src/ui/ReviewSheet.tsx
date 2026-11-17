@@ -3,6 +3,7 @@ import { currentTask, NO_TASK_NAME, useStore } from '../store/useStore';
 import { breakForSeconds, longBreakForSeconds, NEXT_DURATIONS } from '../core/pomodoro';
 import { Sheet } from './Sheet';
 import { Words } from './Words';
+import { NextStepInput } from './NextStepInput';
 
 const WORD = 'text-[14px] text-faint transition-colors hover:text-ink';
 
@@ -49,6 +50,12 @@ export function ReviewSheet({ open }: { open: boolean }) {
           aria-label="Session note"
           className="mt-4 w-full border-b border-line bg-transparent py-2 text-[14px] placeholder:text-faint focus:border-line-strong"
         />
+      )}
+
+      {!doneName && active && (
+        <div className="mt-3">
+          <NextStepInput key={`${active.id}-${open}`} taskId={active.id} />
+        </div>
       )}
 
       {!doneName && active && (

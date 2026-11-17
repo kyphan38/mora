@@ -77,6 +77,7 @@ function localPrefs(s: State): SyncedPrefs {
     dailyGoalMin: s.dailyGoalMin,
     logiEnabled: s.logi.enabled,
     hiddenScenes: s.hiddenScenes,
+    sceneByTime: s.sceneByTime,
     logiHidden: s.logiHidden,
   };
 }
@@ -233,6 +234,7 @@ export function startSync(uid: string, onReady?: () => void): () => void {
               dailyGoalMin: d.dailyGoalMin,
               logi: { enabled: d.logiEnabled === true },
               hiddenScenes: Array.isArray(d.hiddenScenes) ? d.hiddenScenes : [],
+              sceneByTime: d.sceneByTime !== false,
               logiHidden: Array.isArray(d.logiHidden) ? d.logiHidden : [],
             },
           }),
@@ -257,6 +259,7 @@ export function startSync(uid: string, onReady?: () => void): () => void {
       s.autoContinue !== prev.autoContinue ||
       s.dailyGoalMin !== prev.dailyGoalMin ||
       s.hiddenScenes !== prev.hiddenScenes ||
+      s.sceneByTime !== prev.sceneByTime ||
       s.logiHidden !== prev.logiHidden ||
       s.logi !== prev.logi
     ) {

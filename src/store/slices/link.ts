@@ -119,6 +119,7 @@ export const linkSlice: Slice<LinkSlice> = (set, get) => ({
     if (p.muted !== undefined) update.muted = p.muted;
     if (p.logi !== undefined) update.logi = { enabled: p.logi.enabled === true };
     if (p.hiddenScenes !== undefined) update.hiddenScenes = p.hiddenScenes;
+    if (p.sceneByTime !== undefined) update.sceneByTime = p.sceneByTime;
     if (p.logiHidden !== undefined) update.logiHidden = p.logiHidden;
     update.runSyncAt = null;
 

@@ -1,6 +1,7 @@
 import type { Task } from '../../types';
 import { uid } from '../../core/uid';
 import { dropOldTasks } from '../../core/day';
+import { clearNextOnDone, withNext } from '../../core/nextStep';
 
 import type { Slice, TasksSlice } from '../types';
 import { currentTask, keepPick, readLength, switchPatch, tellLogi } from '../helpers';
@@ -85,7 +86,7 @@ export const tasksSlice: Slice<TasksSlice> = (set, get) => ({
     }),
   toggleTask: (id) =>
     set((state) => {
-      const newTasks = state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+      const newTasks = clearNextOnDone(state.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)));
       const activeTaskId = keepPick(state.activeTaskId, newTasks);
       tellLogi(state.tasks, newTasks);
       return {
@@ -106,6 +107,11 @@ export const tasksSlice: Slice<TasksSlice> = (set, get) => ({
     }),
   setTaskKind: (id, kind) =>
     set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, kind } : t)) })),
+  setTaskNext: (id, text) =>
+    set((s) => {
+      const tasks = withNext(s.tasks, id, text);
+      return tasks === s.tasks ? {} : { tasks };
+    }),
   notes: [],
   addNote: (text) => {
     const t = text.trim().slice(0, 500);

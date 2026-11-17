@@ -1,3 +1,4 @@
+import { BELL_NOTES, BELLS_END, DUCK, SOFT_BELLS } from '../core/softBells';
 import { ambientUrl, idleUrl, musicUrl } from '../data/audioManifest';
 import { cachedObjectUrl, saveForLater } from './mediaCache';
 
@@ -292,32 +293,39 @@ export function createAudioEngine(): AudioEngine {
         const ctx = new AudioContextClass();
         const now = ctx.currentTime;
 
-        const playNote = (freq: number, startTime: number, duration: number) => {
+        const playNote = (freq: number, startTime: number, gain: number, duration: number) => {
           const osc = ctx.createOscillator();
           const gainNode = ctx.createGain();
-
           osc.type = 'sine';
           osc.frequency.setValueAtTime(freq, startTime);
-
-          // Envelope: quick attack, slow decay
+          // A soft attack, then a long decay: a bell, not a beep.
           gainNode.gain.setValueAtTime(0, startTime);
-          gainNode.gain.linearRampToValueAtTime(0.15, startTime + 0.02);
-          gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
-
+          gainNode.gain.linearRampToValueAtTime(gain, startTime + 0.08);
+          gainNode.gain.exponentialRampToValueAtTime(0.0005, startTime + duration);
           osc.connect(gainNode);
           gainNode.connect(ctx.destination);
-
           osc.start(startTime);
           osc.stop(startTime + duration);
         };
 
-        // Synthesize a gentle 2-note bell (E5 followed by A5)
-        playNote(659.25, now, 0.8);
-        playNote(880.00, now + 0.12, 1.0);
+        // M9: three bells, quiet to a little louder (see core/softBells).
+        for (const bell of SOFT_BELLS) {
+          for (const note of BELL_NOTES) playNote(note.freq, now + bell.at + note.delay, bell.gain, bell.ring);
+        }
+
+        // Session sound steps back under the bells, then returns.
+        for (const c of [ambient, music]) {
+          if (c.live() && c.el.src && !silent(c)) fade(c, c.target * DUCK, 600);
+        }
+        setTimeout(() => {
+          for (const c of [ambient, music]) {
+            if (c.live() && c.el.src && !silent(c)) fade(c, null, 1500);
+          }
+        }, (BELLS_END - 1) * 1000);
 
         setTimeout(() => {
           ctx.close().catch(() => {});
-        }, 1500);
+        }, (BELLS_END + 0.5) * 1000);
       } catch (err) {
         console.error('Failed to synthesize chime:', err);
       }

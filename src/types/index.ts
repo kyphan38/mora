@@ -48,6 +48,8 @@ export interface Task {
   est?: number;         // estimated focus blocks
   blocks?: number;      // finished focus blocks
   min?: number;         // planned length in minutes (sets the clock when it becomes current)
+  /** M1: what to do first next time, written when a block ends. */
+  next?: string;
   /** Set on tasks that come from today's logi routine. */
   logi?: LogiLinkInfo;
 }

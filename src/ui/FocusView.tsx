@@ -12,6 +12,7 @@ import { useSceneSwipe } from '../hooks/useSceneSwipe';
 import { withTransition } from './viewTransition';
 import { Ring } from './Ring';
 import { HoldButton } from './HoldButton';
+import { NextStepInput } from './NextStepInput';
 import { RollingDigits } from './RollingDigits';
 import { Sheet } from './Sheet';
 import { TaskList } from './TaskList';
@@ -100,6 +101,8 @@ export function FocusView() {
 
   const playPause = () => {
     if (!canPlay) return;
+    // M10: a fresh block may bring a scene that fits the time of day.
+    if (idle) useStore.getState().sceneForTime();
     // The first Play starts a session; play() runs inside the tap for autoplay rules.
     if (!useStore.getState().sessionActive) {
       startFocus();
@@ -111,10 +114,16 @@ export function FocusView() {
     setIsRunning(!isRunning);
   };
 
+  // M1: after a hold-stop on a task, ask for the next step until Play.
+  const [askNext, setAskNext] = useState<string | null>(null);
   const stop = () => {
     getAudioEngine().pause();
+    if (active && phase === 'focus') setAskNext(active.id);
     stopFocus();
   };
+  useEffect(() => {
+    if (isRunning || active?.id !== askNext) setAskNext(null);
+  }, [isRunning, active?.id, askNext]);
 
   // Step through the visible scenes; the name shows clearly for 2 seconds.
   const stepScene = (dir: 1 | -1) => {
@@ -207,7 +216,13 @@ export function FocusView() {
                   {isBreak ? breakLabel : active!.name}
                 </span>
               </p>
-            ) : (
+            ) : null}
+            {idle && active?.next && !askNext ? (
+              <p className="mt-1 max-w-full truncate text-[12px] text-faint" data-testid="task-next">
+                next: {active.next}
+              </p>
+            ) : null}
+            {active || isBreak ? null : (
               <button
                 type="button"
                 className="flex items-center gap-2 text-[14px] text-faint transition-colors hover:text-ink"
@@ -232,7 +247,12 @@ export function FocusView() {
 
         {!zen && (
           <div className="flex min-h-8 items-center">
-            {idle && (
+            {idle && askNext && (
+              <div className="fade-in w-64 max-w-[80vw]">
+                <NextStepInput taskId={askNext} autoFocus onDone={() => setAskNext(null)} />
+              </div>
+            )}
+            {idle && !askNext && (
               <div className="fade-in">
                 <DurationPicker />
               </div>
